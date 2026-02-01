@@ -1,21 +1,169 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Golden Claim | Cloud Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* نفس التصميم الراقي السابق مع تحسينات بسيطة */
+        :root { --gold: #f3ba2f; --bg: #000; --card: #111; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0a0a0a; border-bottom: 1px solid #222; }
+        .u-img { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid var(--gold); }
+        .balance-card { text-align: center; padding: 30px 0; background: radial-gradient(circle, #1a1a1a, #000); }
+        .bal-num { font-size: 50px; font-weight: 900; color: var(--gold); }
+        .mine-btn { width: 220px; height: 220px; border-radius: 50%; background: #111; border: 8px solid #1a1a1a; margin: 20px auto; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        .active-mining { border-color: var(--gold); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(243, 186, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0); } }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; padding: 15px 0; border-top: 1px solid #222; }
+        .nav-item { flex: 1; text-align: center; color: #555; font-size: 12px; cursor: pointer; }
+        .nav-item.active { color: var(--gold); }
+        #loading-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+    </style>
+</head>
+<body>
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
-  authDomain: "goldenclaim-6863a.firebaseapp.com",
-  projectId: "goldenclaim-6863a",
-  storageBucket: "goldenclaim-6863a.firebasestorage.app",
-  messagingSenderId: "817930053370",
-  appId: "1:817930053370:web:2e0a807e47c4a7ad868b43",
-  measurementId: "G-D7LVY0SG9D"
-};
+<div id="loading-overlay">جاري الاتصال بالسيرفر...</div>
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+<div class="header">
+    <div id="ton-connect"></div>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <span id="name" style="font-weight:bold;">...</span>
+        <img id="avatar" class="u-img" src="">
+    </div>
+</div>
+
+<div class="content" style="height: calc(100vh - 140px); overflow-y: auto; text-align: center;">
+    <div class="balance-card">
+        <small style="color:#888">GOLDEN ASSETS</small>
+        <div class="bal-num" id="bal-display">0.0000</div>
+    </div>
+
+    <div id="circle" class="mine-btn" onclick="handleMining()">
+        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="130">
+    </div>
+    
+    <div id="status" style="color:var(--gold); font-weight:bold; margin: 15px 0;">تأكد من استقرار الإنترنت</div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding:0 20px;">
+        <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222;">
+            <small style="color:#888">السرعة الحالية</small>
+            <div id="speed-display" style="font-weight:bold; color:var(--gold);">0.01</div>
+        </div>
+        <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222;">
+            <small style="color:#888">مدة التخزين</small>
+            <div id="time-display" style="font-weight:bold; color:var(--gold);">6h</div>
+        </div>
+    </div>
+</div>
+
+<div class="nav">
+    <div class="nav-item active"><span>⛏️</span><div>تعدين</div></div>
+    <div class="nav-item"><span>👥</span><div>أصدقاء</div></div>
+    <div class="nav-item"><span>👛</span><div>محفظة</div></div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // املأ البيانات من مشروع Firebase الخاص بك هنا
+    const firebaseConfig = {
+        apiKey: "AIzaSy...",
+        authDomain: "your-project.firebaseapp.com",
+        databaseURL: "https://your-project.firebaseio.com",
+        projectId: "your-project",
+        storageBucket: "your-project.appspot.com",
+        messagingSenderId: "...",
+        appId: "..."
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const userId = tg.initDataUnsafe.user?.id || "test_user";
+
+    let userData = {};
+
+    // تحميل البيانات من السيرفر
+    function loadData() {
+        db.ref('users/' + userId).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                userData = data;
+            } else {
+                // إنشاء حساب جديد لو مش موجود
+                userData = {
+                    balance: 0,
+                    speed: 0.01,
+                    timeLimit: 6,
+                    endTime: null,
+                    name: tg.initDataUnsafe.user?.first_name || "Mugahed"
+                };
+                db.ref('users/' + userId).set(userData);
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+            syncUI();
+        });
+    }
+
+    function syncUI() {
+        document.getElementById('bal-display').innerText = userData.balance.toFixed(4);
+        document.getElementById('speed-display').innerText = userData.speed;
+        document.getElementById('time-display').innerText = userData.timeLimit + "h";
+        document.getElementById('name').innerText = userData.name;
+        document.getElementById('avatar').src = tg.initDataUnsafe.user?.photo_url || "https://ui-avatars.com/api/?name=M";
+    }
+
+    function handleMining() {
+        if (!userData.endTime) {
+            userData.endTime = Date.now() + (userData.timeLimit * 3600000);
+            db.ref('users/' + userId).update({ endTime: userData.endTime });
+            tg.HapticFeedback.impactOccurred('medium');
+        } else if (Date.now() >= userData.endTime) {
+            userData.balance += (userData.speed * userData.timeLimit);
+            userData.endTime = null;
+            db.ref('users/' + userId).update({ 
+                balance: userData.balance, 
+                endTime: null 
+            });
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+    }
+
+    function updateTimer() {
+        const circle = document.getElementById('circle');
+        const status = document.getElementById('status');
+        if (userData.endTime) {
+            let diff = userData.endTime - Date.now();
+            if (diff > 0) {
+                circle.classList.add('active-mining');
+                let h = Math.floor(diff/3600000);
+                let m = Math.floor((diff%3600000)/60000);
+                status.innerText = `جاري التعدين.. متبقي ${h}س و ${m}د`;
+            } else {
+                circle.classList.remove('active-mining');
+                status.innerText = "اجمع الذهب الآن! ✨";
+            }
+        } else {
+            circle.classList.remove('active-mining');
+            status.innerText = "جاهز لبدء التعدين";
+        }
+    }
+
+    setInterval(updateTimer, 1000);
+    loadData();
+
+    // تهيئة المحفظة
+    new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect'
+    });
+</script>
+</body>
+</html>
