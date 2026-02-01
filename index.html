@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Cloud Edition</title>
+    <title>Golden Claim</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -11,19 +11,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #111; }
+        :root { --gold: #f3ba2f; --bg: #000; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0a0a0a; border-bottom: 1px solid #222; }
-        .u-img { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid var(--gold); }
+        #avatar { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid var(--gold); }
         .balance-card { text-align: center; padding: 30px 0; background: radial-gradient(circle, #1a1a1a, #000); }
-        .bal-num { font-size: 50px; font-weight: 900; color: var(--gold); }
-        .mine-btn { width: 200px; height: 200px; border-radius: 50%; background: #111; border: 8px solid #1a1a1a; margin: 20px auto; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        #bal-display { font-size: 50px; font-weight: 900; color: var(--gold); }
+        .mine-btn { width: 200px; height: 200px; border-radius: 50%; background: #111; border: 8px solid #1a1a1a; margin: 20px auto; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .active-mining { border-color: var(--gold); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(243, 186, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0); } }
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; padding: 15px 0; border-top: 1px solid #222; }
-        .nav-item { flex: 1; text-align: center; color: #555; font-size: 12px; cursor: pointer; }
-        .nav-item.active { color: var(--gold); }
-        #loading-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+        #loading-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -34,45 +31,28 @@
     <div id="ton-connect"></div>
     <div style="display:flex; align-items:center; gap:10px;">
         <span id="name" style="font-weight:bold;">...</span>
-        <img id="avatar" class="u-img" src="">
+        <img id="avatar" src="">
     </div>
 </div>
 
-<div class="content" style="height: calc(100vh - 140px); overflow-y: auto; text-align: center;">
+<div class="content" style="text-align: center;">
     <div class="balance-card">
-        <small style="color:#888">GOLDEN ASSETS</small>
-        <div class="bal-num" id="bal-display">0.0000</div>
+        <div id="bal-display">0.0000</div>
+        <small style="color:#888">رصيد الذهب</small>
     </div>
 
     <div id="circle" class="mine-btn" onclick="handleMining()">
-        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="120">
+        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="110">
     </div>
     
-    <div id="status" style="color:var(--gold); font-weight:bold; margin: 15px 0;">تأكد من استقرار الإنترنت</div>
-
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding:0 20px;">
-        <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222;">
-            <small style="color:#888">السرعة الحالية</small>
-            <div id="speed-display" style="font-weight:bold; color:var(--gold);">0.01</div>
-        </div>
-        <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222;">
-            <small style="color:#888">مدة التخزين</small>
-            <div id="time-display" style="font-weight:bold; color:var(--gold);">6h</div>
-        </div>
-    </div>
-</div>
-
-<div class="nav">
-    <div class="nav-item active"><span>⛏️</span><div>تعدين</div></div>
-    <div class="nav-item"><span>👥</span><div>أصدقاء</div></div>
-    <div class="nav-item"><span>👛</span><div>محفظة</div></div>
+    <div id="status" style="color:var(--gold); font-weight:bold; margin-top: 10px;">جاهز للتعدين</div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // قيمك الصحيحة من الصور التي أرسلتها
+    // إعدادات Firebase الخاصة بك مدمجة وجاهزة
     const firebaseConfig = {
         apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
         authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -85,76 +65,54 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const userId = tg.initDataUnsafe.user?.id || "test_user";
+    const userId = tg.initDataUnsafe.user?.id || "user_test";
 
     let userData = {};
 
-    function loadData() {
-        db.ref('users/' + userId).on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                userData = data;
-            } else {
-                userData = {
-                    balance: 0,
-                    speed: 0.01,
-                    timeLimit: 6,
-                    endTime: null,
-                    name: tg.initDataUnsafe.user?.first_name || "Mugahed"
-                };
-                db.ref('users/' + userId).set(userData);
-            }
+    function load() {
+        db.ref('users/' + userId).on('value', (snap) => {
+            userData = snap.val() || { balance: 0, speed: 0.01, endTime: null };
+            if (!snap.val()) db.ref('users/' + userId).set(userData);
+            
+            document.getElementById('bal-display').innerText = userData.balance.toFixed(4);
+            document.getElementById('name').innerText = tg.initDataUnsafe.user?.first_name || "مجاهد";
+            document.getElementById('avatar').src = tg.initDataUnsafe.user?.photo_url || "https://ui-avatars.com/api/?name=M";
             document.getElementById('loading-overlay').style.display = 'none';
-            syncUI();
         });
-    }
-
-    function syncUI() {
-        document.getElementById('bal-display').innerText = userData.balance.toFixed(4);
-        document.getElementById('speed-display').innerText = userData.speed;
-        document.getElementById('time-display').innerText = userData.timeLimit + "h";
-        document.getElementById('name').innerText = userData.name;
-        document.getElementById('avatar').src = tg.initDataUnsafe.user?.photo_url || "https://ui-avatars.com/api/?name=M";
     }
 
     function handleMining() {
         if (!userData.endTime) {
-            userData.endTime = Date.now() + (userData.timeLimit * 3600000);
+            userData.endTime = Date.now() + (6 * 3600000); // 6 ساعات
             db.ref('users/' + userId).update({ endTime: userData.endTime });
-            tg.HapticFeedback.impactOccurred('medium');
         } else if (Date.now() >= userData.endTime) {
-            userData.balance += (userData.speed * userData.timeLimit);
+            userData.balance += 0.06; // رصيد الدورة
             userData.endTime = null;
-            db.ref('users/' + userId).update({ 
-                balance: userData.balance, 
-                endTime: null 
-            });
-            tg.HapticFeedback.notificationOccurred('success');
+            db.ref('users/' + userId).update({ balance: userData.balance, endTime: null });
         }
     }
 
-    function updateTimer() {
-        const circle = document.getElementById('circle');
-        const status = document.getElementById('status');
+    setInterval(() => {
+        const s = document.getElementById('status');
+        const c = document.getElementById('circle');
         if (userData.endTime) {
-            let diff = userData.endTime - Date.now();
-            if (diff > 0) {
-                circle.classList.add('active-mining');
-                let h = Math.floor(diff/3600000);
-                let m = Math.floor((diff%3600000)/60000);
-                status.innerText = `جاري التعدين.. متبقي ${h}س و ${m}د`;
+            let d = userData.endTime - Date.now();
+            if (d > 0) {
+                c.classList.add('active-mining');
+                let h = Math.floor(d/3600000);
+                let m = Math.floor((d%3600000)/60000);
+                s.innerText = `متبقي: ${h}س و ${m}د`;
             } else {
-                circle.classList.remove('active-mining');
-                status.innerText = "اجمع الذهب الآن! ✨";
+                c.classList.remove('active-mining');
+                s.innerText = "اجمع الذهب الآن!";
             }
         } else {
-            circle.classList.remove('active-mining');
-            status.innerText = "جاهز لبدء التعدين";
+            c.classList.remove('active-mining');
+            s.innerText = "اضغط للبدء";
         }
-    }
+    }, 1000);
 
-    setInterval(updateTimer, 1000);
-    loadData();
+    load();
 
     new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
