@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim Pro</title>
+    <title>Golden Claim | Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,99 +15,64 @@
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
         .page { display: none; height: 100vh; padding: 20px; box-sizing: border-box; overflow-y: auto; padding-bottom: 100px; }
         .active-page { display: block; }
-        
-        /* الهيدر */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #0a0a0a; border-bottom: 1px solid #222; }
-        .u-info { display: flex; align-items: center; gap: 8px; }
-        #avatar { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid var(--gold); background: #222; }
-        
-        /* التعدين */
-        .balance-card { text-align: center; padding: 20px 0; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
+        .balance-card { text-align: center; padding: 20px 0; }
         .bal-num { font-size: 45px; font-weight: 900; color: var(--gold); }
-        .circle-btn { width: 200px; height: 200px; border-radius: 50%; background: #111; border: 8px solid #1a1a1a; margin: 10px auto; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
-        .circle-btn.mining { border-color: var(--gold); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(243, 186, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0); } }
-        
-        /* القائمة السفلية */
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; border-top: 1px solid #222; padding: 10px 0; z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; color: #555; font-size: 12px; cursor: pointer; }
+        .circle-btn { width: 180px; height: 180px; border-radius: 50%; border: 6px solid #1a1a1a; margin: 10px auto; display: flex; align-items: center; justify-content: center; position: relative; }
+        .circle-btn.mining { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; border-top: 1px solid #222; padding: 10px 0; }
+        .nav-item { flex: 1; text-align: center; color: #555; font-size: 11px; }
         .nav-item.active { color: var(--gold); }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
-
-        /* الكروت والمهام */
-        .card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 10px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-        .btn-action { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-action:disabled { background: #333; color: #777; }
+        .card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .btn-up { background: var(--gold); color: black; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div id="page-mine" class="page active-page">
     <div class="header">
-        <div id="ton-connect"></div>
-        <div class="u-info">
-            <span id="user-name" style="font-weight:bold;">...</span>
-            <img id="avatar" src="">
+        <div id="ton-connect"></div> <div style="display:flex; align-items:center; gap:8px;">
+            <span id="user-name" style="font-weight:bold;">مجاهد</span>
+            <div id="avatar" style="width:35px; height:35px; border-radius:50%; border:1px solid var(--gold); background-size:cover;"></div>
         </div>
     </div>
     
     <div class="balance-card">
         <div class="bal-num" id="balance">0.0000</div>
-        <div style="color:#888; font-size: 14px;">إجمالي رصيد الذهب</div>
+        <div style="color:#888;">إجمالي الذهب</div>
     </div>
 
-    <div id="main-btn" class="circle-btn" onclick="handleAction()">
-        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="120">
+    <div id="main-btn" class="circle-btn" onclick="mineAction()">
+        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="100">
     </div>
-    
-    <div id="timer-status" style="text-align:center; color:var(--gold); font-weight:bold; margin-top:15px;">جاري التحميل...</div>
+    <div id="timer-status" style="text-align:center; color:var(--gold); font-weight:bold; margin-top:10px;">اضغط للبدء</div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-        <div class="card" style="flex-direction:column; gap:5px;">
-            <small style="color:#888">السرعة</small>
-            <b id="stat-speed">0.01/h</b>
-        </div>
-        <div class="card" style="flex-direction:column; gap:5px;">
-            <small style="color:#888">الوقت</small>
-            <b id="stat-time">6h</b>
-        </div>
+        <div class="card" style="flex-direction:column;"> <small>السرعة</small><b id="v-speed">0.01/h</b> </div>
+        <div class="card" style="flex-direction:column;"> <small>الوقت</small><b id="v-time">6h</b> </div>
     </div>
 </div>
 
 <div id="page-tasks" class="page">
-    <h2 style="color:var(--gold)">المهام اليومية</h2>
+    <h3 style="color:var(--gold)">كروت التطوير</h3>
     <div class="card">
-        <div><b>قناة التليجرام</b><br><small>+5.00 ذهب</small></div>
-        <button class="btn-action" onclick="doTask('tg', 5)">تنفيذ</button>
+        <div><b>زيادة السرعة</b><br><small>السعر: 10 ذهب</small></div>
+        <button class="btn-up" onclick="upgrade('speed', 10)">تطوير</button>
     </div>
     <div class="card">
-        <div><b>متابعة X (تويتر)</b><br><small>+3.00 ذهب</small></div>
-        <button class="btn-action" onclick="doTask('tw', 3)">تنفيذ</button>
-    </div>
-</div>
-
-<div id="page-friends" class="page">
-    <h2 style="color:var(--gold)">دعوة الأصدقاء</h2>
-    <div class="card" style="flex-direction:column; text-align:center; gap:15px;">
-        <p>احصل على 10% مكافأة من كل صديق تدعوه!</p>
-        <button class="btn-action" style="width:100%" onclick="invite()">نسخ رابط الدعوة الخاص بك</button>
-    </div>
-    <div id="friends-list" style="margin-top:20px;">
-        <small style="color:#888">قائمة الأصدقاء (0)</small>
+        <div><b>زيادة الوقت</b><br><small>السعر: 15 ذهب</small></div>
+        <button class="btn-up" onclick="upgrade('time', 15)">تطوير</button>
     </div>
 </div>
 
 <nav class="nav">
-    <div class="nav-item active" onclick="switchPage('mine', this)"><i>⛏️</i>تعدين</div>
-    <div class="nav-item" onclick="switchPage('tasks', this)"><i>📝</i>مهام</div>
-    <div class="nav-item" onclick="switchPage('friends', this)"><i>👥</i>أصدقاء</div>
+    <div class="nav-item active" onclick="sw('mine', this)">⛏️<br>تعدين</div>
+    <div class="nav-item" onclick="sw('tasks', this)">🚀<br>تطوير</div>
 </nav>
 
 <script>
     const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // إعدادات Firebase من صورك
+    // بيانات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
         authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -120,95 +85,66 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const uid = tg.initDataUnsafe.user?.id || "demo_user";
+    const uid = tg.initDataUnsafe.user?.id || "user_test";
+    let u = { balance: 0, speed: 0.01, timeLimit: 6, endTime: null };
 
-    let user = { balance: 0, speed: 0.01, endTime: null, tasks: {} };
-
-    function loadData() {
+    function sync() {
         db.ref('users/' + uid).on('value', (s) => {
-            if (s.exists()) user = s.val();
-            else db.ref('users/' + uid).set(user);
-            updateUI();
+            if (s.exists()) u = s.val();
+            else db.ref('users/' + uid).set(u);
+            document.getElementById('balance').innerText = (u.balance || 0).toFixed(4);
+            document.getElementById('v-speed').innerText = (u.speed || 0.01) + "/h";
+            document.getElementById('v-time').innerText = (u.timeLimit || 6) + "h";
         });
     }
 
-    function updateUI() {
-        document.getElementById('balance').innerText = (user.balance || 0).toFixed(4);
-        document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "مجاهد";
-        document.getElementById('avatar').src = tg.initDataUnsafe.user?.photo_url || "https://ui-avatars.com/api/?name=M";
-        document.getElementById('stat-speed').innerText = (user.speed || 0.01) + "/h";
-    }
-
-    function handleAction() {
-        if (!user.endTime) {
-            user.endTime = Date.now() + (6 * 3600000); // 6 ساعات
-            db.ref('users/' + uid).update({ endTime: user.endTime });
-        } else if (Date.now() >= user.endTime) {
-            let gain = user.speed * 6;
-            user.balance += gain;
-            user.endTime = null;
-            db.ref('users/' + uid).update({ balance: user.balance, endTime: null });
-            tg.HapticFeedback.notificationOccurred('success');
+    function mineAction() {
+        if (!u.endTime) {
+            u.endTime = Date.now() + (u.timeLimit * 3600000);
+            db.ref('users/' + uid).update({ endTime: u.endTime });
+        } else if (Date.now() >= u.endTime) {
+            u.balance += (u.speed * u.timeLimit);
+            u.endTime = null;
+            db.ref('users/' + uid).update({ balance: u.balance, endTime: null });
         }
     }
 
-    function switchPage(pageId, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('page-' + pageId).classList.add('active-page');
-        el.classList.add('active');
+    function upgrade(type, cost) {
+        if (u.balance >= cost) {
+            u.balance -= cost;
+            if (type === 'speed') u.speed += 0.01;
+            else u.timeLimit += 2;
+            db.ref('users/' + uid).update(u);
+            alert("تم التطوير بنجاح!");
+        } else { alert("الرصيد غير كافٍ"); }
     }
 
-    function doTask(id, reward) {
-        if (!user.tasks?.[id]) {
-            user.balance += reward;
-            if (!user.tasks) user.tasks = {};
-            user.tasks[id] = true;
-            db.ref('users/' + uid).update({ balance: user.balance, tasks: user.tasks });
-            tg.showAlert("مبروك! حصلت على " + reward + " ذهب");
-        } else {
-            tg.showAlert("المهمة منجزة بالفعل");
-        }
+    function sw(p, e) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active-page'));
+        document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
+        document.getElementById('page-' + p).classList.add('active-page');
+        e.classList.add('active');
     }
 
-    function invite() {
-        const link = "https://t.me/Golden_Claim_Bot?start=" + uid;
-        const input = document.createElement('input');
-        input.value = link;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        tg.showAlert("تم نسخ رابط الدعوة! انشره الآن");
-    }
-
-    setInterval(() => {
-        const btn = document.getElementById('main-btn');
-        const status = document.getElementById('timer-status');
-        if (user.endTime) {
-            let diff = user.endTime - Date.now();
-            if (diff > 0) {
-                btn.classList.add('mining');
-                let h = Math.floor(diff/3600000);
-                let m = Math.floor((diff%3600000)/60000);
-                status.innerText = `متبقي: ${h}س و ${m}د`;
-            } else {
-                btn.classList.remove('mining');
-                status.innerText = "اجمع الذهب الآن! ✨";
-            }
-        } else {
-            btn.classList.remove('mining');
-            status.innerText = "جاهز للبدء";
-        }
-    }, 1000);
-
-    // تفعيل ربط المحفظة TON
-    new TON_CONNECT_UI.TonConnectUI({
+    // تفعيل المحفظة مع Manifest تجريبي لحل مشكلة الرفض
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
     });
 
-    loadData();
+    setInterval(() => {
+        const s = document.getElementById('timer-status');
+        if (u.endTime) {
+            let d = u.endTime - Date.now();
+            if (d > 0) {
+                let h = Math.floor(d/3600000);
+                let m = Math.floor((d%3600000)/60000);
+                s.innerText = `متبقي: ${h}س و ${m}د`;
+            } else { s.innerText = "اجمع الذهب الآن!"; }
+        } else { s.innerText = "اضغط للبدء"; }
+    }, 1000);
+
+    sync();
 </script>
 </body>
 </html>
