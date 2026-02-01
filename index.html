@@ -11,14 +11,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* نفس التصميم الراقي السابق مع تحسينات بسيطة */
         :root { --gold: #f3ba2f; --bg: #000; --card: #111; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0a0a0a; border-bottom: 1px solid #222; }
         .u-img { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid var(--gold); }
         .balance-card { text-align: center; padding: 30px 0; background: radial-gradient(circle, #1a1a1a, #000); }
         .bal-num { font-size: 50px; font-weight: 900; color: var(--gold); }
-        .mine-btn { width: 220px; height: 220px; border-radius: 50%; background: #111; border: 8px solid #1a1a1a; margin: 20px auto; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        .mine-btn { width: 200px; height: 200px; border-radius: 50%; background: #111; border: 8px solid #1a1a1a; margin: 20px auto; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
         .active-mining { border-color: var(--gold); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(243, 186, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 186, 47, 0); } }
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; padding: 15px 0; border-top: 1px solid #222; }
@@ -46,7 +45,7 @@
     </div>
 
     <div id="circle" class="mine-btn" onclick="handleMining()">
-        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="130">
+        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="120">
     </div>
     
     <div id="status" style="color:var(--gold); font-weight:bold; margin: 15px 0;">تأكد من استقرار الإنترنت</div>
@@ -73,15 +72,15 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // املأ البيانات من مشروع Firebase الخاص بك هنا
+    // قيمك الصحيحة من الصور التي أرسلتها
     const firebaseConfig = {
-        apiKey: "AIzaSy...",
-        authDomain: "your-project.firebaseapp.com",
-        databaseURL: "https://your-project.firebaseio.com",
-        projectId: "your-project",
-        storageBucket: "your-project.appspot.com",
-        messagingSenderId: "...",
-        appId: "..."
+        apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
+        authDomain: "goldenclaim-6863a.firebaseapp.com",
+        databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
+        projectId: "goldenclaim-6863a",
+        storageBucket: "goldenclaim-6863a.firebasestorage.app",
+        messagingSenderId: "817930053370",
+        appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -90,14 +89,12 @@
 
     let userData = {};
 
-    // تحميل البيانات من السيرفر
     function loadData() {
         db.ref('users/' + userId).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 userData = data;
             } else {
-                // إنشاء حساب جديد لو مش موجود
                 userData = {
                     balance: 0,
                     speed: 0.01,
@@ -159,7 +156,6 @@
     setInterval(updateTimer, 1000);
     loadData();
 
-    // تهيئة المحفظة
     new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
@@ -167,3 +163,4 @@
 </script>
 </body>
 </html>
+
