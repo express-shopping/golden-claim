@@ -9,118 +9,67 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
         :root { --gold: #f3ba2f; --bg: #000; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; }
         .page { padding: 20px; text-align: center; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; }
         .balance { font-size: 40px; font-weight: 900; color: var(--gold); margin: 20px 0; }
-        .main-btn { width: 180px; height: 180px; border-radius: 50%; border: 5px solid #222; margin: 20px auto; display: flex; align-items: center; justify-content: center; background: #050505; cursor: pointer; transition: 0.3s; }
-        .main-btn:active { transform: scale(0.95); }
+        .main-btn { width: 180px; height: 180px; border-radius: 50%; border: 5px solid #222; margin: 20px auto; display: flex; align-items: center; justify-content: center; background: #050505; cursor: pointer; }
         .mining-active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); }
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #111; padding: 10px 0; border-top: 1px solid #222; }
-        .nav-item { flex: 1; font-size: 12px; color: #888; cursor: pointer; }
-        .active-nav { color: var(--gold); }
+        .nav-item { flex: 1; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
-
     <div class="header">
         <div id="ton-connect"></div>
         <div id="user-info" style="font-weight: bold;">...</div>
     </div>
-
     <div class="page">
         <div class="balance" id="balance">0.0000</div>
-        <div style="color: #888;">رصيد الذهب</div>
-
         <div id="clicker" class="main-btn" onclick="startMining()">
             <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="100">
         </div>
-        
-        <div id="status" style="color: var(--gold); font-weight: bold; font-size: 18px;">اضغط للبدء</div>
+        <div id="status" style="color: var(--gold); font-weight: bold;">اضغط للبدء</div>
     </div>
-
-    <nav class="nav">
-        <div class="nav-item active-nav">⛏️<br>تعدين</div>
-        <div class="nav-item">🚀<br>تطوير</div>
-        <div class="nav-item">👥<br>أصدقاء</div>
-    </nav>
-
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // إعدادات Firebase الخاصة بك
-    const firebaseConfig = {
-        apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
-        authDomain: "goldenclaim-6863a.firebaseapp.com",
-        databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
-        projectId: "goldenclaim-6863a",
-        storageBucket: "goldenclaim-6863a.firebasestorage.app",
-        messagingSenderId: "817930053370",
-        appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const userId = tg.initDataUnsafe.user?.id || "test_user";
-    let userData = { balance: 0, endTime: null };
-
-    // ربط المحفظة برابط عالمي مضمون 100%
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
-        buttonRootId: 'ton-connect'
-    });
-
-    function loadData() {
-        db.ref('users/' + userId).on('value', (snapshot) => {
-            if (snapshot.exists()) {
-                userData = snapshot.val();
-                document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
-                document.getElementById('user-info').innerText = tg.initDataUnsafe.user?.first_name || "User";
-            } else {
-                db.ref('users/' + userId).set(userData);
-            }
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
+            authDomain: "goldenclaim-6863a.firebaseapp.com",
+            databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
+            projectId: "goldenclaim-6863a",
+            storageBucket: "goldenclaim-6863a.firebasestorage.app",
+            messagingSenderId: "817930053370",
+            appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = tg.initDataUnsafe.user?.id || "test_user";
+        let userData = { balance: 0, endTime: null };
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect'
         });
-    }
-
-    function startMining() {
-        if (!userData.endTime) {
-            userData.endTime = Date.now() + (6 * 3600000); // 6 ساعات
-            db.ref('users/' + userId).update({ endTime: userData.endTime });
-            tg.HapticFeedback.impactOccurred('heavy');
-        } else if (Date.now() >= userData.endTime) {
-            userData.balance += 0.06; // مكافأة الـ 6 ساعات
-            userData.endTime = null;
-            db.ref('users/' + userId).update({ balance: userData.balance, endTime: null });
-            alert("مبروك! جمعت 0.06 ذهب");
+        function loadData() {
+            db.ref('users/' + userId).on('value', (s) => {
+                if (s.exists()) {
+                    userData = s.val();
+                    document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
+                    document.getElementById('user-info').innerText = tg.initDataUnsafe.user?.first_name || "User";
+                }
+            });
         }
-    }
-
-    setInterval(() => {
-        const status = document.getElementById('status');
-        const btn = document.getElementById('clicker');
-        if (userData.endTime) {
-            let diff = userData.endTime - Date.now();
-            if (diff > 0) {
-                let h = Math.floor(diff/3600000);
-                let m = Math.floor((diff%3600000)/60000);
-                status.innerText = `متبقي: ${h}س و ${m}د`;
-                btn.classList.add('mining-active');
-            } else {
-                status.innerText = "جاهز للحصد! ✨";
-                btn.classList.remove('mining-active');
+        function startMining() {
+            if (!userData.endTime) {
+                userData.endTime = Date.now() + (6 * 3600000);
+                db.ref('users/' + userId).update({ endTime: userData.endTime });
             }
-        } else {
-            status.innerText = "اضغط للبدء";
-            btn.classList.remove('mining-active');
         }
-    }, 1000);
-
-    loadData();
-</script>
+        loadData();
+    </script>
 </body>
 </html>
 
