@@ -3,76 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Global Edition</title>
+    <title>Golden Claim | Legendary Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@2.0.5/dist/tonconnect-ui.min.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #050505; --card: #121212; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #000; border-bottom: 2px solid #1a1a1a; }
-        .balance-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .bal-amount { font-size: 60px; font-weight: 900; color: var(--gold); text-shadow: 0 0 25px rgba(243,186,47,0.5); margin: 0; }
-        .main-coin { width: 240px; height: 240px; border-radius: 50%; border: 10px solid #1a1a1a; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; box-shadow: 0 0 40px rgba(0,0,0,0.9); position: relative; }
-        .main-coin:active { transform: scale(0.92); border-color: var(--gold); box-shadow: 0 0 30px var(--gold); }
-        .main-coin img { width: 140px; filter: drop-shadow(0 0 10px rgba(243,186,47,0.3)); }
-        #ton-connect button { background: #0088cc !important; border-radius: 15px !important; font-weight: bold !important; box-shadow: 0 4px 15px rgba(0,136,204,0.3) !important; }
+        :root { --gold: #f3ba2f; --bg: #000; --card: #151515; --accent: #222; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; user-select: none; }
+        .app-container { height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; padding: 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 100; border-bottom: 1px solid var(--accent); }
+        
+        /* Stats Card */
+        .balance-section { text-align: center; padding: 20px 0; background: radial-gradient(circle at top, #1a1a1a 0%, #000 100%); }
+        .bal-title { color: #888; font-size: 14px; letter-spacing: 2px; }
+        .bal-value { font-size: 55px; font-weight: 900; color: var(--gold); margin: 5px 0; text-shadow: 0 0 20px rgba(243,186,47,0.4); }
+
+        /* Main Coin Area */
+        .coin-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .coin-glow { position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(243,186,47,0.15) 0%, transparent 70%); z-index: 0; }
+        .main-coin { width: 250px; height: 250px; border-radius: 50%; border: 10px solid #1a1a1a; background: url('https://cdn-icons-png.flaticon.com/512/6585/6585012.png') no-repeat center; background-size: 70%; cursor: pointer; z-index: 1; transition: 0.1s; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        .main-coin:active { transform: scale(0.9); box-shadow: 0 0 30px var(--gold); }
+
+        /* Navigation Tabs */
+        .nav-bar { display: flex; background: #0a0a0a; border-top: 1px solid var(--accent); padding: 10px 0; position: fixed; bottom: 0; width: 100%; }
+        .nav-item { flex: 1; text-align: center; color: #555; font-size: 12px; }
+        .nav-item.active { color: var(--gold); }
+        .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; }
+
+        /* Upgrades Page */
+        .page { display: none; padding: 20px; padding-bottom: 100px; overflow-y: auto; }
+        .page.active { display: block; }
+        .upgrade-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; border: 1px solid var(--accent); }
+        .upgrade-info { flex-grow: 1; }
+        .upgrade-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
+
+<div class="app-container">
     <div class="header">
         <div id="ton-connect"></div>
-        <div style="font-weight: 900; color: var(--gold); border: 1px solid #333; padding: 5px 12px; border-radius: 10px;" id="user-display">...</div>
+        <div id="user-info" style="font-weight:900; color:var(--gold);">...</div>
     </div>
 
-    <div class="balance-container">
-        <p style="color: #888; margin-bottom: 5px; font-weight: bold; letter-spacing: 2px;">TOTAL BALANCE</p>
-        <h1 class="bal-amount" id="balance">0.0000</h1>
-        
-        <div id="coin-btn" class="main-coin" onclick="startMining()">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" alt="Gold Coin">
+    <div id="mine-page" class="page active">
+        <div class="balance-section">
+            <div class="bal-title">الرصيد الذهبي</div>
+            <div class="bal-value" id="balance">0.0000</div>
         </div>
-        
-        <p id="status" style="margin-top: 30px; color: var(--gold); font-weight: 900; animation: pulse 1.5s infinite;">انقر لتجميع الذهب ⚡</p>
+        <div class="coin-area">
+            <div class="coin-glow"></div>
+            <div class="main-coin" onclick="mineAction()"></div>
+            <div id="timer" style="margin-top:25px; font-weight:bold; color:var(--gold);">جاهز للتعدين!</div>
+        </div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.setHeaderColor('#000000');
+    <div id="upgrade-page" class="page">
+        <h2 style="color:var(--gold)">تطوير المعدات 🛠️</h2>
+        <div class="upgrade-card">
+            <div class="upgrade-info">
+                <b>سرعة التعدين</b><br><small>زيادة الربح في الضغطة</small>
+            </div>
+            <button class="upgrade-btn" onclick="upgrade('speed')">10 💰</button>
+        </div>
+        <div class="upgrade-card">
+            <div class="upgrade-info">
+                <b>مخزن الذهب</b><br><small>زيادة سعة التخزين</small>
+            </div>
+            <button class="upgrade-btn" onclick="upgrade('tank')">15 💰</button>
+        </div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
-            authDomain: "goldenclaim-6863a.firebaseapp.com",
-            databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
-            projectId: "goldenclaim-6863a",
-            storageBucket: "goldenclaim-6863a.firebasestorage.app",
-            messagingSenderId: "817930053370",
-            appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const uid = tg.initDataUnsafe.user?.id || "test_user";
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showPage('mine-page', this)">🏠<br>تعدين</div>
+        <div class="nav-item" onclick="showPage('upgrade-page', this)">🚀<br>تطوير</div>
+    </div>
+</div>
 
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect'
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    
+    // Firebase Setup
+    const firebaseConfig = {
+        apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
+        authDomain: "goldenclaim-6863a.firebaseapp.com",
+        databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
+        projectId: "goldenclaim-6863a",
+        storageBucket: "goldenclaim-6863a.firebasestorage.app",
+        messagingSenderId: "817930053370",
+        appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const uid = tg.initDataUnsafe.user?.id || "test_user";
+
+    // TON Connect
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect'
+    });
+
+    let userData = { balance: 0, lastMine: 0, speed: 0.0001 };
+
+    function loadData() {
+        db.ref('users/' + uid).on('value', s => {
+            if(s.exists()) {
+                userData = s.val();
+                document.getElementById('balance').innerText = userData.balance.toFixed(4);
+                checkTimer();
+            }
+            document.getElementById('user-info').innerText = tg.initDataUnsafe.user?.first_name || "Guest";
         });
+    }
 
-        function startMining() {
-            db.ref('users/' + uid).transaction(c => {
-                if(c) c.balance = (parseFloat(c.balance) || 0) + 0.0001;
-                return c || {balance: 0.0001};
+    function mineAction() {
+        const now = Date.now();
+        // التعدين كل 5 دقائق (300,000 مللي ثانية)
+        if (now - (userData.lastMine || 0) >= 300000) {
+            db.ref('users/' + uid).update({
+                balance: (userData.balance || 0) + (userData.speed || 0.0001),
+                lastMine: now
             });
             tg.HapticFeedback.impactOccurred('heavy');
+        } else {
+            tg.showAlert("المعدن ساخن! انتظر حتى يبرد.");
         }
+    }
 
-        db.ref('users/' + uid).on('value', s => {
-            if(s.exists()) document.getElementById('balance').innerText = s.val().balance.toFixed(4);
-            document.getElementById('user-display').innerText = tg.initDataUnsafe.user?.first_name || "Guest";
-        });
-    </script>
+    function checkTimer() {
+        const remaining = 300000 - (Date.now() - (userData.lastMine || 0));
+        if (remaining > 0) {
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('timer').innerText = `التعدين القادم خلال: ${mins}:${secs}`;
+            setTimeout(checkTimer, 1000);
+        } else {
+            document.getElementById('timer').innerText = "جاهز للتعدين! ⚡";
+        }
+    }
+
+    function showPage(id, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
+    }
+
+    loadData();
+</script>
 </body>
 </html>
