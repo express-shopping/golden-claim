@@ -1,36 +1,31 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golden Claim</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; text-align: center; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #111; }
-        .balance { font-size: 45px; font-weight: 900; color: var(--gold); margin: 30px 0; }
-        .main-btn { width: 200px; height: 200px; border-radius: 50%; border: 6px solid #222; margin: 20px auto; display: flex; align-items: center; justify-content: center; background: #080808; cursor: pointer; }
-        #ton-connect button { background: #0088cc !important; }
+        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; }
+        .balance { font-size: 40px; color: #f3ba2f; margin: 30px; font-weight: bold; }
+        .circle { width: 180px; height: 180px; border-radius: 50%; border: 5px solid #222; margin: auto; display: flex; align-items: center; justify-content: center; background: #050505; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="header">
         <div id="ton-connect"></div>
-        <div id="user-name" style="font-weight:bold;">...</div>
+        <div id="user-name" style="padding: 10px;">...</div>
     </div>
     <div class="balance" id="balance">0.0000</div>
-    <div class="main-btn" onclick="mine()">
-        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="120">
+    <div class="circle" onclick="mine()">
+        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="100">
     </div>
-    <h3 id="status" style="color:var(--gold);">اضغط للتعدين</h3>
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
             authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -48,11 +43,10 @@
             buttonRootId: 'ton-connect'
         });
         function mine() {
-            db.ref('users/' + uid).transaction(curr => {
-                if(curr) curr.balance = (curr.balance || 0) + 0.0001;
-                return curr || {balance: 0.0001};
+            db.ref('users/' + uid).transaction(c => {
+                if(c) c.balance = (c.balance || 0) + 0.001;
+                return c || {balance: 0.001};
             });
-            tg.HapticFeedback.impactOccurred('medium');
         }
         db.ref('users/' + uid).on('value', s => {
             if(s.exists()) document.getElementById('balance').innerText = s.val().balance.toFixed(4);
