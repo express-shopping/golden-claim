@@ -3,92 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Legendary Edition</title>
+    <title>Golden Claim | Empire Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #151515; --accent: #222; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; user-select: none; }
-        .app-container { height: 100vh; display: flex; flex-direction: column; }
+        :root { --gold: #f3ba2f; --bg: #050505; --card-bg: rgba(255, 255, 255, 0.05); }
         
-        /* Header */
-        .header { display: flex; justify-content: space-between; padding: 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 100; border-bottom: 1px solid var(--accent); }
-        
-        /* Stats Card */
-        .balance-section { text-align: center; padding: 20px 0; background: radial-gradient(circle at top, #1a1a1a 0%, #000 100%); }
-        .bal-title { color: #888; font-size: 14px; letter-spacing: 2px; }
-        .bal-value { font-size: 55px; font-weight: 900; color: var(--gold); margin: 5px 0; text-shadow: 0 0 20px rgba(243,186,47,0.4); }
+        body { 
+            margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; 
+            user-select: none; -webkit-tap-highlight-color: transparent; /* حل مشكلة المربع الأزرق */
+        }
 
-        /* Main Coin Area */
-        .coin-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .coin-glow { position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(243,186,47,0.15) 0%, transparent 70%); z-index: 0; }
-        .main-coin { width: 250px; height: 250px; border-radius: 50%; border: 10px solid #1a1a1a; background: url('https://cdn-icons-png.flaticon.com/512/6585/6585012.png') no-repeat center; background-size: 70%; cursor: pointer; z-index: 1; transition: 0.1s; box-shadow: 0 0 50px rgba(0,0,0,1); }
-        .main-coin:active { transform: scale(0.9); box-shadow: 0 0 30px var(--gold); }
+        .app-wrapper { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Navigation Tabs */
-        .nav-bar { display: flex; background: #0a0a0a; border-top: 1px solid var(--accent); padding: 10px 0; position: fixed; bottom: 0; width: 100%; }
-        .nav-item { flex: 1; text-align: center; color: #555; font-size: 12px; }
-        .nav-item.active { color: var(--gold); }
-        .nav-item i { display: block; font-size: 20px; margin-bottom: 4px; }
+        /* Header Style */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(243,186,47,0.1); }
 
-        /* Upgrades Page */
-        .page { display: none; padding: 20px; padding-bottom: 100px; overflow-y: auto; }
+        /* Balance Display */
+        .stats-box { text-align: center; padding: 30px 0; background: radial-gradient(circle at center, #111 0%, #000 100%); }
+        .bal-val { font-size: 55px; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(243,186,47,0.3); }
+
+        /* Mining Section */
+        .page { display: none; padding: 20px; flex-grow: 1; overflow-y: auto; padding-bottom: 100px; }
         .page.active { display: block; }
-        .upgrade-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; border: 1px solid var(--accent); }
-        .upgrade-info { flex-grow: 1; }
-        .upgrade-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
+
+        .coin-btn { 
+            width: 240px; height: 240px; border-radius: 50%; margin: 30px auto;
+            background: url('https://cdn-icons-png.flaticon.com/512/6585/6585012.png') no-repeat center;
+            background-size: 80%; border: 8px solid #1a1a1a; cursor: pointer;
+            box-shadow: 0 0 40px rgba(0,0,0,1); transition: transform 0.1s;
+        }
+        .coin-btn:active { transform: scale(0.92); border-color: var(--gold); }
+
+        /* Upgrades Cards (Hamster Style) */
+        .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        .card { 
+            background: var(--card-bg); border-radius: 20px; padding: 15px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);
+        }
+        .card img { width: 60px; height: 60px; margin-bottom: 10px; border-radius: 12px; }
+        .card-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .card-price { color: var(--gold); font-size: 12px; font-weight: 900; display: block; margin-top: 8px; }
+        .buy-btn { background: var(--gold); color: black; border: none; width: 100%; padding: 8px; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+        /* Bottom Navigation */
+        .bottom-nav { 
+            position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px;
+            background: rgba(20,20,20,0.9); border-radius: 25px; display: flex;
+            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        }
+        .nav-link { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 12px; font-weight: bold; }
+        .nav-link.active { color: var(--gold); }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="header">
+<div class="app-wrapper">
+    <div class="top-bar">
         <div id="ton-connect"></div>
-        <div id="user-info" style="font-weight:900; color:var(--gold);">...</div>
+        <div id="user-name" style="color:var(--gold); font-weight:900;">...</div>
     </div>
 
-    <div id="mine-page" class="page active">
-        <div class="balance-section">
-            <div class="bal-title">الرصيد الذهبي</div>
-            <div class="bal-value" id="balance">0.0000</div>
+    <div id="mine" class="page active">
+        <div class="stats-box">
+            <span style="color:#777; font-size:12px; letter-spacing:2px;">الرصيد الذهبي الحالي</span>
+            <div class="bal-val" id="balance">0.0000</div>
         </div>
-        <div class="coin-area">
-            <div class="coin-glow"></div>
-            <div class="main-coin" onclick="mineAction()"></div>
-            <div id="timer" style="margin-top:25px; font-weight:bold; color:var(--gold);">جاهز للتعدين!</div>
+        <div style="text-align:center">
+            <div class="coin-btn" onclick="startMining()"></div>
+            <div id="timer" style="color:var(--gold); font-weight:bold; font-size:18px;">جاهز للتعدين! ⚡</div>
         </div>
     </div>
 
-    <div id="upgrade-page" class="page">
-        <h2 style="color:var(--gold)">تطوير المعدات 🛠️</h2>
-        <div class="upgrade-card">
-            <div class="upgrade-info">
-                <b>سرعة التعدين</b><br><small>زيادة الربح في الضغطة</small>
+    <div id="shop" class="page">
+        <h3 style="color:var(--gold); margin-bottom:20px;">تطوير الممتلكات 🏠🚀</h3>
+        <div class="grid-cards">
+            <div class="card">
+                <img src="https://cdn-icons-png.flaticon.com/512/743/743007.png" alt="Car">
+                <div class="card-title">سيارة رياضية</div>
+                <small style="color:#888">+0.005 تعدين</small>
+                <span class="card-price">50.00 💰</span>
+                <button class="buy-btn" onclick="buy('car', 50)">تطوير</button>
             </div>
-            <button class="upgrade-btn" onclick="upgrade('speed')">10 💰</button>
-        </div>
-        <div class="upgrade-card">
-            <div class="upgrade-info">
-                <b>مخزن الذهب</b><br><small>زيادة سعة التخزين</small>
+            <div class="card">
+                <img src="https://cdn-icons-png.flaticon.com/512/609/609803.png" alt="House">
+                <div class="card-title">فيلا ملكية</div>
+                <small style="color:#888">+0.015 تعدين</small>
+                <span class="card-price">150.00 💰</span>
+                <button class="buy-btn" onclick="buy('house', 150)">تطوير</button>
             </div>
-            <button class="upgrade-btn" onclick="upgrade('tank')">15 💰</button>
+            <div class="card">
+                <img src="https://cdn-icons-png.flaticon.com/512/2645/2645167.png" alt="Rocket">
+                <div class="card-title">محطة فضاء</div>
+                <small style="color:#888">+0.10 تعدين</small>
+                <span class="card-price">1000.00 💰</span>
+                <button class="buy-btn" onclick="buy('rocket', 1000)">تطوير</button>
+            </div>
         </div>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="showPage('mine-page', this)">🏠<br>تعدين</div>
-        <div class="nav-item" onclick="showPage('upgrade-page', this)">🚀<br>تطوير</div>
+    <div class="bottom-nav">
+        <div class="nav-link active" onclick="showTab('mine', this)">⛏️ <span>تعدين</span></div>
+        <div class="nav-link" onclick="showTab('shop', this)">🚀 <span>تطوير</span></div>
     </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    
-    // Firebase Setup
+    tg.backgroundColor = "#050505";
+
     const firebaseConfig = {
         apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
         authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -102,59 +129,59 @@
     const db = firebase.database();
     const uid = tg.initDataUnsafe.user?.id || "test_user";
 
-    // TON Connect
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
     });
 
-    let userData = { balance: 0, lastMine: 0, speed: 0.0001 };
+    let uData = { balance: 0, last: 0, power: 0.0001 };
 
-    function loadData() {
+    function sync() {
         db.ref('users/' + uid).on('value', s => {
-            if(s.exists()) {
-                userData = s.val();
-                document.getElementById('balance').innerText = userData.balance.toFixed(4);
-                checkTimer();
+            if(s.exists()){
+                uData = s.val();
+                document.getElementById('balance').innerText = uData.balance.toFixed(4);
+                updateTimer();
             }
-            document.getElementById('user-info').innerText = tg.initDataUnsafe.user?.first_name || "Guest";
+            document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Mugahed";
         });
     }
 
-    function mineAction() {
+    function startMining() {
+        const cooldown = 300000; // 5 دقائق
         const now = Date.now();
-        // التعدين كل 5 دقائق (300,000 مللي ثانية)
-        if (now - (userData.lastMine || 0) >= 300000) {
+        if (now - (uData.last || 0) >= cooldown) {
             db.ref('users/' + uid).update({
-                balance: (userData.balance || 0) + (userData.speed || 0.0001),
-                lastMine: now
+                balance: (uData.balance || 0) + (uData.power || 0.0001),
+                last: now
             });
             tg.HapticFeedback.impactOccurred('heavy');
         } else {
-            tg.showAlert("المعدن ساخن! انتظر حتى يبرد.");
+            tg.HapticFeedback.notificationOccurred('error');
         }
     }
 
-    function checkTimer() {
-        const remaining = 300000 - (Date.now() - (userData.lastMine || 0));
+    function updateTimer() {
+        const remaining = 300000 - (Date.now() - (uData.last || 0));
         if (remaining > 0) {
-            const mins = Math.floor(remaining / 60000);
-            const secs = Math.floor((remaining % 60000) / 1000);
-            document.getElementById('timer').innerText = `التعدين القادم خلال: ${mins}:${secs}`;
-            setTimeout(checkTimer, 1000);
+            const m = Math.floor(remaining / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('timer').innerText = `التعدين القادم: ${m}:${s < 10 ? '0'+s : s}`;
+            setTimeout(updateTimer, 1000);
         } else {
             document.getElementById('timer').innerText = "جاهز للتعدين! ⚡";
         }
     }
 
-    function showPage(id, el) {
+    function showTab(id, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
     }
 
-    loadData();
+    sync();
 </script>
 </body>
 </html>
+
