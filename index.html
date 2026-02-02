@@ -3,46 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Pro</title>
+    <title>Golden Claim | Global Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@2.0.5/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #111; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
-        .page { height: 100vh; padding: 20px; box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
-        .balance-card { text-align: center; padding: 30px 0; }
-        .bal-num { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 10px rgba(243,186,47,0.3); }
-        .main-btn { width: 220px; height: 220px; border-radius: 50%; border: 8px solid #1a1a1a; margin: 20px auto; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #111 0%, #000 100%); box-shadow: 0 0 30px rgba(0,0,0,0.5); cursor: pointer; transition: 0.2s; }
-        .main-btn:active { transform: scale(0.95); }
-        .mining-active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); }
+        :root { --gold: #f3ba2f; --bg: #050505; --card: #121212; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #000; border-bottom: 2px solid #1a1a1a; }
+        .balance-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .bal-amount { font-size: 60px; font-weight: 900; color: var(--gold); text-shadow: 0 0 25px rgba(243,186,47,0.5); margin: 0; }
+        .main-coin { width: 240px; height: 240px; border-radius: 50%; border: 10px solid #1a1a1a; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; box-shadow: 0 0 40px rgba(0,0,0,0.9); position: relative; }
+        .main-coin:active { transform: scale(0.92); border-color: var(--gold); box-shadow: 0 0 30px var(--gold); }
+        .main-coin img { width: 140px; filter: drop-shadow(0 0 10px rgba(243,186,47,0.3)); }
+        #ton-connect button { background: #0088cc !important; border-radius: 15px !important; font-weight: bold !important; box-shadow: 0 4px 15px rgba(0,136,204,0.3) !important; }
     </style>
 </head>
 <body>
     <div class="header">
         <div id="ton-connect"></div>
-        <div style="font-weight: bold; color: var(--gold);" id="user-display">...</div>
+        <div style="font-weight: 900; color: var(--gold); border: 1px solid #333; padding: 5px 12px; border-radius: 10px;" id="user-display">...</div>
     </div>
 
-    <div class="page">
-        <div class="balance-card">
-            <div class="bal-num" id="balance">0.0000</div>
-            <div style="color:#888; letter-spacing: 1px;">GOLDEN COIN</div>
-        </div>
-
-        <div id="click-btn" class="main-btn" onclick="mine()">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="130">
+    <div class="balance-container">
+        <p style="color: #888; margin-bottom: 5px; font-weight: bold; letter-spacing: 2px;">TOTAL BALANCE</p>
+        <h1 class="bal-amount" id="balance">0.0000</h1>
+        
+        <div id="coin-btn" class="main-coin" onclick="startMining()">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" alt="Gold Coin">
         </div>
         
-        <div id="status" style="text-align:center; margin-top:20px; color:var(--gold); font-weight:bold;">اضغط للبدء</div>
+        <p id="status" style="margin-top: 30px; color: var(--gold); font-weight: 900; animation: pulse 1.5s infinite;">انقر لتجميع الذهب ⚡</p>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.setHeaderColor('#000000');
 
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
@@ -53,25 +52,21 @@
             messagingSenderId: "817930053370",
             appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const uid = tg.initDataUnsafe.user?.id || "user_test";
+        const uid = tg.initDataUnsafe.user?.id || "test_user";
 
-        // استخدام المانيفست الخاص بك لحل مشكلة تعليق Tonkeeper
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
             buttonRootId: 'ton-connect'
         });
 
-        function mine() {
-            db.ref('users/' + uid).transaction(curr => {
-                if (curr) curr.balance = (curr.balance || 0) + 0.0001;
-                return curr || {balance: 0.0001};
+        function startMining() {
+            db.ref('users/' + uid).transaction(c => {
+                if(c) c.balance = (parseFloat(c.balance) || 0) + 0.0001;
+                return c || {balance: 0.0001};
             });
             tg.HapticFeedback.impactOccurred('heavy');
-            document.getElementById('click-btn').classList.add('mining-active');
-            setTimeout(() => document.getElementById('click-btn').classList.remove('mining-active'), 100);
         }
 
         db.ref('users/' + uid).on('value', s => {
