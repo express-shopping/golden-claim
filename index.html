@@ -31,7 +31,8 @@
 
 <div id="page-mine" class="page active-page">
     <div class="header">
-        <div id="ton-connect"></div> <div style="display:flex; align-items:center; gap:8px;">
+        <div id="ton-connect"></div>
+        <div style="display:flex; align-items:center; gap:8px;">
             <span id="user-name" style="font-weight:bold;">مجاهد</span>
             <div id="avatar" style="width:35px; height:35px; border-radius:50%; border:1px solid var(--gold); background-size:cover;"></div>
         </div>
@@ -72,7 +73,6 @@
 
 <script>
     const tg = window.Telegram.WebApp;
-    // بيانات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
         authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -126,9 +126,9 @@
         e.classList.add('active');
     }
 
-    // تفعيل المحفظة مع Manifest تجريبي لحل مشكلة الرفض
+    // تم تحديث الرابط هنا ليكون رابط ملفك الشخصي في GitHub
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
+        manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
     });
 
