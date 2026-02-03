@@ -3,70 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Global Edition</title>
+    <title>Golden Claim | Ultimate Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #000000; --card: #1c1f24; --text-gray: #848e9c; }
-        
-        body { 
-            margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; 
-            user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden;
-        }
-
+        :root { --gold: #f3ba2f; --bg: #000; --card: #151515; --nav-bg: rgba(20,20,20,0.95); }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; }
         .app-container { height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Top Header */
+        .top-nav { display: flex; justify-content: space-between; padding: 12px 15px; background: #000; border-bottom: 1px solid #222; align-items: center; }
+        .user-pill { background: #1a1a1a; padding: 5px 15px; border-radius: 20px; color: var(--gold); border: 1px solid #333; font-size: 13px; font-weight: bold; }
 
-        /* Header like Hamster */
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #000; }
-        .user-pill { background: #1c1f24; padding: 5px 12px; border-radius: 20px; border: 1px solid #333; font-size: 13px; font-weight: bold; color: var(--gold); }
+        /* Balance Section */
+        .balance-header { text-align: center; padding: 25px 0; background: radial-gradient(circle at top, #111 0%, #000 100%); }
+        .coin-img { width: 50px; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--gold)); }
+        .total-amount { font-size: 50px; font-weight: 900; color: #fff; text-shadow: 0 0 20px rgba(243,186,47,0.4); }
 
-        /* Balance Display */
-        .balance-card { text-align: center; padding: 25px 0; background: radial-gradient(circle at top, #1c1f24 0%, #000 100%); }
-        .coin-icon { width: 45px; vertical-align: middle; margin-right: 8px; }
-        .total-bal { font-size: 45px; font-weight: 900; color: #fff; vertical-align: middle; }
+        /* Pages System */
+        .page { display: none; padding: 15px; flex-grow: 1; overflow-y: auto; padding-bottom: 100px; animation: slideUp 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* Main Game Area */
-        .game-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .circle-outer { 
-            width: 280px; height: 280px; border-radius: 50%; background: #1c1f24; 
-            display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 0 50px rgba(243,186,47,0.1); border: 5px solid #282c34;
-        }
-        .main-character { 
-            width: 240px; height: 240px; border-radius: 50%; 
-            background: url('https://cdn-icons-png.flaticon.com/512/6585/6585012.png') no-repeat center;
-            background-size: 85%; cursor: pointer; transition: transform 0.1s;
-        }
-        .main-character:active { transform: scale(0.94); }
+        /* Mining Main Button */
+        .mine-circle { width: 260px; height: 260px; border-radius: 50%; border: 10px solid #1a1a1a; margin: 30px auto; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #222 0%, #000 100%); cursor: pointer; transition: 0.1s; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        .mine-circle:active { transform: scale(0.92); border-color: var(--gold); }
+        .mine-circle img { width: 150px; pointer-events: none; }
 
-        /* Tabs System */
-        .content-page { display: none; padding: 15px; height: 100%; overflow-y: auto; padding-bottom: 100px; }
-        .content-page.active { display: block; }
+        /* Cards & Grid */
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .item-card { background: var(--card); border-radius: 20px; padding: 15px; border: 1px solid #222; position: relative; }
+        .item-card img { width: 45px; margin-bottom: 8px; border-radius: 10px; }
+        .item-title { font-size: 13px; font-weight: bold; display: block; }
+        .item-profit { font-size: 11px; color: #888; display: block; margin: 4px 0; }
+        .item-price { font-size: 14px; color: var(--gold); font-weight: 900; }
+        .action-btn { width: 100%; background: #222; border: none; color: white; padding: 8px; border-radius: 12px; margin-top: 10px; font-weight: bold; cursor: pointer; }
+        .action-btn:active { background: var(--gold); color: black; }
 
-        /* Hamster Style Cards */
-        .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .u-card { 
-            background: var(--card); border-radius: 16px; padding: 12px; 
-            border: 1px solid #2d333b; position: relative;
-        }
-        .u-card img { width: 50px; height: 50px; border-radius: 10px; margin-bottom: 10px; }
-        .u-title { font-size: 13px; font-weight: bold; color: #fff; display: block; }
-        .u-profit { font-size: 11px; color: var(--text-gray); margin-top: 4px; }
-        .u-price { font-size: 14px; font-weight: 900; color: var(--gold); margin-top: 10px; display: block; }
-        .lvl-badge { position: absolute; top: 10px; left: 10px; background: #2d333b; font-size: 10px; padding: 2px 6px; border-radius: 5px; }
+        /* Bottom Menu Hamster Style */
+        .bottom-menu { position: fixed; bottom: 0; width: 100%; background: var(--nav-bg); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; }
+        .menu-item { flex: 1; text-align: center; color: #555; transition: 0.3s; }
+        .menu-item.active { color: var(--gold); transform: translateY(-3px); }
+        .menu-item i { font-size: 24px; display: block; margin-bottom: 3px; }
+        .menu-item span { font-size: 10px; font-weight: 700; }
 
-        /* Bottom Menu */
-        .footer-nav { 
-            position: fixed; bottom: 0; width: 100%; background: #1c1f24; 
-            display: flex; justify-content: space-around; padding: 10px 0;
-            border-top: 1px solid #333;
-        }
-        .nav-tab { text-align: center; color: var(--text-gray); font-size: 11px; text-decoration: none; flex: 1; }
-        .nav-tab.active { color: var(--gold); }
-        .nav-tab i { font-size: 20px; display: block; margin-bottom: 4px; }
+        /* Task List */
+        .task-row { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
     </style>
 </head>
 <body>
@@ -74,61 +59,65 @@
 <div class="app-container">
     <div class="top-nav">
         <div id="ton-connect"></div>
-        <div class="user-pill" id="user-display">Loading...</div>
+        <div class="user-pill" id="user-display">Mugahed...</div>
     </div>
 
-    <div id="page-mine" class="content-page active">
-        <div class="balance-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" class="coin-icon">
-            <span class="total-bal" id="balance">0.0000</span>
+    <div id="p-mine" class="page active">
+        <div class="balance-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" class="coin-img">
+            <div class="total-amount" id="balance">0.0000</div>
         </div>
-        <div class="game-area">
-            <div class="circle-outer">
-                <div class="main-character" onclick="doMine()"></div>
-            </div>
-            <div id="timer" style="margin-top: 25px; color: var(--gold); font-weight: 900; font-size: 18px;">READY TO CLAIM! ⚡</div>
+        <div class="mine-circle" onclick="processMine()">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
         </div>
+        <div id="timer-text" style="text-align:center; color:var(--gold); font-weight:900; font-size:18px;">المطالبة القادمة: --:--</div>
     </div>
 
-    <div id="page-cards" class="content-page">
-        <h3 style="margin-bottom: 20px;">تطوير الممتلكات 🚀</h3>
-        <div class="upgrade-grid">
-            <div class="u-card">
-                <span class="lvl-badge">Lvl 1</span>
+    <div id="p-shop" class="page">
+        <h3 style="color:var(--gold)">تطوير الممتلكات 🚀</h3>
+        <div class="items-grid">
+            <div class="item-card">
                 <img src="https://cdn-icons-png.flaticon.com/512/743/743007.png">
-                <span class="u-title">سيارة رياضية</span>
-                <span class="u-profit">Profit +0.05</span>
-                <span class="u-price">50.00 💰</span>
+                <span class="item-title">سيارة رياضية</span>
+                <span class="item-profit">+0.005 /ساعة</span>
+                <span class="item-price">50 💰</span>
+                <button class="action-btn" onclick="buyItem(50, 0.005)">تطوير</button>
             </div>
-            <div class="u-card">
-                <span class="lvl-badge">Lvl 1</span>
+            <div class="item-card">
                 <img src="https://cdn-icons-png.flaticon.com/512/609/609803.png">
-                <span class="u-title">فيلا خاصة</span>
-                <span class="u-profit">Profit +0.15</span>
-                <span class="u-price">150.00 💰</span>
-            </div>
-            <div class="u-card">
-                <span class="lvl-badge">Lvl 1</span>
-                <img src="https://cdn-icons-png.flaticon.com/512/2645/2645167.png">
-                <span class="u-title">محطة فضاء</span>
-                <span class="u-profit">Profit +1.50</span>
-                <span class="u-price">2500.00 💰</span>
-            </div>
-            <div class="u-card">
-                <span class="lvl-badge">Lvl 1</span>
-                <img src="https://cdn-icons-png.flaticon.com/512/9446/9446547.png">
-                <span class="u-title">جزيرة ذهبية</span>
-                <span class="u-profit">Profit +5.00</span>
-                <span class="u-price">10000 💰</span>
+                <span class="item-title">قصر ملكي</span>
+                <span class="item-profit">+0.02 /ساعة</span>
+                <span class="item-price">200 💰</span>
+                <button class="action-btn" onclick="buyItem(200, 0.02)">تطوير</button>
             </div>
         </div>
     </div>
 
-    <div class="footer-nav">
-        <div class="nav-tab active" onclick="switchTab('page-mine', this)">⛏️<br>التعدين</div>
-        <div class="nav-link nav-tab" onclick="switchTab('page-cards', this)">🚀<br>التطوير</div>
-        <div class="nav-tab">👥<br>الأصدقاء</div>
-        <div class="nav-tab">🎁<br>المكافآت</div>
+    <div id="p-tasks" class="page">
+        <h3 style="color:var(--gold)">المهام اليومية ✅</h3>
+        <div class="task-row">
+            <div><b>تابعنا على تلجرام</b><br><small>+10.00 ذهب</small></div>
+            <button class="action-btn" style="width:70px" onclick="doTask('https://t.me/yourchannel', 10)">بدء</button>
+        </div>
+        <div class="task-row">
+            <div><b>اشترك في يوتيوب</b><br><small>+20.00 ذهب</small></div>
+            <button class="action-btn" style="width:70px" onclick="doTask('https://youtube.com', 20)">بدء</button>
+        </div>
+    </div>
+
+    <div id="p-wallet" class="page">
+        <h3 style="color:var(--gold)">المحفظة والسحب 💸</h3>
+        <div style="background:var(--card); padding:20px; border-radius:20px; text-align:center; border:1px solid var(--gold)">
+            <p>الحد الأدنى للسحب: 1000 ذهب</p>
+            <button class="action-btn" style="background:var(--gold); color:black;" onclick="requestWithdraw()">سحب إلى TON</button>
+        </div>
+    </div>
+
+    <div class="bottom-menu">
+        <div class="menu-item active" onclick="switchPage('p-mine', this)"><i>⛏️</i><span>تعدين</span></div>
+        <div class="menu-item" onclick="switchPage('p-shop', this)"><i>🚀</i><span>تطوير</span></div>
+        <div class="menu-item" onclick="switchPage('p-tasks', this)"><i>📋</i><span>المهام</span></div>
+        <div class="menu-item" onclick="switchPage('p-wallet', this)"><i>💰</i><span>المحفظة</span></div>
     </div>
 </div>
 
@@ -136,7 +125,7 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
     
-    // Firebase Config
+    // Firebase Setup
     const firebaseConfig = {
         apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
         authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -150,59 +139,79 @@
     const db = firebase.database();
     const uid = tg.initDataUnsafe.user?.id || "test_user";
 
-    // TON Connect
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
     });
 
-    let userData = {};
+    let u = { balance: 0, last: 0, power: 0.0001 };
 
-    function syncData() {
+    function init() {
         db.ref('users/' + uid).on('value', s => {
             if(s.exists()){
-                userData = s.val();
-                document.getElementById('balance').innerText = userData.balance.toFixed(4);
-                updateTimer();
+                u = s.val();
+                document.getElementById('balance').innerText = u.balance.toFixed(4);
+                updateT();
+            } else {
+                db.ref('users/' + uid).set(u);
             }
             document.getElementById('user-display').innerText = tg.initDataUnsafe.user?.first_name || "Mugahed";
         });
     }
 
-    function doMine() {
-        const cooldown = 300000; // 5 min
+    function processMine() {
         const now = Date.now();
-        if (now - (userData.last || 0) >= cooldown) {
+        if (now - (u.last || 0) >= 300000) {
             db.ref('users/' + uid).update({
-                balance: (userData.balance || 0) + (userData.power || 0.0001),
+                balance: (u.balance || 0) + (u.power || 0.0001),
                 last: now
             });
             tg.HapticFeedback.impactOccurred('heavy');
         } else {
-            tg.HapticFeedback.notificationOccurred('warning');
+            tg.showAlert("انتظر حتى يبرد المعدن! ❄️");
         }
     }
 
-    function updateTimer() {
-        const rem = 300000 - (Date.now() - (userData.last || 0));
+    function buyItem(cost, addP) {
+        if(u.balance >= cost) {
+            db.ref('users/' + uid).update({
+                balance: u.balance - cost,
+                power: (u.power || 0.0001) + addP
+            });
+            tg.showAlert("تم التطوير بنجاح! 🚀");
+        } else {
+            tg.showAlert("رصيدك لا يكفي! ❌");
+        }
+    }
+
+    function doTask(url, reward) {
+        tg.openTelegramLink(url);
+        setTimeout(() => {
+            db.ref('users/' + uid).update({ balance: u.balance + reward });
+            tg.showAlert(`أحسنت! ربحت ${reward} ذهب 🎁`);
+        }, 5000);
+    }
+
+    function updateT() {
+        const rem = 300000 - (Date.now() - (u.last || 0));
         if (rem > 0) {
             const m = Math.floor(rem / 60000);
             const s = Math.floor((rem % 60000) / 1000);
-            document.getElementById('timer').innerText = `NEXT CLAIM: ${m}:${s < 10 ? '0'+s : s}`;
-            setTimeout(updateTimer, 1000);
+            document.getElementById('timer-text').innerText = `المطالبة القادمة: ${m}:${s < 10 ? '0'+s : s}`;
+            setTimeout(updateT, 1000);
         } else {
-            document.getElementById('timer').innerText = "READY TO CLAIM! ⚡";
+            document.getElementById('timer-text').innerText = "اضغط للمطالبة بذهبك! ⚡";
         }
     }
 
-    function switchTab(id, el) {
-        document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(n => n.classList.remove('active'));
+    function switchPage(id, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
     }
 
-    syncData();
+    init();
 </script>
 </body>
 </html>
