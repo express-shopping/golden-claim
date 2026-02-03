@@ -1,116 +1,158 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Hamster Bot</title>
+    <title>Elite Hamster | Premium Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --blue: #3b82f6;
-            --pink: #ec4899;
-            --yellow: #f59e0b;
-            --green: #10b981;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary-gold: #fbbf24;
+            --accent-blue: #60a5fa;
+            --bg-deep: #020617;
+            --card-glass: rgba(30, 41, 59, 0.5);
+            --text-white: #ffffff;
         }
 
         body {
             margin: 0; padding: 0;
-            background: radial-gradient(circle at top, #1e293b, #0f172a);
-            color: white; font-family: 'Cairo', sans-serif;
-            overflow: hidden; user-select: none;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: var(--text-white);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- الهيدر الاحترافي --- */
+        /* --- Elite Header --- */
         .header {
-            display: flex; align-items: center; padding: 20px;
-            background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; padding: 25px 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
         }
         .user-pic {
-            width: 50px; height: 50px; border-radius: 15px;
-            background: var(--pink); border: 2px solid var(--blue);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            width: 55px; height: 55px; border-radius: 50%;
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.3);
             background-size: cover;
         }
-        .user-meta { margin-right: 15px; flex-grow: 1; }
-        .user-name { font-weight: 900; font-size: 16px; color: var(--yellow); }
-        .level-badge { font-size: 10px; background: var(--green); padding: 2px 8px; border-radius: 20px; }
-
-        /* --- شريط الليفل --- */
-        .level-progress { width: 100px; height: 8px; background: #334155; border-radius: 10px; margin-top: 5px; overflow: hidden; }
-        .level-bar { width: 30%; height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); transition: 0.5s; }
-
-        /* --- الصفحات --- */
-        .page {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-dark); z-index: 100; display: none;
-            padding: 20px; box-sizing: border-box; overflow-y: auto;
+        .user-meta { margin-left: 15px; flex-grow: 1; }
+        .user-name { 
+            font-weight: 800; font-size: 18px; 
+            color: var(--text-white) !important; /* White Username as requested */
+            letter-spacing: -0.5px;
         }
-        .page.active { display: block; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .back-arrow {
-            position: absolute; top: 20px; right: 20px;
-            font-size: 24px; color: var(--blue); cursor: pointer;
+        .level-container { margin-top: 4px; }
+        .level-text { font-size: 11px; text-transform: uppercase; color: var(--accent-blue); font-weight: 600; }
+        
+        .level-progress-bg { 
+            width: 120px; height: 4px; background: rgba(255,255,255,0.1); 
+            border-radius: 10px; margin-top: 6px; overflow: hidden;
+        }
+        .level-progress-fill { 
+            width: 30%; height: 100%; 
+            background: linear-gradient(90deg, var(--accent-blue), #c084fc); 
+            box-shadow: 0 0 10px var(--accent-blue);
         }
 
-        /* --- الرصيد ومنطقة النقر --- */
-        .main-content { text-align: center; padding-top: 40px; }
-        .balance-container { font-size: 45px; font-weight: 900; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .balance-container img { width: 45px; filter: drop-shadow(0 0 10px var(--yellow)); }
+        /* --- Stats Board --- */
+        .stats-top {
+            display: flex; justify-content: space-around;
+            padding: 10px 20px; margin-top: -10px;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+        .stat-value { font-weight: 700; color: var(--primary-gold); font-size: 14px; }
 
-        .tap-circle {
-            width: 280px; height: 280px; border-radius: 50%;
-            margin: 0 auto; position: relative;
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 8px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 0 50px rgba(236, 72, 153, 0.2);
+        /* --- Balance & Tap --- */
+        .main-content { text-align: center; margin-top: 20px; }
+        .balance-container { 
+            font-size: 48px; font-weight: 800; margin-bottom: 25px;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+        }
+        .balance-container img { width: 40px; }
+
+        /* Sleek Tap Circle */
+        .tap-wrapper {
+            position: relative; width: 240px; height: 240px; margin: 0 auto;
             display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s; cursor: pointer;
         }
-        .tap-circle:active { transform: scale(0.92); }
-        .tap-circle img { width: 80%; border-radius: 50%; pointer-events: none; }
+        .tap-circle {
+            width: 210px; height: 210px; border-radius: 50%;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 4px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 0 20px rgba(96, 165, 250, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; position: relative; z-index: 2;
+        }
+        .tap-circle:active { transform: scale(0.95); }
+        .tap-circle img { width: 85%; border-radius: 50%; pointer-events: none; opacity: 0.9; }
 
-        /* --- تأثير رقم النقرة --- */
+        /* Animated Ring */
+        .tap-ring {
+            position: absolute; width: 230px; height: 230px;
+            border-radius: 50%; border: 1px solid var(--accent-blue);
+            opacity: 0.3; animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.3; }
+            100% { transform: scale(1.1); opacity: 0; }
+        }
+
+        /* Floating Number */
         .tap-number {
-            position: absolute; color: white; font-weight: 900; font-size: 30px;
-            pointer-events: none; animation: floatUp 0.8s ease-out forwards;
-            text-shadow: 0 0 10px var(--blue);
+            position: absolute; color: white; font-weight: 800; font-size: 28px;
+            pointer-events: none; animation: floatUp 0.7s ease-out forwards;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 1000;
         }
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-150px); }
+            100% { opacity: 0; transform: translateY(-120px); }
         }
 
-        /* --- الكروت (المتجر) --- */
-        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .shop-card {
-            background: var(--card-bg); border-radius: 15px; padding: 15px;
-            border: 1px solid rgba(255,255,255,0.1); text-align: center;
-        }
-        .shop-card h4 { margin: 0; font-size: 14px; color: var(--pink); }
-        .shop-card p { font-size: 11px; color: var(--green); }
-        .buy-btn {
-            background: var(--blue); border: none; color: white; padding: 8px;
-            border-radius: 8px; width: 100%; margin-top: 10px; font-weight: bold;
+        /* --- Energy Bar --- */
+        .energy-section { width: 75%; margin: 40px auto; }
+        .energy-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight: 600; }
+        .energy-bar-bg { height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .energy-bar-fill { 
+            height: 100%; border-radius: 10px;
+            background: linear-gradient(90deg, #f59e0b, #fbbf24); 
+            width: 100%; transition: width 0.3s;
         }
 
-        /* --- القائمة السفلية --- */
+        /* --- Navigation --- */
         .nav-bar {
-            position: fixed; bottom: 0; width: 100%; background: rgba(15, 23, 42, 0.95);
-            display: flex; justify-content: space-around; padding: 15px 0;
-            border-top: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            position: fixed; bottom: 20px; left: 5%; width: 90%;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-around; padding: 12px 0;
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .nav-btn { text-align: center; font-size: 11px; color: #64748b; cursor: pointer; }
-        .nav-btn.active { color: var(--yellow); }
-        .nav-btn div { font-size: 20px; }
+        .nav-btn { text-align: center; color: #64748b; font-size: 10px; font-weight: 600; text-transform: uppercase; cursor: pointer; }
+        .nav-btn.active { color: var(--accent-blue); }
+        .nav-btn div { font-size: 20px; margin-bottom: 4px; }
 
-        /* شريط الطاقة */
-        .energy-box { width: 80%; margin: 30px auto; }
-        .energy-bar-bg { height: 12px; background: #334155; border-radius: 20px; overflow: hidden; }
-        .energy-bar-fill { height: 100%; background: linear-gradient(90deg, var(--yellow), var(--green)); width: 100%; }
+        /* --- Pages --- */
+        .page {
+            position: fixed; inset: 0; background: var(--bg-deep); z-index: 200;
+            display: none; padding: 30px 20px; overflow-y: auto;
+        }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+        
+        .close-btn { font-size: 28px; color: var(--accent-blue); margin-bottom: 20px; display: block; text-decoration: none; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .shop-card {
+            background: var(--card-glass); padding: 20px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05); text-align: center;
+        }
+        .shop-card h4 { margin: 0; font-size: 14px; letter-spacing: 0.5px; }
+        .shop-card .profit { font-size: 12px; color: var(--primary-gold); margin: 8px 0; }
+        .buy-btn {
+            background: var(--accent-blue); border: none; color: white; width: 100%;
+            padding: 10px; border-radius: 12px; font-weight: 800; font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -118,13 +160,22 @@
     <div class="header">
         <div class="user-pic" id="u-pic"></div>
         <div class="user-meta">
-            <div class="user-name" id="u-name">جاري التحميل..</div>
-            <span class="level-badge">ليفل <span id="lvl-num">1</span></span>
-            <div class="level-progress"><div class="level-bar" id="lvl-bar"></div></div>
+            <div class="user-name" id="u-name">ELITE USER</div>
+            <div class="level-container">
+                <span class="level-text">Level <span id="lvl-num">1</span></span>
+                <div class="level-progress-bg"><div class="level-progress-fill" id="lvl-bar"></div></div>
+            </div>
         </div>
-        <div style="text-align:left">
-            <div style="font-size:10px; color:var(--green)">الربح/ساعة</div>
-            <div id="p-hour" style="font-weight:bold; color:var(--yellow)">0</div>
+    </div>
+
+    <div class="stats-top">
+        <div class="stat-item">
+            <div class="stat-label">Profit per Hour</div>
+            <div class="stat-value" id="p-hour">+0</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Tap Value</div>
+            <div class="stat-value" id="t-val">1</div>
         </div>
     </div>
 
@@ -134,51 +185,46 @@
             <span id="balance">0</span>
         </div>
 
-        <div class="tap-circle" id="tap-zone">
-            <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
+        <div class="tap-wrapper">
+            <div class="tap-ring"></div>
+            <div class="tap-circle" id="tap-zone">
+                <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
+            </div>
         </div>
 
-        <div class="energy-box">
-            <div style="margin-bottom:5px; font-size:14px;">⚡ <span id="energy-text">1000</span>/1000</div>
+        <div class="energy-section">
+            <div class="energy-info">
+                <span>⚡ Energy</span>
+                <span><span id="energy-text">1000</span> / 1000</span>
+            </div>
             <div class="energy-bar-bg"><div class="energy-bar-fill" id="energy-fill"></div></div>
         </div>
     </div>
 
     <div id="shop-page" class="page">
-        <span class="back-arrow" onclick="closePage('shop-page')">←</span>
-        <h2 style="color:var(--pink)">كروت التطوير 🚀</h2>
+        <a href="#" class="close-btn" onclick="closePage('shop-page')">✕</a>
+        <h2 style="margin-bottom: 25px;">Upgrades</h2>
         <div class="card-grid">
             <div class="shop-card">
-                <h4>تعدين مبتدئ</h4>
-                <p>+500 ربح/ساعة</p>
+                <h4>Mining Rig v1</h4>
+                <div class="profit">+500/hr</div>
                 <button class="buy-btn" onclick="buyCard(500, 2000)">2,000 🪙</button>
             </div>
             <div class="shop-card">
-                <h4>مزرعة طاقة</h4>
-                <p>+1500 ربح/ساعة</p>
+                <h4>Cloud Farm</h4>
+                <div class="profit">+1.5K/hr</div>
                 <button class="buy-btn" onclick="buyCard(1500, 5000)">5,000 🪙</button>
-            </div>
-            <div class="shop-card" style="border-color: var(--yellow);">
-                <h4>هامستر ذهبي</h4>
-                <p>+5000 ربح/ساعة</p>
-                <button class="buy-btn" onclick="buyCard(5000, 20000)">20,000 🪙</button>
             </div>
         </div>
     </div>
 
-    <div id="tasks-page" class="page">
-        <span class="back-arrow" onclick="closePage('tasks-page')">←</span>
-        <h2 style="color:var(--blue)">المهام اليومية 📅</h2>
-        <div id="daily-list"></div>
-    </div>
-
-    <div class="nav-bar">
-        <div class="nav-btn active" onclick="closeAllPages()"><div>🏠</div>الرئيسية</div>
-        <div class="nav-btn" onclick="openPage('shop-page')"><div>🚀</div>التطوير</div>
-        <div class="nav-btn" onclick="openPage('tasks-page')"><div>📝</div>المهام</div>
-        <div class="nav-btn" onclick="alert('قريباً: الأصدقاء')"><div>👥</div>الأصدقاء</div>
-        <div class="nav-btn" onclick="alert('قريباً: المحفظة')"><div>💎</div>المحفظة</div>
-    </div>
+    <nav class="nav-bar">
+        <div class="nav-btn active" onclick="closeAllPages()"><div>🏠</div>Home</div>
+        <div class="nav-btn" onclick="openPage('shop-page')"><div>🚀</div>Mine</div>
+        <div class="nav-btn" onclick="alert('Coming Soon')"><div>👥</div>Friends</div>
+        <div class="nav-btn" onclick="alert('Coming Soon')"><div>💰</div>Earn</div>
+        <div class="nav-btn" onclick="alert('Coming Soon')"><div>💎</div>Wallet</div>
+    </nav>
 
     <script>
         let balance = 0;
@@ -187,22 +233,23 @@
         let exp = 0;
         let tapValue = 1;
 
-        // 1. نظام النقرات الاحترافي (حل مشكلة عدم ظهور العدد)
         const tapZone = document.getElementById('tap-zone');
+
+        // Professional Touch Handling
         tapZone.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (energy >= tapValue) {
-                // إضافة الرصيد والخبرة
                 balance += tapValue;
                 energy -= tapValue;
-                exp += 10;
+                exp += 5;
 
-                // إنشاء رقم عائم في مكان اللمس
                 const touch = e.touches[0];
                 createFloatingNumber(touch.clientX, touch.clientY);
-
                 updateUI();
-                if(window.Telegram.WebApp.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                
+                if(window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                }
             }
         });
 
@@ -210,28 +257,25 @@
             const num = document.createElement('div');
             num.className = 'tap-number';
             num.innerText = `+${tapValue}`;
-            num.style.left = `${x - 20}px`;
-            num.style.top = `${y - 40}px`;
+            num.style.left = `${x - 15}px`;
+            num.style.top = `${y - 30}px`;
             document.body.appendChild(num);
-            setTimeout(() => num.remove(), 800);
+            setTimeout(() => num.remove(), 700);
         }
 
-        // 2. تحديث الواجهة والدرجات
         function updateUI() {
             document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
             document.getElementById('energy-text').innerText = energy;
             document.getElementById('energy-fill').style.width = (energy / 10) + "%";
-            document.getElementById('p-hour').innerText = `+${profit}`;
+            document.getElementById('p-hour').innerText = `+${profit.toLocaleString()}`;
             
-            // نظام الليفل
-            let lvl = Math.floor(exp / 1000) + 1;
+            // Level Logic
+            let lvl = Math.floor(exp / 500) + 1;
             document.getElementById('lvl-num').innerText = lvl;
-            document.getElementById('lvl-bar').style.width = (exp % 1000) / 10 + "%";
+            document.getElementById('lvl-bar').style.width = (exp % 500) / 5 + "%";
         }
 
-        // 3. نظام الصفحات
         function openPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
         function closePage(id) {
@@ -241,38 +285,34 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         }
 
-        // 4. نظام الكروت (التطوير)
         function buyCard(pAdd, cost) {
             if (balance >= cost) {
                 balance -= cost;
                 profit += pAdd;
                 updateUI();
-                alert("تم تطوير الكرت بنجاح!");
             } else {
-                alert("رصيدك غير كافي!");
+                window.Telegram.WebApp.showAlert("Not enough balance!");
             }
         }
 
-        // 5. جلب بيانات تليجرام الحقيقية
+        // Telegram Integration
         const tg = window.Telegram.WebApp;
         tg.expand();
         if (tg.initDataUnsafe.user) {
-            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name;
+            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name.toUpperCase();
             if (tg.initDataUnsafe.user.photo_url) {
                 document.getElementById('u-pic').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
             }
-        } else {
-            document.getElementById('u-name').innerText = "مستخدم تجريبي";
         }
 
-        // ربح تلقائي كل ثانية
+        // Auto-Profit and Energy Recovery
         setInterval(() => {
             if (profit > 0) {
                 balance += (profit / 3600);
                 updateUI();
             }
             if (energy < 1000) {
-                energy += 1;
+                energy += 2;
                 updateUI();
             }
         }, 1000);
