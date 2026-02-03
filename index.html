@@ -3,211 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Hamster Pro</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <title>Hamster Clone Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --purple: #8e44ad; }
+        :root {
+            --bg-color: #000000;
+            --card-bg: #1c1f24;
+            --gold: #f3ba2f;
+            --text-main: #ffffff;
+            --text-sub: #848b94;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden; /* لمنع السكرول العشوائي */
+        }
+
+        /* الطبقة العلوية: معلومات المستخدم */
+        .user-header {
+            display: flex; justify-content: space-between;
+            padding: 10px 15px; align-items: center;
+        }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 35px; height: 35px; border-radius: 8px; background: #333; }
         
-        body { 
-            margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; 
-            overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
+        .profit-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333; border-radius: 15px;
+            padding: 5px 15px; text-align: center;
         }
 
-        /* الطبقة الأساسية للتطبيق */
-        .app-shell { height: 100vh; display: flex; flex-direction: column; }
-
-        /* الهيدر الاحترافي */
-        .main-header { display: flex; justify-content: space-between; padding: 15px; background: rgba(0,0,0,0.9); z-index: 10; }
-        .info-pill { background: var(--card); border: 1px solid #333; padding: 5px 12px; border-radius: 20px; font-size: 11px; display: flex; align-items: center; gap: 5px; }
-
-        /* نظام الصفحات (التبديل الفوري) */
-        .content-area { flex-grow: 1; position: relative; overflow-y: auto; padding-bottom: 100px; }
-        .page { display: none; padding: 20px; animation: fadeIn 0.2s ease-in-out; }
-        .active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-
-        /* واجهة التعدين (Home) */
-        .balance-container { text-align: center; margin: 20px 0; }
-        .balance-container h1 { font-size: 45px; margin: 0; font-weight: 900; letter-spacing: 1px; }
-        
-        .main-clicker { 
-            width: 280px; height: 280px; border-radius: 50%; margin: 30px auto;
-            background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 0 40px rgba(142, 68, 173, 0.3); position: relative;
+        /* قسم المهام اليومية (الثلاث مربعات) */
+        .daily-rewards {
+            display: flex; justify-content: space-around;
+            padding: 10px; gap: 8px;
         }
-        .main-clicker img { width: 220px; cursor: pointer; transition: transform 0.1s; z-index: 5; }
-        .main-clicker img:active { transform: scale(0.92); }
-
-        /* كروت التطوير (Cards) */
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .item-card { 
-            background: var(--card); border-radius: 20px; padding: 15px; 
-            border: 1px solid #2d333b; text-align: center; transition: 0.3s;
+        .reward-card {
+            background: var(--card-bg); flex: 1;
+            border-radius: 12px; padding: 10px 5px;
+            text-align: center; border: 1px solid #2d333b;
+            font-size: 10px; color: var(--text-sub);
         }
-        .item-card:active { background: #252930; }
-        .item-card img { width: 50px; height: 50px; border-radius: 12px; margin-bottom: 10px; }
-        .item-card b { display: block; font-size: 14px; margin-bottom: 5px; }
-        .item-card span { color: var(--gold); font-weight: bold; font-size: 13px; }
+        .reward-card img { width: 24px; margin-bottom: 5px; }
 
-        /* القائمة السفلية (Navigation) */
-        .nav-bar { 
-            position: fixed; bottom: 0; width: 100%; height: 85px; 
-            background: rgba(15,15,15,0.98); display: flex; justify-content: space-around; 
-            padding-top: 10px; border-top: 1px solid #222; backdrop-filter: blur(15px);
+        /* الرصيد الكبير */
+        .balance-section {
+            text-align: center; margin: 20px 0;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .nav-btn { flex: 1; text-align: center; color: #555; font-size: 10px; cursor: pointer; transition: 0.2s; }
-        .nav-btn.active { color: var(--gold); }
-        .nav-btn i { font-size: 24px; display: block; margin-bottom: 4px; }
+        .balance-section img { width: 40px; }
+        .balance-section span { font-size: 40px; font-weight: 900; }
+
+        /* منطقة الهامستر (The Core) */
+        .hamster-container {
+            position: relative; width: 300px; height: 300px;
+            margin: 0 auto; display: flex; justify-content: center; align-items: center;
+        }
+        /* الهالة المشعة خلف الهامستر */
+        .glow-circle {
+            position: absolute; width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(142, 68, 173, 0.4) 0%, transparent 70%);
+            border-radius: 50%; z-index: 1;
+        }
+        .hamster-main-img {
+            width: 240px; height: 240px; z-index: 2;
+            cursor: pointer; transition: transform 0.1s;
+            border-radius: 50%; /* إذا كانت صورتك دائرية */
+        }
+        .hamster-main-img:active { transform: scale(0.95); }
+
+        /* القائمة السفلية */
+        .bottom-nav {
+            position: fixed; bottom: 10px; left: 10px; right: 10px;
+            background: #1c1f24; border-radius: 20px;
+            display: flex; justify-content: space-around;
+            padding: 10px 0; border: 1px solid #333;
+        }
+        .nav-item {
+            text-align: center; font-size: 11px; color: var(--text-sub);
+            flex: 1; cursor: pointer;
+        }
+        .nav-item.active { color: #fff; }
+        .nav-item img { width: 22px; display: block; margin: 0 auto 3px; }
+
+        /* الصفحات */
+        .page { display: none; padding: 20px; height: 70vh; overflow-y: auto; }
+        .page.active { display: block; }
     </style>
 </head>
 <body>
 
-<div class="app-shell">
-    <div class="main-header">
-        <div id="ton-connect"></div>
-        <div class="info-pill">
-            <span style="color:#888">Profit/hr:</span>
-            <b id="profit-display" style="color:var(--gold)">0</b>
+    <div class="user-header">
+        <div class="user-info">
+            <div class="avatar"></div> <div>
+                <div style="font-weight: bold; font-size: 13px;">MUGAHED-54 (CEO)</div>
+                <div style="color: var(--gold); font-size: 11px;">Legendary ></div>
+            </div>
+        </div>
+        <div class="profit-box">
+            <div style="font-size: 9px; color: #888;">Profit per hour</div>
+            <div style="font-weight: bold; color: var(--gold);" id="profit-val">+0</div>
         </div>
     </div>
 
-    <div class="content-area">
-        <div id="page-exchange" class="page active">
-            <div class="balance-container">
-                <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="35">
-                    <h1 id="balance-text">0</h1>
-                </div>
-                <p id="rank-text" style="color:var(--gold); font-size:12px; margin-top:5px;">Legendary CEO ></p>
-            </div>
+    <div class="daily-rewards">
+        <div class="reward-card">
+            <img src="https://img.icons8.com/fluency/48/gift.png">
+            <div>Daily combo</div>
+        </div>
+        <div class="reward-card">
+            <img src="https://img.icons8.com/fluency/48/key.png">
+            <div>Daily cipher</div>
+        </div>
+        <div class="reward-card">
+            <img src="https://img.icons8.com/fluency/48/calendar.png">
+            <div>Daily reward</div>
+        </div>
+    </div>
 
-            <div class="main-clicker">
-                <img id="hamster-btn" src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" onclick="handleTap(event)">
-            </div>
+    <div id="exchange-page" class="page active">
+        <div class="balance-section">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
+            <span id="balance">0</span>
+        </div>
+
+        <div class="hamster-container">
+            <div class="glow-circle"></div>
+            <img id="click-btn" src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" class="hamster-main-img">
+        </div>
+    </div>
+
+    <div id="mine-page" class="page">
+        <h2 style="text-align: center;">الترقيات</h2>
+        </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="showPage('exchange-page', this)">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/coins.png">Exchange
+        </div>
+        <div class="nav-item" onclick="showPage('mine-page', this)">
+            <img src="https://img.icons8.com/ios-filled/50/848b94/pick-axe.png">Mine
+        </div>
+        <div class="nav-item" onclick="alert('Coming Soon')">
+            <img src="https://img.icons8.com/ios-filled/50/848b94/group.png">Friends
+        </div>
+        <div class="nav-item" onclick="alert('Airdrop Soon')">
+            <img src="https://img.icons8.com/ios-filled/50/848b94/wallet.png">Airdrop
+        </div>
+    </div>
+
+    <script>
+        let balance = 0;
+        let profitPerHour = 0;
+
+        // وظيفة تبديل الصفحات (شغالة 100%)
+        function showPage(pageId, element) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             
-            <div id="status-bar" style="text-align:center; color:#555; font-size:14px; font-weight:bold;">SYSTEM READY ⚡</div>
-        </div>
+            document.getElementById(pageId).classList.add('active');
+            element.classList.add('active');
+            
+            // تغيير لون الأيقونات (بسيط)
+            element.querySelector('img').style.filter = "grayscale(0)";
+        }
 
-        <div id="page-mine" class="page">
-            <h2 style="margin-bottom:20px; color:var(--gold);">سوق الاستثمار 🚀</h2>
-            <div class="grid-layout">
-                <div class="item-card" onclick="upgradeItem('card1', 500, 150)">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-                    <b>فريق برمجة</b>
-                    <small style="color:#888">+150/hr</small><br>
-                    <span>Price: 500</span>
-                </div>
-                <div class="item-card" onclick="upgradeItem('card2', 2000, 700)">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2645/2645167.png">
-                    <b>محطة تعدين</b>
-                    <small style="color:#888">+700/hr</small><br>
-                    <span>Price: 2000</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="nav-bar">
-        <div class="nav-btn active" onclick="switchTab('page-exchange', this)"><i>🔄</i>Exchange</div>
-        <div class="nav-btn" onclick="switchTab('page-mine', this)"><i>⛏️</i>Mine</div>
-        <div class="nav-btn" onclick="tg.showAlert('قريباً...')"><i>👥</i>Friends</div>
-        <div class="nav-btn" onclick="tg.showAlert('اربط المحفظة أولاً')"><i>🪙</i>Airdrop</div>
-    </div>
-</div>
-
-<script>
-    // [البرمجة - Engine]
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // إعدادات Firebase (ضع بياناتك هنا)
-    const firebaseConfig = {
-        apiKey: "AIzaSy...", 
-        databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const uid = tg.initDataUnsafe.user?.id || "test_user";
-
-    let uData = { balance: 0, profitHour: 0, lastSync: Date.now() };
-
-    // ربط المحفظة
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
-        buttonRootId: 'ton-connect'
-    });
-
-    // جلب البيانات وحساب الأرباح أثناء الغياب (Offline Earnings)
-    function initApp() {
-        db.ref('users/' + uid).on('value', s => {
-            if(s.exists()){
-                const data = s.val();
-                uData = data;
-                
-                // حساب الربح الذي فاتك وأنت مغلق
-                const now = Date.now();
-                const secondsPassed = (now - uData.lastSync) / 1000;
-                const earnedWhileAway = (uData.profitHour / 3600) * secondsPassed;
-                
-                uData.balance += earnedWhileAway;
-                uData.lastSync = now;
-                
-                updateUI();
-            } else {
-                db.ref('users/' + uid).set(uData);
-            }
+        // وظيفة النقر (شغالة 100%)
+        const clickBtn = document.getElementById('click-btn');
+        clickBtn.addEventListener('click', (e) => {
+            balance += 1;
+            updateDisplay();
+            
+            // تأثير اهتزاز بسيط
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         });
 
-        // زيادة الأرباح كل ثانية (Real-time)
-        setInterval(() => {
-            uData.balance += (uData.profitHour / 3600);
-            uData.lastSync = Date.now();
-            updateUI();
-        }, 1000);
-    }
-
-    function handleTap(e) {
-        uData.balance += 1;
-        tg.HapticFeedback.impactOccurred('medium');
-        saveData();
-    }
-
-    function upgradeItem(id, price, profitAdd) {
-        if(uData.balance >= price) {
-            uData.balance -= price;
-            uData.profitHour += profitAdd;
-            saveData();
-            tg.showAlert("تم التطوير بنجاح! 🚀");
-        } else {
-            tg.showAlert("رصيدك غير كافٍ! ❌");
+        function updateDisplay() {
+            document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
+            document.getElementById('profit-val').innerText = `+${profitPerHour}`;
         }
-    }
 
-    function saveData() {
-        db.ref('users/' + uid).update(uData);
-    }
-
-    function updateUI() {
-        document.getElementById('balance-text').innerText = Math.floor(uData.balance).toLocaleString();
-        document.getElementById('profit-display').innerText = `+${(uData.profitHour).toLocaleString()}`;
-    }
-
-    function switchTab(id, btn) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    initApp();
-</script>
+        // تهيئة التطبيق
+        window.Telegram.WebApp.expand();
+        updateDisplay();
+    </script>
 </body>
 </html>
-
