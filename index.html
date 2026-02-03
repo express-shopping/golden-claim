@@ -3,185 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hamster Kombat Clone</title>
+    <title>Golden Hamster Pro</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --purple: #8e44ad; --text: #ffffff; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Cairo', sans-serif; overflow: hidden; user-select: none; }
+        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --purple: #8e44ad; }
+        
+        body { 
+            margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; 
+            overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
+        }
 
-        /* Header Layout */
-        .header { display: flex; justify-content: space-between; padding: 15px; align-items: flex-start; }
-        .user-meta { display: flex; align-items: center; gap: 8px; }
-        .user-meta img { width: 30px; height: 30px; border-radius: 50%; background: #333; }
-        .profit-stats { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid #333; font-size: 11px; }
+        /* الطبقة الأساسية للتطبيق */
+        .app-shell { height: 100vh; display: flex; flex-direction: column; }
 
-        /* Daily Tasks Bar */
-        .daily-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 15px; }
-        .daily-box { background: var(--card); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #2d333b; }
-        .daily-box img { width: 25px; margin-bottom: 5px; }
-        .daily-box span { display: block; font-size: 10px; color: #aaa; }
+        /* الهيدر الاحترافي */
+        .main-header { display: flex; justify-content: space-between; padding: 15px; background: rgba(0,0,0,0.9); z-index: 10; }
+        .info-pill { background: var(--card); border: 1px solid #333; padding: 5px 12px; border-radius: 20px; font-size: 11px; display: flex; align-items: center; gap: 5px; }
 
-        /* Main Section */
-        .main-content { text-align: center; height: 60vh; display: flex; flex-direction: column; justify-content: center; }
-        .balance-display { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .balance-display img { width: 35px; }
-        .balance-display h1 { font-size: 38px; margin: 0; font-weight: 900; }
+        /* نظام الصفحات (التبديل الفوري) */
+        .content-area { flex-grow: 1; position: relative; overflow-y: auto; padding-bottom: 100px; }
+        .page { display: none; padding: 20px; animation: fadeIn 0.2s ease-in-out; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        /* The Hamster Circle (Glow Effect) */
-        .circle-outer { width: 260px; height: 260px; border-radius: 50%; margin: 0 auto; position: relative; 
-                        background: radial-gradient(circle, var(--purple) 0%, transparent 70%); 
-                        display: flex; justify-content: center; align-items: center; box-shadow: 0 0 50px rgba(142, 68, 173, 0.4); }
-        .circle-inner { width: 230px; height: 230px; border-radius: 50%; background: #111; display: flex; justify-content: center; align-items: center; border: 4px solid #222; overflow: hidden; }
-        .hamster-img { width: 100%; height: auto; cursor: pointer; transition: transform 0.1s; }
-        .hamster-img:active { transform: scale(0.95); }
+        /* واجهة التعدين (Home) */
+        .balance-container { text-align: center; margin: 20px 0; }
+        .balance-container h1 { font-size: 45px; margin: 0; font-weight: 900; letter-spacing: 1px; }
+        
+        .main-clicker { 
+            width: 280px; height: 280px; border-radius: 50%; margin: 30px auto;
+            background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 40px rgba(142, 68, 173, 0.3); position: relative;
+        }
+        .main-clicker img { width: 220px; cursor: pointer; transition: transform 0.1s; z-index: 5; }
+        .main-clicker img:active { transform: scale(0.92); }
 
-        /* Navigation Bar */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; z-index: 100; }
-        .nav-item { color: #555; text-align: center; font-size: 10px; flex: 1; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: #fff; }
-        .nav-item img { width: 24px; display: block; margin: 0 auto 4px; filter: grayscale(1); }
-        .nav-item.active img { filter: grayscale(0); }
+        /* كروت التطوير (Cards) */
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .item-card { 
+            background: var(--card); border-radius: 20px; padding: 15px; 
+            border: 1px solid #2d333b; text-align: center; transition: 0.3s;
+        }
+        .item-card:active { background: #252930; }
+        .item-card img { width: 50px; height: 50px; border-radius: 12px; margin-bottom: 10px; }
+        .item-card b { display: block; font-size: 14px; margin-bottom: 5px; }
+        .item-card span { color: var(--gold); font-weight: bold; font-size: 13px; }
 
-        /* Pages */
-        .page { display: none; padding: 20px; height: 75vh; overflow-y: auto; }
-        .page.active { display: block; }
-
-        /* Upgrade Cards */
-        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .upgrade-card { background: var(--card); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid #333; }
-        .btn-upgrade { width: 100%; background: #2d333b; color: white; border: none; padding: 8px; border-radius: 8px; margin-top: 10px; font-weight: bold; }
+        /* القائمة السفلية (Navigation) */
+        .nav-bar { 
+            position: fixed; bottom: 0; width: 100%; height: 85px; 
+            background: rgba(15,15,15,0.98); display: flex; justify-content: space-around; 
+            padding-top: 10px; border-top: 1px solid #222; backdrop-filter: blur(15px);
+        }
+        .nav-btn { flex: 1; text-align: center; color: #555; font-size: 10px; cursor: pointer; transition: 0.2s; }
+        .nav-btn.active { color: var(--gold); }
+        .nav-btn i { font-size: 24px; display: block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="user-meta">
-            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Mugahed" alt="avatar">
-            <div>
-                <b id="user-display">MUGAHED (CEO)</b><br>
-                <small style="color: var(--gold);">Legendary &gt;</small>
-            </div>
-        </div>
-        <div class="profit-stats">
-            <span>Profit per hour</span><br>
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="12">
-            <b id="p-hour">+0</b>
+<div class="app-shell">
+    <div class="main-header">
+        <div id="ton-connect"></div>
+        <div class="info-pill">
+            <span style="color:#888">Profit/hr:</span>
+            <b id="profit-display" style="color:var(--gold)">0</b>
         </div>
     </div>
 
-    <div class="daily-container">
-        <div class="daily-box">🎁<br><b>Daily combo</b><span>19:34</span></div>
-        <div class="daily-box">🔑<br><b>Daily cipher</b><span>02:33</span></div>
-        <div class="daily-box">📅<br><b>Daily reward</b><span>07:33</span></div>
-    </div>
-
-    <div id="page-home" class="page active">
-        <div class="main-content">
-            <div class="balance-display">
-                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
-                <h1 id="main-balance">0</h1>
-            </div>
-            <div class="circle-outer">
-                <div class="circle-inner">
-                    <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" class="hamster-img" onclick="handleTap(event)">
+    <div class="content-area">
+        <div id="page-exchange" class="page active">
+            <div class="balance-container">
+                <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="35">
+                    <h1 id="balance-text">0</h1>
                 </div>
+                <p id="rank-text" style="color:var(--gold); font-size:12px; margin-top:5px;">Legendary CEO ></p>
             </div>
-            <p id="timer" style="margin-top:20px; color:var(--gold); font-weight:bold;">READY TO MINE! ⚡</p>
-        </div>
-    </div>
 
-    <div id="page-mine" class="page">
-        <h2 style="color:var(--gold)">Upgrades 🚀</h2>
-        <div class="card-grid">
-            <div class="upgrade-card">
-                <b>CEO Card</b><br>
-                <small>Profit +100/hr</small><br>
-                <span style="color:var(--gold)">Cost: 500</span>
-                <button class="btn-upgrade" onclick="buyUpgrade(500, 100)">Upgrade</button>
+            <div class="main-clicker">
+                <img id="hamster-btn" src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" onclick="handleTap(event)">
             </div>
-            <div class="upgrade-card">
-                <b>IT Team</b><br>
-                <small>Profit +500/hr</small><br>
-                <span style="color:var(--gold)">Cost: 2000</span>
-                <button class="btn-upgrade" onclick="buyUpgrade(2000, 500)">Upgrade</button>
+            
+            <div id="status-bar" style="text-align:center; color:#555; font-size:14px; font-weight:bold;">SYSTEM READY ⚡</div>
+        </div>
+
+        <div id="page-mine" class="page">
+            <h2 style="margin-bottom:20px; color:var(--gold);">سوق الاستثمار 🚀</h2>
+            <div class="grid-layout">
+                <div class="item-card" onclick="upgradeItem('card1', 500, 150)">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+                    <b>فريق برمجة</b>
+                    <small style="color:#888">+150/hr</small><br>
+                    <span>Price: 500</span>
+                </div>
+                <div class="item-card" onclick="upgradeItem('card2', 2000, 700)">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2645/2645167.png">
+                    <b>محطة تعدين</b>
+                    <small style="color:#888">+700/hr</small><br>
+                    <span>Price: 2000</span>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active" onclick="showPage('page-home', this)">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">Exchange
-        </div>
-        <div class="nav-item" onclick="showPage('page-mine', this)">
-            <img src="https://cdn-icons-png.flaticon.com/512/1042/1042312.png">Mine
-        </div>
-        <div class="nav-item" onclick="alert('Coming Soon!')">
-            <img src="https://cdn-icons-png.flaticon.com/512/921/921347.png">Friends
-        </div>
-        <div class="nav-item" onclick="alert('Connect Wallet')">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">Airdrop
-        </div>
+        <div class="nav-btn active" onclick="switchTab('page-exchange', this)"><i>🔄</i>Exchange</div>
+        <div class="nav-btn" onclick="switchTab('page-mine', this)"><i>⛏️</i>Mine</div>
+        <div class="nav-btn" onclick="tg.showAlert('قريباً...')"><i>👥</i>Friends</div>
+        <div class="nav-btn" onclick="tg.showAlert('اربط المحفظة أولاً')"><i>🪙</i>Airdrop</div>
     </div>
+</div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+<script>
+    // [البرمجة - Engine]
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        // Firebase Setup (استبدل ببياناتك الصحيحة)
-        const firebaseConfig = {
-            apiKey: "AIzaSy...", 
-            databaseURL: "https://your-db.firebaseio.com"
-        };
-        // ملاحظة: لكي يعمل الكود، يجب أن تكون قد ربطت Firebase سابقاً
-        // سأضع منطق برمجي يعمل محلياً (Local) حتى تربطه بنفسك
-        
-        let balance = 0;
-        let pPerHour = 0;
-        let lastTap = 0;
+    // إعدادات Firebase (ضع بياناتك هنا)
+    const firebaseConfig = {
+        apiKey: "AIzaSy...", 
+        databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const uid = tg.initDataUnsafe.user?.id || "test_user";
 
-        function showPage(pageId, element) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            element.classList.add('active');
-        }
+    let uData = { balance: 0, profitHour: 0, lastSync: Date.now() };
 
-        function handleTap(e) {
-            const now = Date.now();
-            if (now - lastTap > 100) { // منع النقر السريع جداً
-                balance += 1;
+    // ربط المحفظة
+    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect'
+    });
+
+    // جلب البيانات وحساب الأرباح أثناء الغياب (Offline Earnings)
+    function initApp() {
+        db.ref('users/' + uid).on('value', s => {
+            if(s.exists()){
+                const data = s.val();
+                uData = data;
+                
+                // حساب الربح الذي فاتك وأنت مغلق
+                const now = Date.now();
+                const secondsPassed = (now - uData.lastSync) / 1000;
+                const earnedWhileAway = (uData.profitHour / 3600) * secondsPassed;
+                
+                uData.balance += earnedWhileAway;
+                uData.lastSync = now;
+                
                 updateUI();
-                tg.HapticFeedback.impactOccurred('light');
-                lastTap = now;
-            }
-        }
-
-        function buyUpgrade(cost, profit) {
-            if (balance >= cost) {
-                balance -= cost;
-                pPerHour += profit;
-                updateUI();
-                alert("Upgrade Successful! 🚀");
             } else {
-                alert("Not enough coins! ❌");
+                db.ref('users/' + uid).set(uData);
             }
-        }
+        });
 
-        function updateUI() {
-            document.getElementById('main-balance').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('p-hour').innerText = `+${(pPerHour/1000).toFixed(1)}K`;
-        }
-
-        // زيادة الأرباح تلقائياً كل ثانية
+        // زيادة الأرباح كل ثانية (Real-time)
         setInterval(() => {
-            balance += (pPerHour / 3600);
+            uData.balance += (uData.profitHour / 3600);
+            uData.lastSync = Date.now();
             updateUI();
         }, 1000);
+    }
 
-    </script>
+    function handleTap(e) {
+        uData.balance += 1;
+        tg.HapticFeedback.impactOccurred('medium');
+        saveData();
+    }
+
+    function upgradeItem(id, price, profitAdd) {
+        if(uData.balance >= price) {
+            uData.balance -= price;
+            uData.profitHour += profitAdd;
+            saveData();
+            tg.showAlert("تم التطوير بنجاح! 🚀");
+        } else {
+            tg.showAlert("رصيدك غير كافٍ! ❌");
+        }
+    }
+
+    function saveData() {
+        db.ref('users/' + uid).update(uData);
+    }
+
+    function updateUI() {
+        document.getElementById('balance-text').innerText = Math.floor(uData.balance).toLocaleString();
+        document.getElementById('profit-display').innerText = `+${(uData.profitHour).toLocaleString()}`;
+    }
+
+    function switchTab(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    initApp();
+</script>
 </body>
 </html>
 
