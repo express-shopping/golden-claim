@@ -3,226 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Hamster | Web3 Edition</title>
+    <title>Elite Hamster | Premium Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --gold: #fbbf24;
-            --blue: #3b82f6;
-            --purple: #8b5cf6;
-            --bg: #020617;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary-gold: #fbbf24;
+            --accent-blue: #60a5fa;
+            --bg-deep: #020617;
+            --card-glass: rgba(30, 41, 59, 0.4);
+            --text-white: #ffffff;
+            --premium-gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
         }
 
         body {
-            margin: 0; padding: 0; background: var(--bg); color: white;
-            font-family: 'Inter', sans-serif; overflow: hidden; user-select: none;
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: var(--text-white);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Header Style */
-        .header { display: flex; align-items: center; padding: 20px; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.1), transparent); }
-        .u-pic { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--blue); background-size: cover; }
-        .u-info { margin-left: 15px; flex-grow: 1; }
-        .u-name { font-weight: 800; font-size: 16px; color: white !important; text-transform: uppercase; }
-        .lvl-tag { font-size: 10px; color: var(--blue); font-weight: 800; }
-        .lvl-progress { width: 100px; height: 4px; background: var(--glass); border-radius: 10px; margin-top: 5px; overflow: hidden; }
-        .lvl-bar { height: 100%; background: var(--blue); box-shadow: 0 0 10px var(--blue); }
-
-        /* Main Tap UI */
-        .main-content { text-align: center; padding-top: 20px; }
-        .balance { font-size: 45px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .balance img { width: 40px; }
-
-        .tap-zone {
-            width: 220px; height: 220px; border-radius: 50%; margin: 0 auto;
-            background: radial-gradient(circle, #1e293b 0%, #020617 100%);
-            border: 5px solid var(--glass-border); position: relative;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s; box-shadow: 0 0 40px rgba(59, 130, 246, 0.15);
+        /* --- Global UI Elements --- */
+        .page {
+            position: fixed; inset: 0; background: var(--bg-deep); z-index: 200;
+            display: none; padding: 25px 20px; overflow-y: auto; padding-bottom: 100px;
         }
-        .tap-zone:active { transform: scale(0.92); }
-        .tap-zone img { width: 80%; border-radius: 50%; pointer-events: none; }
-
-        /* Floating Number */
-        .float-val { position: absolute; color: white; font-weight: 800; font-size: 30px; animation: float 0.7s ease-out forwards; pointer-events: none; }
-        @keyframes float { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-120px); } }
-
-        /* Pages System */
-        .page { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: none; padding: 25px; overflow-y: auto; padding-bottom: 100px; }
-        .page.active { display: block; animation: slideUp 0.3s ease; }
+        .page.active { display: block; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .close-btn { font-size: 24px; color: #64748b; margin-bottom: 20px; cursor: pointer; display: block; }
-
-        /* Wallet Design */
-        .wallet-card { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 30px; border-radius: 30px; border: 1px solid var(--glass-border); text-align: center; margin-bottom: 20px; }
-        .wallet-btn { background: var(--blue); color: white; border: none; padding: 15px 30px; border-radius: 15px; font-weight: 800; width: 100%; margin-top: 20px; }
-
-        /* Earn & Leaderboard */
-        .task-item { background: var(--glass); padding: 15px; border-radius: 15px; display: flex; align-items: center; margin-bottom: 10px; border: 1px solid var(--glass-border); }
-        .task-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
-        .task-info { flex-grow: 1; }
-        .task-reward { color: var(--gold); font-weight: 800; font-size: 14px; }
         
-        .leaderboard { margin-top: 30px; background: var(--glass); border-radius: 20px; padding: 15px; }
-        .rank-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--glass-border); }
-        .rank-num { width: 30px; font-weight: 800; color: var(--blue); }
+        .close-btn { font-size: 24px; color: #94a3b8; text-decoration: none; position: absolute; right: 20px; top: 20px; }
         
-        /* Nav Bar */
-        .nav { position: fixed; bottom: 15px; left: 5%; width: 90%; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border-radius: 25px; display: flex; justify-content: space-around; padding: 15px 0; border: 1px solid var(--glass-border); z-index: 2000; }
-        .nav-item { text-align: center; font-size: 10px; color: #64748b; font-weight: 600; }
-        .nav-item.active { color: var(--blue); }
-        .nav-item div { font-size: 22px; margin-bottom: 4px; }
+        h2 { font-weight: 800; font-size: 24px; margin-bottom: 20px; background: var(--premium-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* --- Header --- */
+        .header { display: flex; align-items: center; padding: 20px; }
+        .user-pic { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent-blue); background-size: cover; }
+        .user-meta { margin-left: 12px; }
+        .user-name { font-weight: 800; font-size: 16px; }
+
+        /* --- Balance --- */
+        .main-balance { text-align: center; margin: 30px 0; }
+        .balance-value { font-size: 52px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .balance-value img { width: 45px; }
+
+        /* --- Navigation --- */
+        .nav-bar {
+            position: fixed; bottom: 15px; left: 5%; width: 90%;
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-around; padding: 15px 0;
+            border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); z-index: 1000;
+        }
+        .nav-btn { text-align: center; color: #64748b; font-size: 10px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .nav-btn.active { color: var(--primary-gold); transform: translateY(-5px); }
+        .nav-btn div { font-size: 22px; margin-bottom: 4px; }
+
+        /* --- Wallet Design --- */
+        .wallet-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 24px; padding: 25px; border: 1px solid rgba(255,255,255,0.05);
+            position: relative; overflow: hidden; margin-bottom: 20px;
+        }
+        .wallet-card::after { content: ''; position: absolute; top: -50%; right: -50%; width: 200px; height: 200px; background: var(--accent-blue); filter: blur(100px); opacity: 0.1; }
+        .wallet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .action-btn { background: var(--card-glass); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 15px; border-radius: 15px; font-weight: 600; }
+
+        /* --- Earn & Tasks --- */
+        .task-item {
+            background: var(--card-glass); padding: 15px; border-radius: 18px;
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .task-info { display: flex; align-items: center; gap: 12px; }
+        .task-icon { width: 40px; height: 40px; background: #334155; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .claim-btn { background: var(--premium-gradient); border: none; color: black; padding: 8px 15px; border-radius: 10px; font-weight: 700; font-size: 12px; }
+
+        /* --- Leaderboard --- */
+        .leaderboard { margin-top: 30px; background: rgba(255,255,255,0.02); border-radius: 20px; padding: 15px; }
+        .leader-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .rank { width: 30px; font-weight: 800; color: var(--primary-gold); }
+        .leader-pic { width: 35px; height: 35px; border-radius: 50%; background: #475569; margin: 0 10px; }
+        .leader-name { flex-grow: 1; font-size: 14px; }
+        .leader-score { font-weight: 600; color: var(--accent-blue); }
+
+        /* --- Tap Circle --- */
+        .tap-wrapper { position: relative; width: 260px; height: 260px; margin: 20px auto; }
+        .tap-circle {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle, #1e293b 0%, #020617 100%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(96, 165, 250, 0.2);
+            border: 5px solid rgba(255,255,255,0.03);
+        }
+        .tap-circle img { width: 80%; border-radius: 50%; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="u-pic" id="u-pic"></div>
-        <div class="u-info">
-            <div class="u-name" id="u-name">ELITE OPERATOR</div>
-            <div class="lvl-tag">LEVEL <span id="lvl-num">1</span></div>
-            <div class="lvl-progress"><div class="lvl-bar" id="lvl-bar" style="width: 10%;"></div></div>
+    <div id="home-content">
+        <div class="header">
+            <div class="user-pic" id="u-pic" style="background-image: url('https://via.placeholder.com/100')"></div>
+            <div class="user-meta">
+                <div class="user-name" id="u-name">ELITE PLAYER</div>
+                <div style="font-size: 11px; color: var(--accent-blue);">PRO LEVEL</div>
+            </div>
         </div>
-        <div style="text-align: right;">
-            <div style="font-size: 9px; color: #64748b;">PROFIT/HR</div>
-            <div style="color: var(--gold); font-weight: 800;" id="p-hour">0</div>
-        </div>
-    </div>
 
-    <div class="main-content">
-        <div class="balance">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
-            <span id="balance">0</span>
+        <div class="main-balance">
+            <div class="balance-value">
+                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
+                <span id="balance">0</span>
+            </div>
+            <p style="color: #64748b; font-size: 12px; letter-spacing: 2px;">TOTAL ELITE COINS</p>
         </div>
-        <div class="tap-zone" id="tap-zone">
-            <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
-        </div>
-        <div style="margin-top: 30px;">
-            <div style="font-size: 13px; margin-bottom: 10px;">⚡ <span id="energy">1000</span>/1000</div>
-            <div style="width: 70%; height: 6px; background: var(--glass); margin: 0 auto; border-radius: 10px; overflow: hidden;">
-                <div id="energy-bar" style="height: 100%; background: var(--gold); width: 100%;"></div>
+
+        <div class="tap-wrapper">
+            <div class="tap-circle" id="tap-zone">
+                <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
             </div>
         </div>
     </div>
 
     <div id="wallet-page" class="page">
-        <span class="close-btn" onclick="closeAll()">✕</span>
-        <h2>Crypto Wallet</h2>
+        <a href="#" class="close-btn" onclick="closeAllPages()">✕</a>
+        <h2>Elite Wallet</h2>
         <div class="wallet-card">
-            <div style="color: #64748b; font-size: 14px;">Total Balance</div>
-            <div style="font-size: 32px; font-weight: 800; margin: 10px 0;">$0.00</div>
-            <div style="font-size: 12px; color: var(--blue);">Connect your TON wallet to withdraw</div>
-            <button class="wallet-btn">Connect Wallet</button>
+            <p style="font-size: 12px; opacity: 0.6; margin: 0;">Available Balance</p>
+            <div class="balance-value" style="justify-content: flex-start; font-size: 32px; margin: 10px 0;">
+                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" style="width: 30px;">
+                <span id="w-balance">0</span>
+            </div>
+            <p style="font-size: 10px; color: var(--accent-blue);">Network: TON Blockchain</p>
         </div>
-        <div class="task-item">
-            <div class="task-icon">💎</div>
-            <div class="task-info">Deposit TON</div>
-            <div class="task-reward">Get 50K Coins</div>
-        </div>
-    </div>
-
-    <div id="earn-page" class="page">
-        <span class="close-btn" onclick="closeAll()">✕</span>
-        <h2>Earn Tasks</h2>
-        <div class="task-item" onclick="window.open('https://youtube.com')">
-            <div class="task-icon">📺</div>
-            <div class="task-info">Watch YouTube Video</div>
-            <div class="task-reward">+10,000</div>
-        </div>
-        <div class="task-item" onclick="window.open('https://t.me')">
-            <div class="task-icon">✈️</div>
-            <div class="task-info">Join Telegram Channel</div>
-            <div class="task-reward">+5,000</div>
-        </div>
-        <div class="task-item">
-            <div class="task-icon">❌</div>
-            <div class="task-info">Follow on X (Twitter)</div>
-            <div class="task-reward">+3,000</div>
-        </div>
-
-        <h3 style="margin-top: 40px;">🏆 Leaderboard</h3>
-        <div class="leaderboard">
-            <div class="rank-item"><span class="rank-num">1</span> <b>Alex Crypto</b> <span style="margin-left: auto;">98M 🪙</span></div>
-            <div class="rank-item"><span class="rank-num">2</span> <b>Satoshi_H</b> <span style="margin-left: auto;">85M 🪙</span></div>
-            <div class="rank-item"><span class="rank-num">3</span> <b>Elite_User</b> <span style="margin-left: auto;">72M 🪙</span></div>
+        <div class="wallet-actions">
+            <button class="action-btn">Deposit</button>
+            <button class="action-btn" style="background: var(--premium-gradient); color: black; border: none;">Withdraw</button>
         </div>
     </div>
 
     <div id="friends-page" class="page">
-        <span class="close-btn" onclick="closeAll()">✕</span>
+        <a href="#" class="close-btn" onclick="closeAllPages()">✕</a>
         <h2>Invite Friends</h2>
-        <div class="wallet-card" style="background: linear-gradient(135deg, #4c1d95, #1e1b4b);">
-            <div style="font-size: 40px;">👥</div>
-            <h3>Referral System</h3>
-            <p style="font-size: 14px; color: #cbd5e1;">Get 10% of your friends' earnings!</p>
-            <button class="wallet-btn" style="background: #a78bfa;" onclick="tg.openTelegramLink('https://t.me/share/url?url=YOUR_LINK')">Invite a Friend</button>
+        <div class="wallet-card" style="text-align: center;">
+            <p>Earn 5,000 for every friend!</p>
+            <button class="action-btn" style="width: 100%; margin-top: 10px; background: var(--premium-gradient); color: black;">Copy Invite Link</button>
+        </div>
+        <h3 style="font-size: 16px;">My Referrals (0)</h3>
+        <div style="text-align: center; color: #475569; margin-top: 40px;">No friends invited yet.</div>
+    </div>
+
+    <div id="earn-page" class="page">
+        <a href="#" class="close-btn" onclick="closeAllPages()">✕</a>
+        <h2>Daily Tasks</h2>
+        
+        <div class="task-item">
+            <div class="task-info">
+                <div class="task-icon">📺</div>
+                <div><div>Youtube Sub</div><div style="font-size: 10px; color: var(--primary-gold);">+10,000</div></div>
+            </div>
+            <button class="claim-btn">Join</button>
+        </div>
+
+        <div class="task-item">
+            <div class="task-info">
+                <div class="task-icon">✈️</div>
+                <div><div>Telegram Channel</div><div style="font-size: 10px; color: var(--primary-gold);">+5,000</div></div>
+            </div>
+            <button class="claim-btn">Join</button>
+        </div>
+
+        <div class="leaderboard">
+            <h3 style="margin-top: 0; font-size: 16px;">Top Elite Players</h3>
+            <div class="leader-item">
+                <div class="rank">1</div>
+                <div class="leader-pic"></div>
+                <div class="leader-name">Alex Crypto</div>
+                <div class="leader-score">1.2M</div>
+            </div>
+            <div class="leader-item">
+                <div class="rank">2</div>
+                <div class="leader-pic"></div>
+                <div class="leader-name">Sarah VIP</div>
+                <div class="leader-score">980K</div>
+            </div>
+            <div class="leader-item">
+                <div class="rank">3</div>
+                <div class="leader-pic"></div>
+                <div class="leader-name">Hamster King</div>
+                <div class="leader-score">850K</div>
+            </div>
         </div>
     </div>
 
-    <nav class="nav">
-        <div class="nav-item active" onclick="closeAll()"><div>🏠</div>Home</div>
-        <div class="nav-item" onclick="openPage('earn-page')"><div>💰</div>Earn</div>
-        <div class="nav-item" onclick="openPage('friends-page')"><div>👥</div>Friends</div>
-        <div class="nav-item" onclick="openPage('wallet-page')"><div>💎</div>Wallet</div>
+    <nav class="nav-bar">
+        <div class="nav-btn active" onclick="closeAllPages(); setActive(this)"><div>🏠</div>Home</div>
+        <div class="nav-btn" onclick="openPage('earn-page'); setActive(this)"><div>💰</div>Earn</div>
+        <div class="nav-btn" onclick="openPage('friends-page'); setActive(this)"><div>👥</div>Friends</div>
+        <div class="nav-btn" onclick="openPage('wallet-page'); setActive(this)"><div>💎</div>Wallet</div>
     </nav>
 
     <script>
-        let balance = 0; let energy = 1000; let profit = 0; let exp = 0; let tapValue = 1;
+        let balance = 0;
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Tap Logic
+        // Handle Tapping
         document.getElementById('tap-zone').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (energy >= tapValue) {
-                balance += tapValue; energy -= tapValue; exp += 5;
-                const t = e.touches[0];
-                createFloat(t.clientX, t.clientY);
-                updateUI();
-                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            }
+            balance += 1;
+            updateUI();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         });
 
-        function createFloat(x, y) {
-            const el = document.createElement('div');
-            el.className = 'float-val'; el.innerText = `+${tapValue}`;
-            el.style.left = `${x-20}px`; el.style.top = `${y-40}px`;
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 700);
-        }
-
         function updateUI() {
-            document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('energy').innerText = energy;
-            document.getElementById('energy-bar').style.width = (energy/10) + "%";
-            document.getElementById('p-hour').innerText = `+${profit}`;
-            let lvl = Math.floor(exp/500) + 1;
-            document.getElementById('lvl-num').innerText = lvl;
-            document.getElementById('lvl-bar').style.width = (exp%500)/5 + "%";
+            const formatted = Math.floor(balance).toLocaleString();
+            document.getElementById('balance').innerText = formatted;
+            document.getElementById('w-balance').innerText = formatted;
         }
 
         function openPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            closeAllPages();
             document.getElementById(id).classList.add('active');
         }
 
-        function closeAll() {
+        function closeAllPages() {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         }
 
-        // Real Telegram Data
-        if (tg.initDataUnsafe.user) {
-            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name.toUpperCase();
-            if (tg.initDataUnsafe.user.photo_url) document.getElementById('u-pic').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
+        function setActive(el) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        setInterval(() => {
-            if (energy < 1000) { energy += 1; updateUI(); }
-        }, 1000);
-
-        updateUI();
+        // Load TG User Data
+        if (tg.initDataUnsafe.user) {
+            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name.toUpperCase();
+            if (tg.initDataUnsafe.user.photo_url) {
+                document.getElementById('u-pic').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
+            }
+        }
     </script>
 </body>
 </html>
