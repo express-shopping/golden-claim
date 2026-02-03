@@ -3,280 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hamster Pro Elite</title>
+    <title>Hamster Pro Platinum</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* [1] الإعدادات العامة والألوان */
         :root {
             --bg-color: #0b0e11;
             --card-bg: #1c1f24;
             --gold: #f3ba2f;
             --text-main: #ffffff;
             --text-sub: #848b94;
-            --purple: #8e44ad;
+            --accent: #2ebd67;
         }
 
-        * { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
-        body { margin: 0; background-color: var(--bg-color); color: var(--text-main); font-family: 'Cairo', sans-serif; overflow: hidden; }
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Cairo', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        /* [2] الهيدر وشريط المستوى (الفيل) */
+        /* --- الهيدر ونظام الليفل --- */
         .user-header { display: flex; justify-content: space-between; padding: 15px; align-items: center; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 42px; height: 42px; border-radius: 12px; border: 2px solid var(--gold); background-size: cover; }
-        
-        .level-section { padding: 0 15px; margin-bottom: 10px; }
-        .level-info { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
-        .progress-bar { width: 100%; height: 8px; background: #222; border-radius: 10px; border: 1px solid #333; overflow: hidden; }
-        .progress-fill { width: 10%; height: 100%; background: linear-gradient(90deg, var(--gold), #fff); transition: 0.5s; }
+        .level-container { flex-grow: 1; margin: 0 15px; }
+        .level-info { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; }
+        .level-bar-bg { width: 100%; height: 6px; background: #333; border-radius: 10px; }
+        .level-bar-fill { width: 10%; height: 100%; background: var(--gold); border-radius: 10px; transition: 0.3s; }
 
-        .settings-btn { cursor: pointer; background: var(--card-bg); padding: 8px; border-radius: 10px; border: 1px solid #333; }
+        /* --- الصفحات --- */
+        .page { display: none; padding: 20px; height: 80vh; overflow-y: auto; padding-bottom: 120px; }
+        .page.active { display: block; }
 
-        /* [3] مربعات المهام العلوية */
-        .top-tasks { display: flex; justify-content: space-around; padding: 10px; gap: 8px; }
-        .task-item { background: var(--card-bg); flex: 1; border-radius: 15px; padding: 10px; text-align: center; border: 1px solid #333; cursor: pointer; }
-        .task-item img { width: 24px; margin-bottom: 5px; }
-        .task-item div { font-size: 10px; font-weight: bold; }
+        /* --- المربعات العلوية (المهام اليومية) --- */
+        .top-tasks-box {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px;
+        }
+        .task-card {
+            background: var(--card-bg); padding: 10px; border-radius: 12px;
+            text-align: center; border: 1px solid #333; cursor: pointer;
+        }
+        .task-card img { width: 25px; }
+        .task-card div { font-size: 10px; margin-top: 5px; }
 
-        /* [4] الرصيد ومنطقة النقر */
-        .balance-area { text-align: center; margin: 20px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .balance-area h1 { font-size: 40px; margin: 0; font-weight: 900; }
+        /* --- منطقة النقر --- */
+        .balance-section { text-align: center; margin: 20px 0; font-size: 35px; font-weight: 900; }
+        .hamster-btn {
+            width: 250px; height: 250px; border-radius: 50%;
+            margin: 0 auto; display: block; border: 10px solid #25282e;
+            box-shadow: 0 0 30px rgba(243, 186, 47, 0.2);
+            transition: transform 0.05s; cursor: pointer;
+        }
+        .hamster-btn:active { transform: scale(0.95); }
 
-        .click-zone { position: relative; width: 280px; height: 280px; margin: 0 auto; display: flex; justify-content: center; align-items: center; }
-        .glow { position: absolute; width: 240px; height: 240px; background: radial-gradient(circle, var(--purple) 0%, transparent 70%); opacity: 0.4; }
-        .hamster-img { width: 230px; z-index: 5; cursor: pointer; transition: transform 0.05s; border-radius: 50%; }
-        .hamster-img:active { transform: scale(0.94); }
+        /* --- شريط الطاقة السفلي --- */
+        .energy-wrapper { width: 80%; margin: 20px auto; text-align: center; }
+        .energy-bar { height: 10px; background: #222; border-radius: 10px; margin-top: 5px; overflow: hidden; }
+        .energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f3ba2f, #fce08d); }
 
-        /* [5] شريط الطاقة */
-        .energy-box { position: fixed; bottom: 100px; width: 100%; padding: 0 20px; }
-        .energy-header { font-size: 14px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
-        .energy-bar { width: 100%; height: 12px; background: #222; border-radius: 10px; border: 1px solid #333; overflow: hidden; }
-        .energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--gold), #ffeb3b); transition: 0.2s; }
+        /* --- القائمة السفلية --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; background: #1c1f24;
+            display: flex; justify-content: space-around; padding: 15px 0;
+            border-top: 1px solid #333;
+        }
+        .nav-item { font-size: 12px; color: var(--text-sub); text-align: center; cursor: pointer; }
+        .nav-item.active { color: var(--gold); }
 
-        /* [6] نظام الصفحات */
-        .page { display: none; padding: 20px; height: 80vh; overflow-y: auto; padding-bottom: 150px; }
-        .active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* --- نافذة الإعدادات والمهام --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000; padding: 20px; box-sizing: border-box;
+        }
+        .daily-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .day-box { background: #333; padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; opacity: 0.5; }
+        .day-box.active { border: 1px solid var(--gold); opacity: 1; background: #444; }
 
-        /* [7] مهام الأيام والاشتراكات */
-        .daily-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
-        .day-box { background: var(--card-bg); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #333; font-size: 11px; }
-        .day-box.claimed { border-color: var(--gold); background: rgba(243, 186, 47, 0.1); }
-        
-        .social-task { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .go-btn { background: var(--gold); border: none; padding: 5px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* [8] القائمة السفلية */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #1c1f24; display: flex; justify-content: space-around; padding: 10px 0 25px; border-top: 1px solid #333; }
-        .nav-link { text-align: center; font-size: 11px; color: var(--text-sub); flex: 1; cursor: pointer; }
-        .nav-link.active { color: white; }
-        .nav-link img { width: 22px; display: block; margin: 0 auto 4px; }
-
-        /* تأثير +1 */
-        .plus-one { position: absolute; color: white; font-size: 26px; font-weight: 900; pointer-events: none; animation: flyUp 0.8s forwards; z-index: 100; }
-        @keyframes flyUp { to { transform: translateY(-120px); opacity: 0; } }
+        .social-task {
+            display: flex; justify-content: space-between; background: #25282e;
+            padding: 12px; border-radius: 10px; margin-bottom: 10px; align-items: center;
+        }
+        .social-task button { background: var(--gold); border: none; padding: 5px 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
     <div class="user-header">
-        <div class="user-info">
-            <div class="avatar" id="avatar-img" style="background-image: url('https://img.icons8.com/fluency/48/user-male-circle.png');"></div>
-            <div>
-                <b id="user-name" style="font-size: 14px;">CEO MUGAHED</b>
-                <div style="color: var(--gold); font-size: 11px;" id="rank-name">Bronze ></div>
+        <div style="width: 40px; height: 40px; background: #444; border-radius: 8px;" id="user-avatar"></div>
+        <div class="level-container">
+            <div class="level-info">
+                <span id="level-name">Bronze</span>
+                <span>Level <span id="level-num">1</span>/10</span>
             </div>
+            <div class="level-bar-bg"><div class="level-bar-fill" id="level-fill"></div></div>
         </div>
-        <div class="settings-btn" onclick="openSettings()">⚙️</div>
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png" width="25" onclick="toggleModal('settings-modal')">
     </div>
 
-    <div class="level-section">
-        <div class="level-info">
-            <span>Level <b id="lvl-txt">1</b>/11</span>
-            <span>Profit/hr: <b id="profit-txt" style="color: var(--gold)">+0</b></span>
-        </div>
-        <div class="progress-bar"><div id="lvl-fill" class="progress-fill"></div></div>
-    </div>
-
-    <div class="top-tasks">
-        <div class="task-item" onclick="showPage('daily-page', this)">
+    <div class="top-tasks-box">
+        <div class="task-card" onclick="toggleModal('daily-modal')">
             <img src="https://img.icons8.com/fluency/48/calendar.png">
-            <div>المكافأة</div>
+            <div>مكافأة يومية</div>
         </div>
-        <div class="task-item" onclick="alert('الشفرة اليومية قادمة!')">
+        <div class="task-card" onclick="alert('قريباً: فك الشفرة!')">
             <img src="https://img.icons8.com/fluency/48/key.png">
-            <div>الشفرة</div>
+            <div>شفرة مورس</div>
         </div>
-        <div class="task-item" onclick="alert('الكومبو متاح في قسم Mine')">
-            <img src="https://img.icons8.com/fluency/48/gift.png">
-            <div>الكومبو</div>
-        </div>
-    </div>
-
-    <div id="home-page" class="page active">
-        <div class="balance-area">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="35">
-            <h1 id="balance-txt">0</h1>
-        </div>
-        <div class="click-zone" id="click-area">
-            <div class="glow"></div>
-            <img id="hamster-btn" src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" class="hamster-img">
+        <div class="task-card" onclick="toggleModal('social-modal')">
+            <img src="https://img.icons8.com/fluency/48/share.png">
+            <div>مهام التواصل</div>
         </div>
     </div>
 
-    <div id="daily-page" class="page">
-        <h3 style="color:var(--gold)">مكافأة تسجيل الدخول (7 أيام)</h3>
-        <div class="daily-grid" id="days-container"></div>
-
-        <h3 style="color:var(--gold); margin-top:20px;">قنوات التواصل</h3>
-        <div class="social-task"><span>قناة تلجرام</span><button class="go-btn" onclick="doTask('https://t.me/yourlink', 5000, this)">+5K</button></div>
-        <div class="social-task"><span>يوتيوب</span><button class="go-btn" onclick="doTask('https://youtube.com', 10000, this)">+10K</button></div>
-        <div class="social-task"><span>تيك توك</span><button class="go-btn" onclick="doTask('https://tiktok.com', 3000, this)">+3K</button></div>
-    </div>
-
-    <div id="wallet-page" class="page">
-        <h3 style="text-align: center;">المحفظة (Wallet)</h3>
-        <div style="background:var(--card-bg); padding:30px; border-radius:20px; text-align:center; border:1px solid #333;">
-            <img src="https://img.icons8.com/fluency/96/wallet.png" width="80"><br><br>
-            <p>رصيدك القابل للسحب</p>
-            <h2 id="w-bal" style="color:var(--gold)">0</h2>
-            <button class="go-btn" style="width:100%; padding:15px; margin-top:20px" onclick="tg.showAlert('سيتم فتح السحب عند الإدراج قريباً!')">Connect TON Wallet</button>
+    <div id="exchange-page" class="page active">
+        <div class="balance-section">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="40">
+            <span id="balance">0</span>
+        </div>
+        <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" 
+             class="hamster-btn" id="tap-target">
+        
+        <div class="energy-wrapper">
+            <div>⚡ <span id="energy-val">1000</span> / 1000</div>
+            <div class="energy-bar"><div class="energy-fill" id="energy-fill-bar"></div></div>
         </div>
     </div>
 
-    <div class="energy-box">
-        <div class="energy-header">⚡ <span id="en-txt">1000</span> / 1000</div>
-        <div class="energy-bar"><div id="en-fill" class="energy-fill"></div></div>
+    <div id="airdrop-page" class="page">
+        <h2 style="text-align: center;">المحفظة الرقمية</h2>
+        <div style="background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center;">
+            <img src="https://img.icons8.com/fluency/96/wallet.png" width="80">
+            <p>اربط محفظة TON الخاصة بك لاستلام العملات عند الإدراج</p>
+            <button onclick="connectWallet()" style="background:#007aff; color:white; border:none; padding:15px 30px; border-radius:10px; width:100%; font-weight:bold;">Connect TON Wallet</button>
+            <p id="wallet-status" style="margin-top:10px; color:var(--text-sub); font-size:12px;">المحفظة غير متصلة</p>
+        </div>
+    </div>
+
+    <div id="daily-modal" class="modal">
+        <h3>المكافآت اليومية</h3>
+        <div class="daily-grid" id="daily-days-container">
+            </div>
+        <button onclick="toggleModal('daily-modal')" style="margin-top:20px; width:100%; padding:10px;">إغلاق</button>
+    </div>
+
+    <div id="social-modal" class="modal">
+        <h3>اشترك واربح</h3>
+        <div class="social-task"><span>قناة التليجرام (+500)</span><button onclick="claimSocial(500)">فتح</button></div>
+        <div class="social-task"><span>يوتيوب (+400)</span><button onclick="claimSocial(400)">فتح</button></div>
+        <div class="social-task"><span>تيك توك (+300)</span><button onclick="claimSocial(300)">فتح</button></div>
+        <div class="social-task"><span>منصة X (+200)</span><button onclick="claimSocial(200)">فتح</button></div>
+        <button onclick="toggleModal('social-modal')" style="margin-top:20px; width:100%; padding:10px;">إغلاق</button>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <h3>الإعدادات</h3>
+        <p>اللغة: العربية</p>
+        <p>الاهتزاز: مفعل</p>
+        <button onclick="alert('تم الحفظ')" style="width:100%; padding:10px; background:var(--gold);">حفظ التغييرات</button>
+        <button onclick="toggleModal('settings-modal')" style="margin-top:10px; width:100%; padding:10px;">رجوع</button>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-link active" onclick="showPage('home-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/coins.png">Exchange
-        </div>
-        <div class="nav-link" onclick="showPage('daily-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/848b94/money-bag.png">Earn
-        </div>
-        <div class="nav-link" onclick="showPage('wallet-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/848b94/wallet.png">Wallet
-        </div>
+        <div class="nav-item active" onclick="showPage('exchange-page', this)">🏠<br>الرئيسية</div>
+        <div class="nav-item" onclick="showPage('airdrop-page', this)">💎<br>المحفظة</div>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        // المتغيرات
+        // المتغيرات الأساسية
         let balance = 0;
         let energy = 1000;
-        let maxEnergy = 1000;
+        let exp = 0;
         let level = 1;
-        let profitPerHour = 0;
-        let tapValue = 1;
+        let dayStreak = 1; // لليوم الحالي
 
-        // [تطوير] وظيفة تبديل الصفحات
-        function showPage(pageId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            if(el.classList.contains('nav-link')) el.classList.add('active');
+        // 1. نظام الليفل (كل ليفل يحتاج 1000 نقطة خبرة)
+        function updateLevel() {
+            level = Math.floor(exp / 1000) + 1;
+            let currentExpInLevel = exp % 1000;
+            document.getElementById('level-num').innerText = level;
+            document.getElementById('level-fill').style.width = (currentExpInLevel / 10) + "%";
+            
+            if(level > 5) document.getElementById('level-name').innerText = "Silver";
+            if(level > 10) document.getElementById('level-name').innerText = "Gold";
         }
 
-        // [تطوير] نظام النقر المتطور
-        const hamster = document.getElementById('hamster-btn');
-        hamster.addEventListener('touchstart', (e) => {
+        // 2. معالجة النقر (التعدين)
+        document.getElementById('tap-target').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (energy >= tapValue) {
-                balance += tapValue;
-                energy -= tapValue;
-                createFlyText(e.touches[0].clientX, e.touches[0].clientY);
-                updateUI();
-                tg.HapticFeedback.impactOccurred('medium');
+            if (energy > 0) {
+                balance += 1;
+                energy -= 1;
+                exp += 5; // كل نقرة تعطي 5 خبرة
+                updateDisplay();
+                updateLevel();
+                if(window.Telegram.WebApp.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
         });
 
-        function createFlyText(x, y) {
-            const txt = document.createElement('div');
-            txt.className = 'plus-one';
-            txt.innerText = `+${tapValue}`;
-            txt.style.left = `${x - 15}px`;
-            txt.style.top = `${y - 50}px`;
-            document.body.appendChild(txt);
-            setTimeout(() => txt.remove(), 800);
+        // 3. تحديث الواجهة
+        function updateDisplay() {
+            document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
+            document.getElementById('energy-val').innerText = energy;
+            document.getElementById('energy-fill-bar').style.width = (energy / 10) + "%";
         }
 
-        // [تطوير] نظام الأيام السبعة
-        function initDaily() {
-            const container = document.getElementById('days-container');
-            for(let i=1; i<=7; i++) {
-                let reward = i * 100;
-                container.innerHTML += `
-                    <div class="day-box" id="day-${i}" onclick="claimDay(${i}, ${reward})">
-                        Day ${i}<br><b>+${reward}</b>
-                    </div>
-                `;
-            }
+        // 4. نظام الصفحات والنوافذ
+        function showPage(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
-        function claimDay(day, amt) {
-            const box = document.getElementById(`day-${day}`);
-            if(!box.classList.contains('claimed')) {
-                balance += amt;
-                box.classList.add('claimed');
-                updateUI();
-                tg.showAlert(`مبروك! استلمت ${amt} عملة.`);
-            }
+        function toggleModal(id) {
+            let m = document.getElementById(id);
+            m.style.display = (m.style.display === 'block') ? 'none' : 'block';
         }
 
-        // [تطوير] نظام المهام
-        function doTask(url, reward, btn) {
-            tg.openLink(url);
-            setTimeout(() => {
-                balance += reward;
-                btn.innerText = "Done ✓";
-                btn.style.background = "#2ecc71";
-                btn.disabled = true;
-                updateUI();
-            }, 3000);
+        // 5. توليد أيام المكافآت (7 أيام)
+        const dailyContainer = document.getElementById('daily-days-container');
+        for (let i = 1; i <= 7; i++) {
+            let div = document.createElement('div');
+            div.className = `day-box ${i === dayStreak ? 'active' : ''}`;
+            div.innerHTML = `يوم ${i}<br><b>${i * 100}</b>`;
+            div.onclick = () => {
+                if(i === dayStreak) {
+                    balance += (i * 100);
+                    alert(`مبروك! ربحت ${i*100}`);
+                    dayStreak++;
+                    updateDisplay();
+                } else {
+                    alert("هذا اليوم ليس متاحاً بعد");
+                }
+            };
+            dailyContainer.appendChild(div);
         }
 
-        // [تطوير] نظام الإعدادات
-        function openSettings() {
-            tg.showPopup({
-                title: 'الإعدادات',
-                message: 'تحكم في إعدادات اللعبة من هنا',
-                buttons: [{text: 'تغيير الاسم', type: 'default'}, {text: 'إغلاق', type: 'destructive'}]
-            });
+        // 6. المحفظة
+        function connectWallet() {
+            document.getElementById('wallet-status').innerText = "تم ربط المحفظة بنجاح: UQC1...X9p";
+            document.getElementById('wallet-status').style.color = "var(--accent)";
         }
 
-        function updateUI() {
-            document.getElementById('balance-txt').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('w-bal').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('en-txt').innerText = energy;
-            document.getElementById('en-fill').style.width = (energy / maxEnergy * 100) + "%";
-            
-            // تحديث الليفل تلقائياً
-            level = Math.floor(balance / 5000) + 1;
-            if(level > 11) level = 11;
-            document.getElementById('lvl-txt').innerText = level;
-            document.getElementById('lvl-fill').style.width = (level * 9) + "%";
+        // 7. مهام التواصل
+        function claimSocial(amount) {
+            balance += amount;
+            updateDisplay();
+            alert("تمت إضافة المكافأة!");
         }
 
-        // استعادة الطاقة والربح التلقائي
-        setInterval(() => {
-            if (energy < maxEnergy) energy += 1;
-            balance += (profitPerHour / 3600);
-            updateUI();
-        }, 1000);
+        // استرجاع الطاقة تلقائياً
+        setInterval(() => { if(energy < 1000) { energy += 2; updateDisplay(); } }, 2000);
 
-        // سحب بيانات المستخدم من تلجرام
-        const user = tg.initDataUnsafe.user;
-        if (user) {
-            document.getElementById('user-name').innerText = user.first_name;
-            if(user.photo_url) document.getElementById('avatar-img').style.backgroundImage = `url('${user.photo_url}')`;
+        // Telegram WebApp Setup
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        if(tg.initDataUnsafe.user) {
+            document.getElementById('user-avatar').style.background = `url(${tg.initDataUnsafe.user.photo_url}) center/cover`;
         }
-
-        initDaily();
-        updateUI();
     </script>
 </body>
 </html>
