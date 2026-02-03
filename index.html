@@ -3,162 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Hamster | CEO Edition</title>
+    <title>Hamster Kombat Clone</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --purple: #8e44ad; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden; }
-        
-        /* Header Info */
-        .top-stats { display: flex; justify-content: space-between; padding: 15px; align-items: center; background: rgba(0,0,0,0.8); }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-info img { width: 35px; border-radius: 50%; border: 1px solid var(--gold); }
-        .profit-box { background: #1a1a1a; padding: 5px 15px; border-radius: 20px; border: 1px solid #333; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --purple: #8e44ad; --text: #ffffff; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Cairo', sans-serif; overflow: hidden; user-select: none; }
 
-        /* Daily Reward Grid */
-        .daily-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 10px 15px; }
-        .daily-item { background: var(--card); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #2d333b; position: relative; }
-        .daily-item small { color: #888; font-size: 10px; display: block; }
-        .daily-item b { font-size: 11px; display: block; margin-top: 5px; }
-        .check-mark { position: absolute; top: 5px; right: 5px; color: #2ecc71; font-size: 12px; }
+        /* Header Layout */
+        .header { display: flex; justify-content: space-between; padding: 15px; align-items: flex-start; }
+        .user-meta { display: flex; align-items: center; gap: 8px; }
+        .user-meta img { width: 30px; height: 30px; border-radius: 50%; background: #333; }
+        .profit-stats { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid #333; font-size: 11px; }
 
-        /* Balance */
-        .balance-section { text-align: center; margin: 20px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .balance-section img { width: 40px; }
-        .balance-section h1 { font-size: 40px; margin: 0; font-weight: 900; }
+        /* Daily Tasks Bar */
+        .daily-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 15px; }
+        .daily-box { background: var(--card); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #2d333b; }
+        .daily-box img { width: 25px; margin-bottom: 5px; }
+        .daily-box span { display: block; font-size: 10px; color: #aaa; }
 
-        /* Main Hamster & Glow */
-        .main-mining-area { position: relative; display: flex; justify-content: center; align-items: center; margin-top: 20px; }
-        .glow-circle { width: 280px; height: 280px; border-radius: 50%; border: 10px solid var(--purple); position: relative; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 30px var(--purple); overflow: hidden; }
-        .hamster-img { width: 230px; cursor: pointer; transition: transform 0.1s; z-index: 2; }
+        /* Main Section */
+        .main-content { text-align: center; height: 60vh; display: flex; flex-direction: column; justify-content: center; }
+        .balance-display { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .balance-display img { width: 35px; }
+        .balance-display h1 { font-size: 38px; margin: 0; font-weight: 900; }
+
+        /* The Hamster Circle (Glow Effect) */
+        .circle-outer { width: 260px; height: 260px; border-radius: 50%; margin: 0 auto; position: relative; 
+                        background: radial-gradient(circle, var(--purple) 0%, transparent 70%); 
+                        display: flex; justify-content: center; align-items: center; box-shadow: 0 0 50px rgba(142, 68, 173, 0.4); }
+        .circle-inner { width: 230px; height: 230px; border-radius: 50%; background: #111; display: flex; justify-content: center; align-items: center; border: 4px solid #222; overflow: hidden; }
+        .hamster-img { width: 100%; height: auto; cursor: pointer; transition: transform 0.1s; }
         .hamster-img:active { transform: scale(0.95); }
-        .timer-overlay { position: absolute; bottom: -30px; color: var(--gold); font-weight: 900; }
 
-        /* Bottom Nav */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 80px; background: rgba(20,20,20,0.95); display: flex; justify-content: space-around; padding-top: 10px; border-top: 1px solid #333; backdrop-filter: blur(10px); }
-        .nav-item { text-align: center; color: #555; font-size: 11px; flex: 1; text-decoration: none; }
+        /* Navigation Bar */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; z-index: 100; }
+        .nav-item { color: #555; text-align: center; font-size: 10px; flex: 1; cursor: pointer; transition: 0.3s; }
         .nav-item.active { color: #fff; }
-        .nav-item i { font-size: 24px; display: block; margin-bottom: 5px; }
-        .airdrop-icon { color: var(--gold) !important; }
+        .nav-item img { width: 24px; display: block; margin: 0 auto 4px; filter: grayscale(1); }
+        .nav-item.active img { filter: grayscale(0); }
 
         /* Pages */
-        .page { display: none; padding: 20px; height: 80vh; overflow-y: auto; padding-bottom: 100px; }
+        .page { display: none; padding: 20px; height: 75vh; overflow-y: auto; }
         .page.active { display: block; }
+
+        /* Upgrade Cards */
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .upgrade-card { background: var(--card); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid #333; }
+        .btn-upgrade { width: 100%; background: #2d333b; color: white; border: none; padding: 8px; border-radius: 8px; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <div class="top-stats">
-        <div class="user-info">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
+    <div class="header">
+        <div class="user-meta">
+            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Mugahed" alt="avatar">
             <div>
-                <b id="username" style="font-size: 12px;">MUGAMMAD (CEO)</b><br>
-                <small style="color: var(--gold);">Legendary ></small>
+                <b id="user-display">MUGAHED (CEO)</b><br>
+                <small style="color: var(--gold);">Legendary &gt;</small>
             </div>
         </div>
-        <div class="profit-box">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="15">
-            <span>Profit per hour: <b style="color: #fff;" id="p-hour">+212.39K</b></span>
-            <i style="color: #888;">⚙️</i>
+        <div class="profit-stats">
+            <span>Profit per hour</span><br>
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="12">
+            <b id="p-hour">+0</b>
         </div>
     </div>
 
-    <div class="daily-grid">
-        <div class="daily-item"><span class="check-mark">✔️</span>📅<br><b>Daily reward</b><small>07:33</small></div>
-        <div class="daily-item"><span class="check-mark">✔️</span>🔑<br><b>Daily cipher</b><small>02:33</small></div>
-        <div class="daily-item">🎁<br><b>Daily combo</b><small>19:34</small></div>
+    <div class="daily-container">
+        <div class="daily-box">🎁<br><b>Daily combo</b><span>19:34</span></div>
+        <div class="daily-box">🔑<br><b>Daily cipher</b><span>02:33</span></div>
+        <div class="daily-box">📅<br><b>Daily reward</b><span>07:33</span></div>
     </div>
 
-    <div id="exchange" class="page active">
-        <div class="balance-section">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
-            <h1 id="balance">0</h1>
-        </div>
-        <div class="main-mining-area">
-            <div class="glow-circle">
-                <img src="https://cdn-icons-png.flaticon.com/512/11427/11427103.png" class="hamster-img" onclick="mineAction()">
+    <div id="page-home" class="page active">
+        <div class="main-content">
+            <div class="balance-display">
+                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
+                <h1 id="main-balance">0</h1>
             </div>
-            <div class="timer-overlay" id="timer">READY! ⚡</div>
+            <div class="circle-outer">
+                <div class="circle-inner">
+                    <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" class="hamster-img" onclick="handleTap(event)">
+                </div>
+            </div>
+            <p id="timer" style="margin-top:20px; color:var(--gold); font-weight:bold;">READY TO MINE! ⚡</p>
+        </div>
+    </div>
+
+    <div id="page-mine" class="page">
+        <h2 style="color:var(--gold)">Upgrades 🚀</h2>
+        <div class="card-grid">
+            <div class="upgrade-card">
+                <b>CEO Card</b><br>
+                <small>Profit +100/hr</small><br>
+                <span style="color:var(--gold)">Cost: 500</span>
+                <button class="btn-upgrade" onclick="buyUpgrade(500, 100)">Upgrade</button>
+            </div>
+            <div class="upgrade-card">
+                <b>IT Team</b><br>
+                <small>Profit +500/hr</small><br>
+                <span style="color:var(--gold)">Cost: 2000</span>
+                <button class="btn-upgrade" onclick="buyUpgrade(2000, 500)">Upgrade</button>
+            </div>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('exchange', this)"><i>🔄</i>Exchange</div>
-        <div class="nav-item"><i>⛏️</i>Mine</div>
-        <div class="nav-item"><i>👥</i>Friends</div>
-        <div class="nav-item"><i>💰</i>Earn</div>
-        <div class="nav-item airdrop-icon"><i>🪙</i>Airdrop</div>
+        <div class="nav-item active" onclick="showPage('page-home', this)">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">Exchange
+        </div>
+        <div class="nav-item" onclick="showPage('page-mine', this)">
+            <img src="https://cdn-icons-png.flaticon.com/512/1042/1042312.png">Mine
+        </div>
+        <div class="nav-item" onclick="alert('Coming Soon!')">
+            <img src="https://cdn-icons-png.flaticon.com/512/921/921347.png">Friends
+        </div>
+        <div class="nav-item" onclick="alert('Connect Wallet')">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">Airdrop
+        </div>
     </div>
-</div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-    // Firebase Config
-    const firebaseConfig = {
-        apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
-        authDomain: "goldenclaim-6863a.firebaseapp.com",
-        databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
-        projectId: "goldenclaim-6863a",
-        storageBucket: "goldenclaim-6863a.firebasestorage.app",
-        messagingSenderId: "817930053370",
-        appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const uid = tg.initDataUnsafe.user?.id || "test_user";
+        // Firebase Setup (استبدل ببياناتك الصحيحة)
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", 
+            databaseURL: "https://your-db.firebaseio.com"
+        };
+        // ملاحظة: لكي يعمل الكود، يجب أن تكون قد ربطت Firebase سابقاً
+        // سأضع منطق برمجي يعمل محلياً (Local) حتى تربطه بنفسك
+        
+        let balance = 0;
+        let pPerHour = 0;
+        let lastTap = 0;
 
-    let u = { balance: 0, last: 0, power: 0.0001, profitHour: 212390 };
+        function showPage(pageId, element) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            element.classList.add('active');
+        }
 
-    function sync() {
-        db.ref('users/' + uid).on('value', s => {
-            if(s.exists()){
-                u = s.val();
-                document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString();
-                document.getElementById('p-hour').innerText = `+${(u.profitHour / 1000).toFixed(2)}K`;
-                updateTimer();
+        function handleTap(e) {
+            const now = Date.now();
+            if (now - lastTap > 100) { // منع النقر السريع جداً
+                balance += 1;
+                updateUI();
+                tg.HapticFeedback.impactOccurred('light');
+                lastTap = now;
             }
-            document.getElementById('username').innerText = (tg.initDataUnsafe.user?.first_name || "MUGAMMAD") + " (CEO)";
-        });
-    }
-
-    function mineAction() {
-        const now = Date.now();
-        if (now - (u.last || 0) >= 300000) {
-            db.ref('users/' + uid).update({
-                balance: (u.balance || 0) + (u.power || 1000) + (u.profitHour / 12), // تعدين كل 5 دقائق
-                last: now
-            });
-            tg.HapticFeedback.impactOccurred('heavy');
         }
-    }
 
-    function updateTimer() {
-        const rem = 300000 - (Date.now() - (u.last || 0));
-        if (rem > 0) {
-            const m = Math.floor(rem / 60000);
-            const s = Math.floor((rem % 60000) / 1000);
-            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-            setTimeout(updateTimer, 1000);
-        } else {
-            document.getElementById('timer').innerText = "READY! ⚡";
+        function buyUpgrade(cost, profit) {
+            if (balance >= cost) {
+                balance -= cost;
+                pPerHour += profit;
+                updateUI();
+                alert("Upgrade Successful! 🚀");
+            } else {
+                alert("Not enough coins! ❌");
+            }
         }
-    }
 
-    function switchTab(id, el) {
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-        // هنا يمكنك إضافة منطق تبديل الصفحات الفعلي
-    }
+        function updateUI() {
+            document.getElementById('main-balance').innerText = Math.floor(balance).toLocaleString();
+            document.getElementById('p-hour').innerText = `+${(pPerHour/1000).toFixed(1)}K`;
+        }
 
-    sync();
-</script>
+        // زيادة الأرباح تلقائياً كل ثانية
+        setInterval(() => {
+            balance += (pPerHour / 3600);
+            updateUI();
+        }, 1000);
+
+    </script>
 </body>
 </html>
 
