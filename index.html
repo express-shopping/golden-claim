@@ -3,119 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Empire Edition</title>
+    <title>Golden Claim | Global Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #f3ba2f; --bg: #050505; --card-bg: rgba(255, 255, 255, 0.05); }
+        :root { --gold: #f3ba2f; --bg: #000000; --card: #1c1f24; --text-gray: #848e9c; }
         
         body { 
             margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; 
-            user-select: none; -webkit-tap-highlight-color: transparent; /* حل مشكلة المربع الأزرق */
+            user-select: none; -webkit-tap-highlight-color: transparent; overflow: hidden;
         }
 
-        .app-wrapper { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .app-container { height: 100vh; display: flex; flex-direction: column; }
 
-        /* Header Style */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.5); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(243,186,47,0.1); }
+        /* Header like Hamster */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #000; }
+        .user-pill { background: #1c1f24; padding: 5px 12px; border-radius: 20px; border: 1px solid #333; font-size: 13px; font-weight: bold; color: var(--gold); }
 
         /* Balance Display */
-        .stats-box { text-align: center; padding: 30px 0; background: radial-gradient(circle at center, #111 0%, #000 100%); }
-        .bal-val { font-size: 55px; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(243,186,47,0.3); }
+        .balance-card { text-align: center; padding: 25px 0; background: radial-gradient(circle at top, #1c1f24 0%, #000 100%); }
+        .coin-icon { width: 45px; vertical-align: middle; margin-right: 8px; }
+        .total-bal { font-size: 45px; font-weight: 900; color: #fff; vertical-align: middle; }
 
-        /* Mining Section */
-        .page { display: none; padding: 20px; flex-grow: 1; overflow-y: auto; padding-bottom: 100px; }
-        .page.active { display: block; }
-
-        .coin-btn { 
-            width: 240px; height: 240px; border-radius: 50%; margin: 30px auto;
+        /* Main Game Area */
+        .game-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .circle-outer { 
+            width: 280px; height: 280px; border-radius: 50%; background: #1c1f24; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 0 50px rgba(243,186,47,0.1); border: 5px solid #282c34;
+        }
+        .main-character { 
+            width: 240px; height: 240px; border-radius: 50%; 
             background: url('https://cdn-icons-png.flaticon.com/512/6585/6585012.png') no-repeat center;
-            background-size: 80%; border: 8px solid #1a1a1a; cursor: pointer;
-            box-shadow: 0 0 40px rgba(0,0,0,1); transition: transform 0.1s;
+            background-size: 85%; cursor: pointer; transition: transform 0.1s;
         }
-        .coin-btn:active { transform: scale(0.92); border-color: var(--gold); }
+        .main-character:active { transform: scale(0.94); }
 
-        /* Upgrades Cards (Hamster Style) */
-        .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-        .card { 
-            background: var(--card-bg); border-radius: 20px; padding: 15px; text-align: center;
-            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);
-        }
-        .card img { width: 60px; height: 60px; margin-bottom: 10px; border-radius: 12px; }
-        .card-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
-        .card-price { color: var(--gold); font-size: 12px; font-weight: 900; display: block; margin-top: 8px; }
-        .buy-btn { background: var(--gold); color: black; border: none; width: 100%; padding: 8px; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        /* Tabs System */
+        .content-page { display: none; padding: 15px; height: 100%; overflow-y: auto; padding-bottom: 100px; }
+        .content-page.active { display: block; }
 
-        /* Bottom Navigation */
-        .bottom-nav { 
-            position: fixed; bottom: 15px; left: 15px; right: 15px; height: 70px;
-            background: rgba(20,20,20,0.9); border-radius: 25px; display: flex;
-            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        /* Hamster Style Cards */
+        .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .u-card { 
+            background: var(--card); border-radius: 16px; padding: 12px; 
+            border: 1px solid #2d333b; position: relative;
         }
-        .nav-link { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 12px; font-weight: bold; }
-        .nav-link.active { color: var(--gold); }
+        .u-card img { width: 50px; height: 50px; border-radius: 10px; margin-bottom: 10px; }
+        .u-title { font-size: 13px; font-weight: bold; color: #fff; display: block; }
+        .u-profit { font-size: 11px; color: var(--text-gray); margin-top: 4px; }
+        .u-price { font-size: 14px; font-weight: 900; color: var(--gold); margin-top: 10px; display: block; }
+        .lvl-badge { position: absolute; top: 10px; left: 10px; background: #2d333b; font-size: 10px; padding: 2px 6px; border-radius: 5px; }
+
+        /* Bottom Menu */
+        .footer-nav { 
+            position: fixed; bottom: 0; width: 100%; background: #1c1f24; 
+            display: flex; justify-content: space-around; padding: 10px 0;
+            border-top: 1px solid #333;
+        }
+        .nav-tab { text-align: center; color: var(--text-gray); font-size: 11px; text-decoration: none; flex: 1; }
+        .nav-tab.active { color: var(--gold); }
+        .nav-tab i { font-size: 20px; display: block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
 
-<div class="app-wrapper">
-    <div class="top-bar">
+<div class="app-container">
+    <div class="top-nav">
         <div id="ton-connect"></div>
-        <div id="user-name" style="color:var(--gold); font-weight:900;">...</div>
+        <div class="user-pill" id="user-display">Loading...</div>
     </div>
 
-    <div id="mine" class="page active">
-        <div class="stats-box">
-            <span style="color:#777; font-size:12px; letter-spacing:2px;">الرصيد الذهبي الحالي</span>
-            <div class="bal-val" id="balance">0.0000</div>
+    <div id="page-mine" class="content-page active">
+        <div class="balance-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" class="coin-icon">
+            <span class="total-bal" id="balance">0.0000</span>
         </div>
-        <div style="text-align:center">
-            <div class="coin-btn" onclick="startMining()"></div>
-            <div id="timer" style="color:var(--gold); font-weight:bold; font-size:18px;">جاهز للتعدين! ⚡</div>
-        </div>
-    </div>
-
-    <div id="shop" class="page">
-        <h3 style="color:var(--gold); margin-bottom:20px;">تطوير الممتلكات 🏠🚀</h3>
-        <div class="grid-cards">
-            <div class="card">
-                <img src="https://cdn-icons-png.flaticon.com/512/743/743007.png" alt="Car">
-                <div class="card-title">سيارة رياضية</div>
-                <small style="color:#888">+0.005 تعدين</small>
-                <span class="card-price">50.00 💰</span>
-                <button class="buy-btn" onclick="buy('car', 50)">تطوير</button>
+        <div class="game-area">
+            <div class="circle-outer">
+                <div class="main-character" onclick="doMine()"></div>
             </div>
-            <div class="card">
-                <img src="https://cdn-icons-png.flaticon.com/512/609/609803.png" alt="House">
-                <div class="card-title">فيلا ملكية</div>
-                <small style="color:#888">+0.015 تعدين</small>
-                <span class="card-price">150.00 💰</span>
-                <button class="buy-btn" onclick="buy('house', 150)">تطوير</button>
-            </div>
-            <div class="card">
-                <img src="https://cdn-icons-png.flaticon.com/512/2645/2645167.png" alt="Rocket">
-                <div class="card-title">محطة فضاء</div>
-                <small style="color:#888">+0.10 تعدين</small>
-                <span class="card-price">1000.00 💰</span>
-                <button class="buy-btn" onclick="buy('rocket', 1000)">تطوير</button>
-            </div>
+            <div id="timer" style="margin-top: 25px; color: var(--gold); font-weight: 900; font-size: 18px;">READY TO CLAIM! ⚡</div>
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <div class="nav-link active" onclick="showTab('mine', this)">⛏️ <span>تعدين</span></div>
-        <div class="nav-link" onclick="showTab('shop', this)">🚀 <span>تطوير</span></div>
+    <div id="page-cards" class="content-page">
+        <h3 style="margin-bottom: 20px;">تطوير الممتلكات 🚀</h3>
+        <div class="upgrade-grid">
+            <div class="u-card">
+                <span class="lvl-badge">Lvl 1</span>
+                <img src="https://cdn-icons-png.flaticon.com/512/743/743007.png">
+                <span class="u-title">سيارة رياضية</span>
+                <span class="u-profit">Profit +0.05</span>
+                <span class="u-price">50.00 💰</span>
+            </div>
+            <div class="u-card">
+                <span class="lvl-badge">Lvl 1</span>
+                <img src="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+                <span class="u-title">فيلا خاصة</span>
+                <span class="u-profit">Profit +0.15</span>
+                <span class="u-price">150.00 💰</span>
+            </div>
+            <div class="u-card">
+                <span class="lvl-badge">Lvl 1</span>
+                <img src="https://cdn-icons-png.flaticon.com/512/2645/2645167.png">
+                <span class="u-title">محطة فضاء</span>
+                <span class="u-profit">Profit +1.50</span>
+                <span class="u-price">2500.00 💰</span>
+            </div>
+            <div class="u-card">
+                <span class="lvl-badge">Lvl 1</span>
+                <img src="https://cdn-icons-png.flaticon.com/512/9446/9446547.png">
+                <span class="u-title">جزيرة ذهبية</span>
+                <span class="u-profit">Profit +5.00</span>
+                <span class="u-price">10000 💰</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-nav">
+        <div class="nav-tab active" onclick="switchTab('page-mine', this)">⛏️<br>التعدين</div>
+        <div class="nav-link nav-tab" onclick="switchTab('page-cards', this)">🚀<br>التطوير</div>
+        <div class="nav-tab">👥<br>الأصدقاء</div>
+        <div class="nav-tab">🎁<br>المكافآت</div>
     </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.backgroundColor = "#050505";
-
+    
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
         authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -129,58 +150,59 @@
     const db = firebase.database();
     const uid = tg.initDataUnsafe.user?.id || "test_user";
 
+    // TON Connect
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
     });
 
-    let uData = { balance: 0, last: 0, power: 0.0001 };
+    let userData = {};
 
-    function sync() {
+    function syncData() {
         db.ref('users/' + uid).on('value', s => {
             if(s.exists()){
-                uData = s.val();
-                document.getElementById('balance').innerText = uData.balance.toFixed(4);
+                userData = s.val();
+                document.getElementById('balance').innerText = userData.balance.toFixed(4);
                 updateTimer();
             }
-            document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Mugahed";
+            document.getElementById('user-display').innerText = tg.initDataUnsafe.user?.first_name || "Mugahed";
         });
     }
 
-    function startMining() {
-        const cooldown = 300000; // 5 دقائق
+    function doMine() {
+        const cooldown = 300000; // 5 min
         const now = Date.now();
-        if (now - (uData.last || 0) >= cooldown) {
+        if (now - (userData.last || 0) >= cooldown) {
             db.ref('users/' + uid).update({
-                balance: (uData.balance || 0) + (uData.power || 0.0001),
+                balance: (userData.balance || 0) + (userData.power || 0.0001),
                 last: now
             });
             tg.HapticFeedback.impactOccurred('heavy');
         } else {
-            tg.HapticFeedback.notificationOccurred('error');
+            tg.HapticFeedback.notificationOccurred('warning');
         }
     }
 
     function updateTimer() {
-        const remaining = 300000 - (Date.now() - (uData.last || 0));
-        if (remaining > 0) {
-            const m = Math.floor(remaining / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
-            document.getElementById('timer').innerText = `التعدين القادم: ${m}:${s < 10 ? '0'+s : s}`;
+        const rem = 300000 - (Date.now() - (userData.last || 0));
+        if (rem > 0) {
+            const m = Math.floor(rem / 60000);
+            const s = Math.floor((rem % 60000) / 1000);
+            document.getElementById('timer').innerText = `NEXT CLAIM: ${m}:${s < 10 ? '0'+s : s}`;
             setTimeout(updateTimer, 1000);
         } else {
-            document.getElementById('timer').innerText = "جاهز للتعدين! ⚡";
+            document.getElementById('timer').innerText = "READY TO CLAIM! ⚡";
         }
     }
 
-    function showTab(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    function switchTab(id, el) {
+        document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
     }
 
-    sync();
+    syncData();
 </script>
 </body>
 </html>
