@@ -3,259 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hamster Ultimate Pro</title>
+    <title>Elite Hamster | Ultra Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --gold: #f3ba2f; --blue: #007aff; --bg: #050505;
-            --card: #151515; --text: #ffffff; --sub-text: #a0a0a0;
+            --gold: #FFD700;
+            --gold-glow: rgba(255, 215, 0, 0.4);
+            --accent: #00d2ff;
+            --bg-dark: #050a14;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --glass: rgba(15, 23, 42, 0.9);
         }
 
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Cairo', sans-serif; overflow: hidden; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        /* --- نظام الهيدر الاحترافي --- */
-        .header { display: flex; justify-content: space-between; padding: 15px; align-items: center; position: fixed; top: 0; width: 100%; z-index: 1000; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); }
-        .user-box { display: flex; align-items: center; gap: 10px; }
-        .user-img { width: 40px; height: 40px; border-radius: 12px; border: 2px solid var(--gold); }
-        .settings-btn { font-size: 20px; cursor: pointer; background: var(--card); padding: 5px 10px; border-radius: 10px; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at top, #1e293b, #050a14);
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-        /* --- شريط المستوى (الليفل) --- */
-        .level-container { padding: 75px 20px 10px; }
-        .level-info { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
-        .level-bar { width: 100%; height: 8px; background: #222; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-        .level-fill { width: 10%; height: 100%; background: linear-gradient(90deg, var(--gold), #fff); transition: width 0.5s ease; }
+        /* --- Header --- */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
 
-        /* --- التنقل بين الصفحات --- */
-        .page { display: none; height: 100vh; padding: 20px; overflow-y: auto; padding-bottom: 150px; }
-        .active-page { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .user-pic {
+            width: 50px; height: 50px;
+            border-radius: 15px;
+            background: var(--accent);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+            background-size: cover;
+        }
 
-        /* --- صفحة المحفظة (الجديدة كلياً) --- */
-        .wallet-card { background: linear-gradient(135deg, #1e1e1e 0%, #000 100%); padding: 30px 20px; border-radius: 25px; border: 1px solid #333; text-align: center; margin-top: 20px; }
-        .wallet-balance { font-size: 35px; font-weight: 900; color: var(--gold); margin: 15px 0; }
-        .wallet-btn { background: var(--blue); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .user-info { margin-right: 15px; flex-grow: 1; }
+        .user-name { font-weight: 900; font-size: 16px; letter-spacing: 0.5px; }
+        
+        /* --- Stats Row --- */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 15px;
+        }
 
-        /* --- صفحة المهام EARN --- */
-        .daily-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-        .day-card { min-width: 80px; background: var(--card); padding: 15px 10px; border-radius: 15px; text-align: center; border: 1px solid #333; }
-        .day-card.active { border-color: var(--gold); background: rgba(243, 186, 47, 0.1); }
-        .task-item { background: var(--card); padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border: 1px solid #222; }
+        .stat-card {
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
 
-        /* --- منطقة النقر --- */
-        .tap-hero { text-align: center; margin: 40px 0; }
-        .balance-main { font-size: 45px; font-weight: 900; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .coin-btn { width: 260px; height: 260px; margin: 0 auto; position: relative; cursor: pointer; transition: transform 0.05s; }
-        .coin-btn:active { transform: scale(0.95); }
-        .coin-btn img { width: 100%; height: 100%; border-radius: 50%; border: 8px solid var(--card); box-shadow: 0 0 50px rgba(243, 186, 47, 0.1); }
+        .stat-label { font-size: 10px; color: #94a3b8; margin-bottom: 4px; }
+        .stat-value { font-weight: bold; color: var(--gold); }
 
-        /* --- شريط الطاقة --- */
-        .energy-wrapper { position: fixed; bottom: 100px; width: 100%; padding: 0 25px; }
-        .energy-bar-bg { width: 100%; height: 12px; background: #111; border-radius: 10px; border: 1px solid #333; overflow: hidden; }
-        .energy-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #ffee58); transition: width 0.2s; }
+        /* --- Main Canvas --- */
+        .main-stage {
+            height: 55vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
 
-        /* --- القائمة السفلية --- */
-        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(20,20,20,0.95); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 10px 5px; border-radius: 25px; border: 1px solid #333; }
-        .nav-item { text-align: center; font-size: 11px; color: var(--sub-text); cursor: pointer; flex: 1; }
-        .nav-item.active { color: white; }
-        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+        .balance-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
 
-        /* تأثير الرقم المتطاير */
-        .pop-num { position: absolute; font-size: 30px; font-weight: 900; color: white; pointer-events: none; animation: popUp 0.8s forwards; z-index: 1000; }
-        @keyframes popUp { to { transform: translateY(-150px); opacity: 0; } }
+        /* --- The Premium Button --- */
+        .clicker-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+        }
+
+        .clicker-btn {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #16213e, #0f172a);
+            border: 8px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 0 30px rgba(0, 210, 255, 0.1);
+            cursor: pointer;
+            transition: transform 0.05s;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 5; position: relative;
+        }
+
+        .clicker-btn:active { transform: scale(0.92); }
+
+        .clicker-btn img {
+            width: 80%; border-radius: 50%;
+            pointer-events: none;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+
+        /* --- Floating Numbers --- */
+        .floating-num {
+            position: absolute;
+            color: white;
+            font-size: 32px;
+            font-weight: 900;
+            pointer-events: none;
+            animation: rise 0.8s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes rise {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-150px) scale(1.2); }
+        }
+
+        /* --- Energy Bar --- */
+        .energy-wrapper {
+            width: 80%;
+            margin-top: 30px;
+        }
+
+        .energy-labels {
+            display: flex; justify-content: space-between;
+            font-size: 14px; font-weight: bold; margin-bottom: 8px;
+        }
+
+        .progress-bg {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            width: 100%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* --- Bottom Navigation --- */
+        .nav-bar {
+            position: fixed; bottom: 0; width: 100%;
+            height: 80px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            display: flex; justify-content: space-around;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #64748b; font-size: 11px; font-weight: bold; cursor: pointer;
+        }
+
+        .nav-item.active { color: var(--accent); }
+        .nav-item i { font-size: 24px; margin-bottom: 4px; }
+
+        /* --- Panels (Modals) --- */
+        .panel {
+            position: fixed; bottom: -100%; left: 0; width: 100%; height: 85vh;
+            background: #0f172a; border-radius: 30px 30px 0 0;
+            z-index: 2000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 25px; border-top: 2px solid var(--accent);
+        }
+
+        .panel.open { bottom: 0; }
+
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .upgrade-card {
+            background: var(--card-bg);
+            border-radius: 20px; padding: 15px;
+            display: flex; align-items: center;
+            margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .upgrade-info { flex-grow: 1; margin-right: 15px; }
+        .upgrade-info h4 { margin: 0; font-size: 16px; }
+        .upgrade-info p { margin: 5px 0; font-size: 12px; color: var(--gold); }
+
+        .buy-btn {
+            background: var(--accent); border: none; padding: 10px 20px;
+            border-radius: 12px; color: white; font-weight: bold;
+        }
+        
+        .buy-btn:disabled { background: #334155; opacity: 0.5; }
+
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="user-box">
-            <img id="u-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mugahed" class="user-img">
-            <div>
-                <b id="u-name">جاري التحميل...</b>
-                <div style="font-size: 9px; color: var(--gold);">CEO • LVL <span id="lvl-badge">1</span></div>
-            </div>
+        <div class="user-pic" id="u-pic"></div>
+        <div class="user-info">
+            <div class="user-name" id="u-name">ELITE MINER</div>
+            <div style="font-size: 10px; color: var(--accent);">PREMIUM MEMBER</div>
         </div>
-        <div class="settings-btn" onclick="openSettings()">⚙️</div>
-    </div>
-
-    <div id="home-page" class="page active-page">
-        <div class="level-container">
-            <div class="level-info">
-                <span>المستوى <b id="lvl-num">1</b>/11</span>
-                <span>الربح: <b style="color:var(--gold)">+0</b></span>
-            </div>
-            <div class="level-bar"><div id="lvl-fill" class="level-fill"></div></div>
-        </div>
-
-        <div class="tap-hero">
-            <div class="balance-main">
-                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="40">
-                <span id="bal-txt">0</span>
-            </div>
-            <div class="coin-btn" id="tap-trigger">
-                <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
-            </div>
+        <div class="stat-card" style="min-width: 100px;">
+            <div class="stat-label">المستوى</div>
+            <div class="stat-value" id="lvl-txt">1</div>
         </div>
     </div>
 
-    <div id="earn-page" class="page">
-        <h2 style="margin-top: 60px;">المهام اليومية</h2>
-        <div class="daily-scroll" id="daily-days">
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">الربح بالساعة</div>
+            <div class="stat-value" id="p-hour">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">لكل نقرة</div>
+            <div class="stat-value" id="t-val">1</div>
+        </div>
+    </div>
+
+    <div class="main-stage">
+        <div class="balance-box">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="45">
+            <span id="balance">0</span>
+        </div>
+
+        <div class="clicker-container">
+            <div class="clicker-btn" id="tap-btn">
+                <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" alt="hamster">
             </div>
-
-        <h2 style="margin-top: 20px;">مهام التواصل</h2>
-        <div class="task-item">
-            <span>إشترك في قناة التليجرام</span>
-            <button class="settings-btn" style="background:var(--blue); color:white;" onclick="doTask('https://t.me/yourlink', 5000, this)">+5K</button>
         </div>
-        <div class="task-item">
-            <span>متابعة على تيك توك</span>
-            <button class="settings-btn" style="background:var(--blue); color:white;" onclick="doTask('https://tiktok.com', 3000, this)">+3K</button>
+
+        <div class="energy-wrapper">
+            <div class="energy-labels">
+                <span>⚡ الطاقة</span>
+                <span><span id="energy-now">1000</span> / 1000</span>
+            </div>
+            <div class="progress-bg">
+                <div class="progress-fill" id="energy-bar"></div>
+            </div>
         </div>
     </div>
 
-    <div id="wallet-page" class="page">
-        <h2 style="margin-top: 60px; text-align: center;">Airdrop & Wallet</h2>
-        <div class="wallet-card">
-            <img src="https://img.icons8.com/fluency/96/wallet.png" width="70">
-            <div style="color: var(--sub-text); margin-top: 10px;">رصيدك القابل للسحب</div>
-            <div class="wallet-balance" id="w-bal">0</div>
-            <button class="wallet-btn" onclick="tg.showAlert('سيتم ربط محفظة TON قريباً عند الإدراج!')">
-                <img src="https://ton.org/download/ton_symbol.png" width="20">
-                Connect Wallet
-            </button>
+    <div id="shop-panel" class="panel">
+        <div class="panel-header">
+            <h3>تطوير المعدات</h3>
+            <button onclick="togglePanel('shop-panel')" style="background:none; border:none; color:white; font-size:24px;">✕</button>
         </div>
-        <div style="padding: 20px; color: var(--sub-text); font-size: 13px; text-align: center;">
-            <p>سيتم توزيع العملات (TGE) بناءً على مستواك ونشاطك اليومي.</p>
-        </div>
-    </div>
-
-    <div class="energy-wrapper">
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-bottom: 5px;">
-            <span>⚡ <span id="en-txt">1000</span> / 1000</span>
-        </div>
-        <div class="energy-bar-bg"><div id="en-fill" class="energy-bar-fill"></div></div>
+        <div id="upgrades-list">
+            </div>
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="showTab('home-page', this)"><i>🏠</i><span>الرئيسية</span></div>
-        <div class="nav-item" onclick="showTab('earn-page', this)"><i>💰</i><span>المهام</span></div>
-        <div class="nav-item" onclick="showTab('wallet-page', this)"><i>💎</i><span>المحفظة</span></div>
+        <div class="nav-item active" onclick="togglePanel('home')"><i>🏠</i><span>الرئيسية</span></div>
+        <div class="nav-item" onclick="togglePanel('shop-panel')"><i>🚀</i><span>تعدين</span></div>
+        <div class="nav-item" onclick="tgAlert()"><i>👥</i><span>الأصدقاء</span></div>
+        <div class="nav-item" onclick="tgAlert()"><i>💰</i><span>المهام</span></div>
+        <div class="nav-item" onclick="tgAlert()"><i>💎</i><span>المحفظة</span></div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation();
 
-        let balance = 0;
-        let energy = 1000;
-        let level = 1;
+        let state = {
+            balance: 0,
+            energy: 1000,
+            maxEnergy: 1000,
+            profitPerHour: 0,
+            tapValue: 1,
+            exp: 0
+        };
 
-        // [1] التبديل بين التبويبات (إصلاح كامل)
-        function showTab(tabId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active-page');
-            el.classList.add('active');
+        const upgrades = [
+            { id: 1, name: "معالج صغير", profit: 150, cost: 500, icon: "⚡" },
+            { id: 2, name: "كارت شاشة V1", profit: 800, cost: 2500, icon: "🎮" },
+            { id: 3, name: "مزرعة تعدين", profit: 3500, cost: 10000, icon: "🏢" }
+        ];
+
+        // Initialization
+        function init() {
+            if (tg.initDataUnsafe.user) {
+                document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name;
+                if(tg.initDataUnsafe.user.photo_url) {
+                    document.getElementById('u-pic').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
+                }
+            }
+            renderUpgrades();
+            updateUI();
+            startPassiveIncome();
         }
 
-        // [2] نظام النقر (Tap)
-        const trigger = document.getElementById('tap-trigger');
-        trigger.addEventListener('touchstart', (e) => {
+        // Tap Logic
+        document.getElementById('tap-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (energy >= 1) {
-                balance += 1;
-                energy -= 1;
-                createPop(e.touches[0].clientX, e.touches[0].clientY);
-                updateUI();
-                tg.HapticFeedback.impactOccurred('medium');
+            if (state.energy >= state.tapValue) {
+                const touch = e.touches[0];
+                handleTap(touch.clientX, touch.clientY);
             }
         });
 
-        function createPop(x, y) {
+        function handleTap(x, y) {
+            state.balance += state.tapValue;
+            state.energy -= state.tapValue;
+            state.exp += 2;
+            
+            createFloatingNumber(x, y);
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            updateUI();
+        }
+
+        function createFloatingNumber(x, y) {
             const num = document.createElement('div');
-            num.className = 'pop-num';
-            num.innerText = '+1';
-            num.style.left = `${x - 15}px`;
-            num.style.top = `${y - 50}px`;
+            num.className = 'floating-num';
+            num.innerText = `+${state.tapValue}`;
+            num.style.left = `${x - 20}px`;
+            num.style.top = `${y - 40}px`;
             document.body.appendChild(num);
             setTimeout(() => num.remove(), 800);
         }
 
-        // [3] نظام المهام اليومية (7 أيام)
-        function initDaily() {
-            const container = document.getElementById('daily-days');
-            for (let i = 1; i <= 7; i++) {
-                const amt = i * 100;
-                container.innerHTML += `
-                    <div class="day-card" onclick="claimDay(${amt}, this)">
-                        <div style="font-size:10px">يوم ${i}</div>
-                        <b>+${amt}</b>
-                    </div>
-                `;
-            }
-        }
-
-        function claimDay(amt, el) {
-            if(!el.classList.contains('active')) {
-                balance += amt;
-                el.classList.add('active');
-                el.innerHTML = "تم ✓";
-                updateUI();
-                tg.showAlert(`مبروك! استلمت ${amt} عملة.`);
-            }
-        }
-
-        function doTask(url, amt, btn) {
-            tg.openLink(url);
-            setTimeout(() => {
-                balance += amt;
-                btn.innerText = "تم ✓";
-                btn.disabled = true;
-                updateUI();
-            }, 3000);
-        }
-
-        // [4] تحديث الواجهة والبيانات
+        // UI Updates
         function updateUI() {
-            document.getElementById('bal-txt').innerText = balance.toLocaleString();
-            document.getElementById('w-bal').innerText = balance.toLocaleString();
-            document.getElementById('en-txt').innerText = energy;
-            document.getElementById('en-fill').style.width = (energy / 10) + "%";
+            document.getElementById('balance').innerText = Math.floor(state.balance).toLocaleString();
+            document.getElementById('energy-now').innerText = state.energy;
+            document.getElementById('energy-bar').style.width = (state.energy / state.maxEnergy * 100) + "%";
+            document.getElementById('p-hour').innerText = `+${formatNum(state.profitPerHour)}`;
+            document.getElementById('t-val').innerText = state.tapValue;
+            document.getElementById('lvl-txt').innerText = Math.floor(state.exp / 1000) + 1;
             
-            // حساب الليفل
-            level = Math.floor(balance / 2000) + 1;
-            if (level > 11) level = 11;
-            document.getElementById('lvl-num').innerText = level;
-            document.getElementById('lvl-badge').innerText = level;
-            document.getElementById('lvl-fill').style.width = (level * 9) + "%";
+            // Update Buttons State
+            renderUpgrades();
         }
 
-        // [5] نظام الإعدادات
-        function openSettings() {
-            tg.showPopup({
-                title: 'الإعدادات',
-                message: 'تحكم في تفضيلات حسابك',
-                buttons: [{text: 'تغيير الاسم', type: 'default'}, {text: 'إغلاق', type: 'destructive'}]
-            });
+        function formatNum(num) {
+            if (num >= 1000000) return (num/1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num/100).toFixed(1) + 'K';
+            return num;
         }
 
-        // استعادة الطاقة تلقائياً
-        setInterval(() => {
-            if (energy < 1000) { energy += 1; updateUI(); }
-        }, 1500);
-
-        // سحب بيانات تلجرام
-        const user = tg.initDataUnsafe.user;
-        if (user) {
-            document.getElementById('u-name').innerText = user.first_name;
-            if (user.photo_url) document.getElementById('u-img').src = user.photo_url;
+        // Panels
+        function togglePanel(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+            if (id !== 'home') {
+                document.getElementById(id).classList.add('open');
+            }
         }
 
-        initDaily();
-        updateUI();
+        function renderUpgrades() {
+            const container = document.getElementById('upgrades-list');
+            container.innerHTML = upgrades.map(up => `
+                <div class="upgrade-card">
+                    <div style="font-size:30px; margin-left:15px;">${up.icon}</div>
+                    <div class="upgrade-info">
+                        <h4>${up.name}</h4>
+                        <p>الربح: +${up.profit}/ساعة</p>
+                        <small>التكلفة: ${up.cost} 🪙</small>
+                    </div>
+                    <button class="buy-btn" 
+                        onclick="buyUpgrade(${up.cost}, ${up.profit})" 
+                        ${state.balance < up.cost ? 'disabled' : ''}>
+                        شراء
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function buyUpgrade(cost, profit) {
+            if (state.balance >= cost) {
+                state.balance -= cost;
+                state.profitPerHour += profit;
+                tg.HapticFeedback.notificationOccurred('success');
+                updateUI();
+            }
+        }
+
+        function startPassiveIncome() {
+            setInterval(() => {
+                // الربح السلبي كل ثانية
+                if (state.profitPerHour > 0) {
+                    state.balance += (state.profitPerHour / 3600);
+                }
+                // استعادة الطاقة
+                if (state.energy < state.maxEnergy) {
+                    state.energy = Math.min(state.maxEnergy, state.energy + 3);
+                }
+                updateUI();
+            }, 1000);
+        }
+
+        function tgAlert() {
+            tg.showAlert("قريباً في التحديث القادم!");
+        }
+
+        init();
     </script>
 </body>
 </html>
