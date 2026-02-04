@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Community Edition</title>
+    <title>Golden Claim | Viral Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -13,31 +13,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --accent: #2d333b; --success: #22c55e; }
+        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --accent: #2d333b; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
-        
         .top-info { display: flex; justify-content: space-between; padding: 15px; background: #111; border-bottom: 1px solid #222; align-items: center; }
         .stat-box { background: var(--card); padding: 5px 12px; border-radius: 12px; border: 1px solid var(--accent); font-size: 11px; }
-
         .page { display: none; height: 82vh; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
         .active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ستايل المهام */
-        .task-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        .task-item { background: var(--card); padding: 15px; border-radius: 18px; border: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
-        .task-info b { display: block; font-size: 14px; }
-        .task-info span { color: var(--gold); font-size: 12px; font-weight: bold; }
-        .task-btn { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .task-btn.done { background: #333; color: #777; cursor: default; }
-
-        .balance-hero { text-align: center; margin-top: 10px; }
-        .coin-btn { width: 200px; height: 200px; border-radius: 50%; margin: 20px auto; background: radial-gradient(circle, #222, #000); border: 8px solid #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
-        .coin-btn:active { transform: scale(0.95); border-color: var(--gold); }
-
+        /* ستايل الإحالة */
+        .ref-box { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--accent); text-align: center; margin-top: 15px; }
+        .ref-link-input { width: 100%; background: #000; border: 1px dashed var(--gold); color: var(--gold); padding: 10px; border-radius: 10px; margin: 10px 0; font-size: 12px; text-align: center; }
+        
+        .task-item { background: var(--card); padding: 15px; border-radius: 18px; border: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .coin-btn { width: 180px; height: 180px; border-radius: 50%; margin: 20px auto; background: radial-gradient(circle, #222, #000); border: 8px solid #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
         .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #151515; display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; }
         .nav-link { text-align: center; color: #555; flex: 1; font-size: 11px; cursor: pointer; }
         .nav-link.active { color: var(--gold); }
+        .btn-main { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
@@ -48,51 +41,39 @@
     </div>
 
     <div id="home" class="page active">
-        <div class="balance-hero">
-            <h1 id="balance" style="font-size: 45px; margin: 0;">0.0000</h1>
-            <p style="color: var(--gold); letter-spacing: 2px; font-size: 12px;">GOLDEN COIN</p>
+        <div style="text-align:center;">
+            <h1 id="balance" style="font-size: 40px; margin: 0;">0.0000</h1>
+            <p style="color: var(--gold); font-size: 12px;">GOLDEN COIN</p>
         </div>
         <div class="coin-btn" onclick="handleMine()">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="120">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="100">
         </div>
-        <div id="timer" style="text-align:center; font-weight:bold; color:var(--gold); font-size: 14px;">جاري المزامنة...</div>
+        <div id="timer" style="text-align:center; color:var(--gold); font-size: 14px;">مزامنة...</div>
     </div>
 
-    <div id="tasks" class="page">
-        <h2 style="text-align: center; color: var(--gold);">المهام الاجتماعية 📢</h2>
-        <p style="text-align: center; font-size: 12px; color: #888;">أكمل المهام لزيادة رصيدك فوراً!</p>
-        
-        <div class="task-list">
-            <div class="task-item">
-                <div class="task-info">
-                    <b>انضم لقناتنا على تلجرام</b>
-                    <span>+10.0000 GOLD</span>
-                </div>
-                <button id="task1" class="task-btn" onclick="doTask('https://t.me/YOUR_CHANNEL', 10, 'task1')">انتقال</button>
-            </div>
-
-            <div class="task-item">
-                <div class="task-info">
-                    <b>اشترك في قناة اليوتيوب</b>
-                    <span>+15.0000 GOLD</span>
-                </div>
-                <button id="task2" class="task-btn" onclick="doTask('https://youtube.com/@YOUR_CHANNEL', 15, 'task2')">انتقال</button>
-            </div>
+    <div id="friends" class="page">
+        <h2 style="text-align:center; color:var(--gold);">دعوة الأصدقاء 👥</h2>
+        <div class="ref-box">
+            <p style="font-size:14px;">احصل على <b style="color:var(--gold)">50.0000</b> عن كل صديق يدخل من رابطك!</p>
+            <input type="text" id="ref-url" class="ref-link-input" readonly value="جاري إنشاء الرابط...">
+            <button class="btn-main" onclick="copyRef()">نسخ رابط الدعوة</button>
+        </div>
+        <div style="margin-top:20px; text-align:center;">
+            <p>عدد أصدقائك: <span id="ref-count" style="color:var(--gold); font-weight:bold;">0</span></p>
         </div>
     </div>
 
     <div id="wallet" class="page">
-        <h3 style="text-align:center;">المحفظة والسحب</h3>
+        <h3 style="text-align:center;">المحفظة</h3>
         <div style="background:var(--card); padding:20px; border-radius:20px; text-align:center; border:1px solid var(--accent);">
-            <p>رصيدك القابل للسحب</p>
-            <h2 id="w-bal" style="color:var(--gold)">0.0000</h2>
-            <button class="task-btn" style="width: 100%; height: 50px;" onclick="tg.showAlert('السحب سيفتح قريباً بعد انتهاء مرحلة التجميع!')">سحب إلى TON</button>
+            <p id="w-bal" style="font-size:30px; color:var(--gold); margin:10px 0;">0.0000</p>
+            <button class="btn-main" onclick="tg.showAlert('السحب سيفتح قريباً!')">سحب العملات</button>
         </div>
     </div>
 
     <nav class="bottom-nav">
         <div class="nav-link active" onclick="showTab('home', this)">⛏️<br>تعدين</div>
-        <div class="nav-link" onclick="showTab('tasks', this)">🚀<br>المهام</div>
+        <div class="nav-link" onclick="showTab('friends', this)">👥<br>الأصدقاء</div>
         <div class="nav-link" onclick="showTab('wallet', this)">💰<br>المحفظة</div>
     </nav>
 
@@ -111,74 +92,78 @@
         };
         firebase.initializeApp(firebaseConfig);
 
+        let userData = {};
+        const botUsername = "Golden_Claim_Bot"; // استبدله بـ يوزر بوتك الحقيقي بدون @
+
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) startSync(user.uid);
+            if (user) handleUserAuth(user.uid);
             else firebase.auth().signInAnonymously();
         });
 
-        let userData = { balance: 0, last: 0, profitHour: 0 };
+        function handleUserAuth(uid) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const referrer = urlParams.get('tgWebAppStartParam'); // يحصل على ID الداعي من الرابط
+
+            const userRef = firebase.database().ref('users/' + uid);
+            userRef.once('value').then((s) => {
+                if (!s.exists()) {
+                    // مستخدم جديد - فحص هل جاء عبر إحالة؟
+                    let startData = { balance: 0, last: 0, profitHour: 0, refCount: 0 };
+                    userRef.set(startData);
+                    
+                    if (referrer && referrer !== uid) {
+                        rewardReferrer(referrer);
+                    }
+                }
+                startSync(uid);
+            });
+        }
+
+        function rewardReferrer(referrerId) {
+            const refRef = firebase.database().ref('users/' + referrerId);
+            refRef.transaction((data) => {
+                if (data) {
+                    data.balance = (data.balance || 0) + 50.0; // جائزة الإحالة
+                    data.refCount = (data.refCount || 0) + 1;
+                }
+                return data;
+            });
+        }
 
         function startSync(uid) {
-            const userRef = firebase.database().ref('users/' + uid);
-            userRef.on('value', (s) => {
-                const data = s.val();
-                if (data) {
-                    userData = data;
-                    document.getElementById('balance').innerText = (data.balance || 0).toFixed(4);
-                    document.getElementById('w-bal').innerText = (data.balance || 0).toFixed(4);
-                    document.getElementById('p-hour').innerText = (data.profitHour || 0).toFixed(4);
-                    updateTimerDisplay();
-                    checkCompletedTasks(data.tasks);
-                } else {
-                    userRef.set({ balance: 0, last: 0, profitHour: 0, tasks: {} });
-                }
+            firebase.database().ref('users/' + uid).on('value', (s) => {
+                userData = s.val();
+                document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
+                document.getElementById('w-bal').innerText = (userData.balance || 0).toFixed(4);
+                document.getElementById('ref-count').innerText = userData.refCount || 0;
+                document.getElementById('ref-url').value = `https://t.me/${botUsername}/start?startapp=${uid}`;
+                updateTimerDisplay();
             });
         }
 
-        // دالة تنفيذ المهمة
-        function doTask(url, reward, taskId) {
-            window.open(url, '_blank');
-            tg.showConfirm("هل قمت بالاشتراك فعلاً؟", (ok) => {
-                if(ok) {
-                    const uid = firebase.auth().currentUser.uid;
-                    firebase.database().ref('users/' + uid).update({
-                        balance: (userData.balance || 0) + reward,
-                        [`tasks/${taskId}`]: true
-                    });
-                    tg.showAlert(`مبروك! حصلت على ${reward} عملة 🎁`);
-                }
-            });
-        }
-
-        function checkCompletedTasks(tasks) {
-            if(!tasks) return;
-            if(tasks.task1) { document.getElementById('task1').innerText = "تم ✓"; document.getElementById('task1').className = "task-btn done"; document.getElementById('task1').onclick = null; }
-            if(tasks.task2) { document.getElementById('task2').innerText = "تم ✓"; document.getElementById('task2').className = "task-btn done"; document.getElementById('task2').onclick = null; }
+        function copyRef() {
+            const copyText = document.getElementById("ref-url");
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            tg.showAlert("تم نسخ رابط الإحالة! أرسله لأصدقائك 🚀");
         }
 
         function handleMine() {
             const now = Date.now();
             if (now - (userData.last || 0) >= 300000) {
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: (userData.balance || 0) + 0.0010 + (userData.profitHour || 0),
+                    balance: (userData.balance || 0) + 0.0010,
                     last: now
                 });
-                tg.HapticFeedback.impactOccurred('heavy');
+                tg.HapticFeedback.impactOccurred('medium');
             } else {
-                tg.showAlert("المعدن ساخن! انتظر اكتمال الوقت ❄️");
+                tg.showAlert("انتظر اكتمال الوقت ❄️");
             }
         }
 
         function updateTimerDisplay() {
             const rem = 300000 - (Date.now() - (userData.last || 0));
-            if (rem > 0) {
-                const m = Math.floor(rem / 60000);
-                const s = Math.floor((rem % 60000) / 1000);
-                document.getElementById('timer').innerText = `جاهز خلال: ${m}:${s < 10 ? '0'+s : s}`;
-                setTimeout(updateTimerDisplay, 1000);
-            } else {
-                document.getElementById('timer').innerText = "جاهز للمطالبة! ⚡";
-            }
+            document.getElementById('timer').innerText = rem > 0 ? `جاهز خلال: ${Math.floor(rem/60000)}:${Math.floor((rem%60000)/1000)}` : "جاهز للمطالبة! ⚡";
         }
 
         function showTab(id, el) {
@@ -188,10 +173,7 @@
             el.classList.add('active');
         }
 
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect'
-        });
+        new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
     </script>
 </body>
 </html>
