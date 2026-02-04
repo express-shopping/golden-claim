@@ -3,297 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Hamster | Pro Edition</title>
+    <title>Elite Hamster | Diamond Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --gold: #ffcf4b;
-            --royal-blue: #3b82f6;
-            --deep-dark: #05070a;
+            --primary: #fbbf24;
+            --secondary: #60a5fa;
+            --bg: #020617;
+            --card-bg: rgba(30, 41, 59, 0.7);
             --glass: rgba(255, 255, 255, 0.05);
-            --neon-glow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
 
         body {
             margin: 0; padding: 0;
-            background: radial-gradient(circle at top, #111827, #05070a);
-            color: white;
-            font-family: 'Cairo', sans-serif;
-            overflow: hidden;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: white; font-family: 'Cairo', sans-serif;
+            overflow: hidden; user-select: none;
         }
 
-        /* --- Header & Level --- */
-        .header-elite {
+        /* --- Header Premium --- */
+        .header {
             display: flex; align-items: center; padding: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
         }
-        .profile-section { position: relative; }
-        .user-avatar {
-            width: 60px; height: 60px; border-radius: 20px;
-            border: 2px solid var(--royal-blue);
-            box-shadow: var(--neon-glow);
-            background-image: url('https://via.placeholder.com/60');
-            background-size: cover;
+        .user-pic {
+            width: 50px; height: 50px; border-radius: 15px;
+            border: 2px solid var(--secondary);
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.3);
+            background-size: cover; background-position: center;
         }
-        .level-badge {
-            position: absolute; bottom: -5px; right: -5px;
-            background: var(--gold); color: black;
-            font-size: 10px; font-weight: 900;
-            padding: 2px 6px; border-radius: 8px;
-        }
-        .user-info { margin-right: 15px; flex-grow: 1; }
-        .user-name { font-weight: 900; font-size: 18px; letter-spacing: 0.5px; }
-        
-        .xp-container { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 8px; overflow: hidden; }
-        .xp-bar { width: 20%; height: 100%; background: linear-gradient(90deg, var(--royal-blue), #a855f7); transition: 0.4s; }
+        .user-meta { margin-right: 15px; flex-grow: 1; }
+        .u-name { font-weight: 900; font-size: 16px; letter-spacing: 0.5px; }
+        .u-rank { color: var(--primary); font-size: 11px; font-weight: 700; }
 
-        /* --- Stats Card --- */
-        .stats-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px;
+        /* --- Global Pages System --- */
+        .page {
+            position: fixed; inset: 0; background: var(--bg);
+            padding: 80px 20px 100px 20px; display: none;
+            overflow-y: auto; z-index: 100;
         }
-        .stat-card {
-            background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
-            padding: 10px; border-radius: 15px; text-align: center;
-        }
-        .stat-card small { font-size: 10px; color: #94a3b8; display: block; }
-        .stat-card span { font-weight: bold; color: var(--gold); }
+        .page.active { display: block; animation: pageIn 0.4s ease forwards; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Main Balance --- */
-        .balance-section { text-align: center; margin: 30px 0; }
-        .balance-amount {
-            font-size: 50px; font-weight: 900;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            text-shadow: 0 0 30px rgba(255, 207, 75, 0.3);
-        }
-        .balance-amount img { width: 45px; filter: drop-shadow(0 0 10px var(--gold)); }
+        /* --- Home Page Specifics --- */
+        .balance-box { text-align: center; margin: 20px 0; }
+        .balance-amount { font-size: 50px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .balance-amount img { width: 45px; }
 
-        /* --- The Elite Tap Button --- */
-        .tap-area {
-            position: relative; width: 260px; height: 260px; margin: 0 auto;
+        .tap-zone {
+            position: relative; width: 250px; height: 250px; margin: 30px auto;
             display: flex; align-items: center; justify-content: center;
-        }
-        .pulse-ring {
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 50%; border: 2px solid var(--royal-blue);
-            animation: pulse-animation 2s infinite;
         }
         .main-btn {
-            width: 220px; height: 220px; border-radius: 50%;
+            width: 210px; height: 210px; border-radius: 50%;
             background: linear-gradient(145deg, #1e293b, #020617);
-            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(59, 130, 246, 0.2);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: transform 0.1s; border: 4px solid rgba(255,255,255,0.05);
-            z-index: 5;
+            border: 6px solid var(--glass); cursor: pointer;
+            transition: transform 0.1s; position: relative; z-index: 5;
+            box-shadow: 0 0 50px rgba(0,0,0,0.6);
         }
         .main-btn:active { transform: scale(0.92); }
-        .main-btn img { width: 80%; border-radius: 50%; pointer-events: none; }
+        .main-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
-        @keyframes pulse-animation {
-            0% { transform: scale(1); opacity: 0.5; }
+        /* Pulse Ring */
+        .pulse {
+            position: absolute; width: 100%; height: 100%;
+            border: 2px solid var(--secondary); border-radius: 50%;
+            animation: pulse-ani 2s infinite; opacity: 0;
+        }
+        @keyframes pulse-ani {
+            0% { transform: scale(0.8); opacity: 0.5; }
             100% { transform: scale(1.3); opacity: 0; }
         }
 
-        /* --- Energy --- */
-        .energy-wrapper { width: 80%; margin: 30px auto; text-align: center; }
-        .energy-label { font-size: 14px; margin-bottom: 5px; font-weight: bold; color: #cbd5e1; }
-        .energy-bar-outer { height: 12px; background: #1e293b; border-radius: 20px; padding: 2px; border: 1px solid rgba(255,255,255,0.1); }
-        .energy-bar-inner { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 20px; transition: 0.3s; }
+        /* --- Energy Bar --- */
+        .energy-box { width: 85%; margin: 20px auto; }
+        .energy-bar { height: 10px; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid var(--glass); }
+        .energy-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #fff); width: 100%; transition: width 0.3s; }
 
-        /* --- Navigation --- */
-        .bottom-nav {
-            position: fixed; bottom: 25px; left: 5%; width: 90%;
-            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px);
-            display: flex; justify-content: space-around; padding: 15px 0;
-            border-radius: 25px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 1000;
+        /* --- Task & Wallet Cards --- */
+        .glass-card {
+            background: var(--card-bg); border-radius: 20px; padding: 20px;
+            border: 1px solid var(--glass); margin-bottom: 15px;
         }
-        .nav-item { text-align: center; color: #64748b; font-size: 11px; font-weight: bold; transition: 0.3s; cursor: pointer; }
-        .nav-item.active { color: var(--royal-blue); transform: translateY(-5px); }
-        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+        .task-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .action-btn {
+            background: var(--secondary); border: none; color: white;
+            padding: 8px 18px; border-radius: 12px; font-weight: 800; cursor: pointer;
+        }
 
-        /* --- Pages --- */
-        .elite-page {
-            position: fixed; inset: 0; background: #05070a; z-index: 2000;
-            display: none; padding: 40px 20px; 
+        /* --- Bottom Nav --- */
+        .nav-bar {
+            position: fixed; bottom: 20px; left: 15px; right: 15px;
+            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-around; padding: 12px;
+            border-radius: 25px; border: 1px solid var(--glass); z-index: 1000;
         }
-        .elite-page.active { display: block; animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .nav-btn { text-align: center; color: #64748b; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .nav-btn.active { color: var(--secondary); transform: translateY(-5px); }
+        .nav-btn div { font-size: 22px; margin-bottom: 4px; }
 
-        .wallet-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            padding: 30px; border-radius: 30px; border: 1px solid var(--royal-blue);
-            text-align: center; margin-top: 20px;
-        }
-        
-        .floating-num {
-            position: absolute; color: white; font-size: 32px; font-weight: 900;
-            pointer-events: none; animation: float 0.8s ease-out forwards; z-index: 200;
-            text-shadow: 0 0 10px var(--royal-blue);
-        }
-        @keyframes float { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-150px); } }
-
+        /* Pop Number */
+        .pop { position: absolute; font-weight: 900; font-size: 32px; pointer-events: none; animation: popUp 0.8s forwards; z-index: 2000; }
+        @keyframes popUp { to { transform: translateY(-150px); opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div class="header-elite">
-        <div class="profile-section">
-            <div class="user-avatar" id="avatar"></div>
-            <div class="level-badge">LVL <span id="lvl-txt">1</span></div>
+    <div class="header" style="position: fixed; top: 0; width: 100%; z-index: 1100;">
+        <div class="user-pic" id="u-pic"></div>
+        <div class="user-meta">
+            <div class="u-name" id="u-name">Elite User</div>
+            <div class="u-rank">Rank: <span id="rank-name">CEO</span></div>
         </div>
-        <div class="user-info">
-            <div class="user-name" id="username">ELITE PLAYER</div>
-            <div class="xp-container"><div class="xp-bar" id="xp-bar"></div></div>
-        </div>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card">
-            <small>الربح في الساعة</small>
-            <span id="p-hour">+0</span>
-        </div>
-        <div class="stat-card">
-            <small>قوة النقرة</small>
-            <span id="t-power">1</span>
+        <div style="text-align: left;">
+            <div style="font-size: 10px; color: #94a3b8;">PROFIT/HR</div>
+            <div style="color: var(--primary); font-weight: 900;" id="p-hr">+0</div>
         </div>
     </div>
 
-    <div class="balance-section">
-        <div class="balance-amount">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
-            <span id="balance">0</span>
+    <div id="home" class="page active">
+        <div class="balance-box">
+            <div class="balance-amount">
+                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
+                <span id="bal-val">0</span>
+            </div>
+        </div>
+
+        <div class="tap-zone" id="tap-area">
+            <div class="pulse"></div>
+            <div class="pulse" style="animation-delay: 1s"></div>
+            <div class="main-btn">
+                <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
+            </div>
+        </div>
+
+        <div class="energy-box">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+                <span>⚡ الطاقة</span>
+                <span><span id="en-val">1000</span> / 1000</span>
+            </div>
+            <div class="energy-bar"><div id="en-fill" class="energy-fill"></div></div>
         </div>
     </div>
 
-    <div class="tap-area">
-        <div class="pulse-ring"></div>
-        <div class="main-btn" id="main-tap">
-            <img src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg">
+    <div id="earn" class="page">
+        <h2 style="color: var(--primary);">المهام اليومية</h2>
+        <div class="glass-card">
+            <div class="task-row">
+                <div><b>مكافأة اليوم 1</b><br><small>+1,000 قطعة</small></div>
+                <button class="action-btn" onclick="claimDaily(1000, this)">استلام</button>
+            </div>
+            <div class="task-row">
+                <div><b>متابعة يوتيوب</b><br><small>+50,000 قطعة</small></div>
+                <button class="action-btn" onclick="window.open('https://youtube.com')">انتقال</button>
+            </div>
         </div>
     </div>
 
-    <div class="energy-wrapper">
-        <div class="energy-label">الطاقة المستهلكة: <span id="e-num">1000</span>/1000</div>
-        <div class="energy-bar-outer"><div class="energy-bar-inner" id="e-bar" style="width: 100%;"></div></div>
+    <div id="friends" class="page">
+        <h2 style="text-align: center;">ادعُ الأصدقاء</h2>
+        <div class="glass-card" style="text-align: center;">
+            <div style="font-size: 50px;">🎁</div>
+            <p>سوف تحصل على 10,000 قطعة عن كل صديق تدعوه!</p>
+            <button class="action-btn" style="width: 100%; padding: 15px;" onclick="tg.openTelegramLink('https://t.me/share/url?url=...')">دعوة صديق</button>
+        </div>
     </div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="location.reload()"><i>🏠</i>الرئيسية</div>
-        <div class="nav-item" onclick="openPage('mine-page')"><i>⛏️</i>تعدين</div>
-        <div class="nav-item" onclick="openPage('wallet-page')"><i>💎</i>المحفظة</div>
+    <div id="wallet" class="page">
+        <h2 style="text-align: center;">المحفظة الرقمية</h2>
+        <div class="glass-card" style="text-align: center; background: linear-gradient(145deg, #0f172a, #1e293b);">
+            <img src="https://img.icons8.com/fluency/96/wallet.png" width="80">
+            <h3>ربط محفظة TON</h3>
+            <p style="color: #94a3b8; font-size: 13px;">قم بربط محفظتك لتلقي العملات عند الإدراج</p>
+            <button class="action-btn" style="width: 100%; background: #007aff;" onclick="tg.showAlert('قريباً: سيتم فتح الربط في التحديث القادم!')">Connect Wallet</button>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-btn active" onclick="showPage('home', this)"><div>🏠</div>الرئيسية</div>
+        <div class="nav-btn" onclick="showPage('earn', this)"><div>💰</div>المهام</div>
+        <div class="nav-btn" onclick="showPage('friends', this)"><div>👥</div>الأصدقاء</div>
+        <div class="nav-btn" onclick="showPage('wallet', this)"><div>💎</div>المحفظة</div>
     </nav>
 
-    <div id="wallet-page" class="elite-page">
-        <div onclick="closePages()" style="font-size: 30px; cursor: pointer;">✕</div>
-        <h1 style="text-align: center;">المحفظة الملكية</h1>
-        <div class="wallet-card">
-            <p>إجمالي الرصيد القابل للسحب</p>
-            <h2 id="w-bal" style="color: var(--gold); font-size: 35px;">0</h2>
-            <button style="background: var(--royal-blue); border: none; color: white; padding: 12px 30px; border-radius: 15px; font-weight: bold; width: 100%; margin-top: 20px;">ربط محفظة TON</button>
-        </div>
-    </div>
-
-    <div id="mine-page" class="elite-page">
-        <div onclick="closePages()" style="font-size: 30px; cursor: pointer;">✕</div>
-        <h1>تطوير المعدات</h1>
-        <div style="background: var(--glass); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
-            <h3>معدات احترافية v1</h3>
-            <p style="color: var(--gold);">+1,000 ربح/ساعة</p>
-            <button onclick="buyUpgrade(1000, 5000)" style="background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; cursor: pointer;">شراء (5,000)</button>
-        </div>
-    </div>
-
     <script>
-        let balance = 0;
-        let energy = 1000;
-        let profit = 0;
-        let xp = 0;
-        let tapPower = 1;
-
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation();
 
-        // Vibration Helper
-        function triggerHaptic() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
-        }
+        let balance = 0;
+        let energy = 1000;
+        let tapVal = 1;
 
-        // Tap Logic
-        document.getElementById('main-tap').addEventListener('touchstart', (e) => {
+        // --- نظام النقر الراقي ---
+        document.getElementById('tap-area').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (energy >= tapPower) {
-                balance += tapPower;
-                energy -= tapPower;
-                xp += 2;
+            if (energy >= tapVal) {
+                balance += tapVal;
+                energy -= tapVal;
                 
-                triggerHaptic();
-                createParticle(e.touches[0].clientX, e.touches[0].clientY);
+                const touch = e.touches[0];
+                createPop(touch.clientX, touch.clientY);
                 updateUI();
+                
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             }
         });
 
-        function createParticle(x, y) {
-            const num = document.createElement('div');
-            num.className = 'floating-num';
-            num.innerText = `+${tapPower}`;
-            num.style.left = `${x - 20}px`;
-            num.style.top = `${y - 40}px`;
-            document.body.appendChild(num);
-            setTimeout(() => num.remove(), 800);
+        function createPop(x, y) {
+            const p = document.createElement('div');
+            p.className = 'pop';
+            p.innerText = `+${tapVal}`;
+            p.style.left = `${x - 20}px`;
+            p.style.top = `${y - 50}px`;
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+        }
+
+        // --- نظام التنقل الفاخر ---
+        function showPage(id, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
         }
 
         function updateUI() {
-            document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('w-bal').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('e-num').innerText = energy;
-            document.getElementById('e-bar').style.width = (energy / 10) + "%";
-            document.getElementById('p-hour').innerText = `+${profit.toLocaleString()}`;
-            
-            // Leveling Logic
-            let currentLevel = Math.floor(xp / 100) + 1;
-            document.getElementById('lvl-txt').innerText = currentLevel;
-            document.getElementById('xp-bar').style.width = (xp % 100) + "%";
-            
-            // Update Tap Power based on level
-            tapPower = currentLevel;
-            document.getElementById('t-power').innerText = tapPower;
+            document.getElementById('bal-val').innerText = balance.toLocaleString();
+            document.getElementById('en-val').innerText = energy;
+            document.getElementById('en-fill').style.width = (energy / 10) + "%";
         }
 
-        function openPage(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function closePages() {
-            document.querySelectorAll('.elite-page').forEach(p => p.classList.remove('active'));
-        }
-
-        function buyUpgrade(pAdd, cost) {
-            if (balance >= cost) {
-                balance -= cost;
-                profit += pAdd;
-                updateUI();
-                tg.showAlert("تمت عملية الشراء بنجاح! أرباحك زادت.");
-            } else {
-                tg.showAlert("رصيدك غير كافي لهذه الترقية الملكية!");
-            }
-        }
-
-        // Auto Profit & Recovery
-        setInterval(() => {
-            if (profit > 0) balance += (profit / 3600);
-            if (energy < 1000) energy += 1;
+        function claimDaily(amt, btn) {
+            balance += amt;
+            btn.innerText = "تمت";
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
             updateUI();
-        }, 1000);
+        }
 
-        // Telegram User Data
+        // استعادة الطاقة والربح الآلي
+        setInterval(() => {
+            if (energy < 1000) { energy += 2; updateUI(); }
+        }, 1500);
+
+        // تحميل بيانات تلجرام
         if (tg.initDataUnsafe.user) {
-            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name.toUpperCase();
+            document.getElementById('u-name').innerText = tg.initDataUnsafe.user.first_name;
             if (tg.initDataUnsafe.user.photo_url) {
-                document.getElementById('avatar').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
+                document.getElementById('u-pic').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
             }
         }
 
