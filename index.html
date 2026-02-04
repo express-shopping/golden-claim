@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Master Admin Edition</title>
+    <title>Golden Claim | Excellence Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -13,87 +13,124 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --accent: #2d333b; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; text-align: center; }
+        :root { 
+            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --green: #00ff87;
+            --bg: #050505; --glass: rgba(255, 255, 255, 0.05);
+        }
         
-        .level-badge { padding: 6px 15px; border-radius: 50px; font-weight: 900; font-size: 11px; display: inline-block; margin-top: 15px; }
-        .lvl-1 { background: #cd7f32; } .lvl-2 { background: #c0c0c0; color: #000; }
-        .lvl-3 { background: #f3ba2f; color: #000; } .lvl-4 { background: #b9f2ff; color: #000; }
-        .lvl-5 { background: #6366f1; } .lvl-6 { background: #8b5cf6; }
-        .lvl-7 { background: #ec4899; } .lvl-8 { background: linear-gradient(to right, #f43f5e, #fb923c); }
-        .lvl-9 { background: linear-gradient(to right, #8b5cf6, #d946ef); border: 2px solid gold; }
-        .lvl-10 { background: radial-gradient(circle, #fff, #f3ba2f); color: #000; animation: glow 1s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 5px #f3ba2f; } to { box-shadow: 0 0 20px #f3ba2f; } }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
 
-        .coin-btn { width: 190px; height: 190px; border-radius: 50%; margin: 20px auto; background: radial-gradient(circle, #222, #000); border: 8px solid #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
-        .coin-btn:active { transform: scale(0.92); }
-        
-        .page { display: none; height: 85vh; padding: 20px; overflow-y: auto; }
-        .active { display: block; }
+        /* خلفية فنية متحركة */
+        .bg-gradient {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(0, 210, 255, 0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.1) 0%, transparent 40%);
+            z-index: -1;
+        }
 
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #151515; display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; z-index: 100; }
-        .nav-link { color: #555; font-size: 11px; cursor: pointer; flex: 1; }
-        .nav-link.active { color: var(--gold); }
-        .btn-main { width: 100%; padding: 12px; background: var(--gold); color:black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        /* شريط المعلومات العلوي */
+        .header { display: flex; justify-content: space-between; padding: 20px; align-items: center; }
+        .user-tag { background: var(--glass); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); font-size: 12px; }
+
+        /* شريط المستوى الأنيق */
+        .level-section { padding: 0 30px; margin-top: 10px; }
+        .level-info { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; color: var(--blue); font-weight: bold; }
+        .progress-container { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(to right, var(--blue), var(--pink)); transition: width 0.5s ease; }
+
+        /* منطقة الرصيد */
+        .balance-area { text-align: center; margin-top: 30px; }
+        .balance-main { font-size: 50px; font-weight: 900; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        .lvl-badge { display: inline-block; padding: 4px 12px; border-radius: 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; border: 1px solid var(--gold); }
+
+        /* دائرة النقر الإبداعية */
+        .coin-wrapper { position: relative; width: 220px; height: 220px; margin: 40px auto; display: flex; align-items: center; justify-content: center; }
+        .coin-btn { 
+            width: 180px; height: 180px; border-radius: 50%; 
+            background: radial-gradient(circle, #1a1a1a, #000); 
+            border: 4px solid rgba(255, 255, 255, 0.05);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; z-index: 2;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+            -webkit-tap-highlight-color: transparent; /* يمنع المربع الأزرق */
+        }
+        .coin-btn:active { transform: scale(0.95); }
+        .glow-effect { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--blue); filter: blur(50px); opacity: 0.1; z-index: 1; }
+
+        /* القائمة السفلية الراقية */
+        .bottom-nav { position: fixed; bottom: 20px; left: 5%; width: 90%; background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { color: #777; font-size: 11px; text-align: center; flex: 1; transition: 0.3s; }
+        .nav-item.active { color: var(--gold); }
+
+        .page { display: none; padding: 20px; height: 75vh; overflow-y: auto; }
+        .active-page { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--glass); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
     </style>
 </head>
 <body>
+    <div class="bg-gradient"></div>
+    
+    <audio id="snd-click" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="snd-lvl" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
 
-    <audio id="click-sound" src="https://www.soundjay.com/buttons/button-16.mp3" preload="auto"></audio>
-    <audio id="level-up-sound" src="https://www.soundjay.com/buttons/button-09.mp3" preload="auto"></audio>
-
-    <div style="display:flex; justify-content:space-between; padding:15px; background:#111; border-bottom:1px solid #222;">
+    <div class="header">
         <div id="ton-connect"></div>
-        <div style="background:var(--card); padding:5px 12px; border-radius:12px; font-size:11px;">الربح/نقرة: <span style="color:var(--gold)">+0.001</span></div>
+        <div class="user-tag" id="user-name">مستخدم ذهبي</div>
     </div>
 
-    <div id="home" class="page active">
-        <div id="level-tag" class="level-badge lvl-1">مزامنة...</div>
-        <h1 id="balance" style="font-size: 45px; margin: 10px 0 0 0;">0.0000</h1>
-        <p style="color: var(--gold); font-size: 12px; margin-bottom: 15px;">GOLDEN CLAIM</p>
-        <div class="coin-btn" onclick="handleMine()">
-            <img id="coin-img" src="https://cdn-icons-png.flaticon.com/512/2529/2529396.png" width="100">
+    <div class="level-section">
+        <div class="level-info">
+            <span id="lvl-text">مستوى: برونزي</span>
+            <span id="lvl-percent">0%</span>
         </div>
-        <div id="timer" style="color:var(--gold); font-weight:bold; font-size:14px;">تحميل...</div>
+        <div class="progress-container"><div class="progress-bar" id="p-bar"></div></div>
     </div>
 
-    <div id="friends" class="page">
-        <h2>دعوة الأصدقاء 👥</h2>
-        <div style="background:var(--card); padding:20px; border-radius:20px; border:1px solid var(--accent);">
-            <p>سيكافئك النظام بـ 50 عملة لكل إحالة!</p>
-            <input type="text" id="ref-url" readonly style="width:90%; padding:10px; background:#000; color:var(--gold); border:1px solid #333; border-radius:10px; text-align:center;">
-            <button class="btn-main" onclick="copyRef()">نسخ رابط الدعوة</button>
+    <div id="home" class="page active-page">
+        <div class="balance-area">
+            <h1 class="balance-main" id="balance">0.0000</h1>
+            <div class="lvl-badge" id="lvl-badge">BRONZE</div>
+        </div>
+        <div class="coin-wrapper">
+            <div class="glow-effect"></div>
+            <div class="coin-btn" onclick="handleMine()">
+                <img id="coin-img" src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="100">
+            </div>
+        </div>
+        <div id="timer" style="text-align:center; color:#555; font-size:12px;">مزامنة البيانات...</div>
+    </div>
+
+    <div id="wallet" class="page">
+        <h2 style="text-align:center;">المحفظة الرقمية 💰</h2>
+        <div class="card">
+            <p style="color:#888;">الرصيد القابل للسحب</p>
+            <h1 style="color:var(--gold);" id="w-balance">0.00</h1>
+            <div style="height:1px; background:rgba(255,255,255,0.1); margin:15px 0;"></div>
+            <button onclick="tg.showAlert('السحب سيفتح قريباً عند الإدراج!')" style="width:100%; padding:15px; background:linear-gradient(to right, var(--blue), var(--pink)); border:none; border-radius:15px; color:white; font-weight:bold;">طلب سحب العملات</button>
         </div>
     </div>
 
     <div id="admin" class="page">
-        <h2 style="color:var(--gold);">لوحة الإدارة ⚙️</h2>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div style="background:var(--card); padding:15px; border-radius:15px;">
-                <p style="font-size:11px;">المستخدمين</p>
-                <h3 id="total-users" style="color:var(--gold)">0</h3>
-            </div>
-            <div style="background:var(--card); padding:15px; border-radius:15px;">
-                <p style="font-size:11px;">إجمالي العملات</p>
-                <h3 id="total-coins" style="color:var(--gold)">0</h3>
-            </div>
+        <h2 style="color:var(--gold);">إحصائيات الإمبراطورية ⚙️</h2>
+        <div class="card" style="display:flex; justify-content:space-around;">
+            <div><p style="font-size:10px;">المستخدمين</p><h2 id="total-u">0</h2></div>
+            <div><p style="font-size:10px;">إجمالي الذهب</p><h2 id="total-c">0</h2></div>
         </div>
-        <button class="btn-main" onclick="loadAdminStats()" style="background:#444; color:white;">تحديث الإحصائيات</button>
+        <button onclick="loadAdminStats()" style="width:100%; padding:10px; background:var(--blue); border:none; border-radius:10px; color:black; font-weight:bold;">تحديث البيانات</button>
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-link active" onclick="showTab('home', this)">⛏️<br>تعدين</div>
-        <div class="nav-link" onclick="showTab('friends', this)">👥<br>الأصدقاء</div>
-        <div id="admin-link" class="nav-link" style="display:none;" onclick="showTab('admin', this)">⚙️<br>الإدارة</div>
+        <div class="nav-item active" onclick="showTab('home', this)">⛏️<br>تعدين</div>
+        <div class="nav-item" onclick="showTab('wallet', this)">💰<br>المحفظة</div>
+        <div id="admin-link" class="nav-item" style="display:none;" onclick="showTab('admin', this)">⚙️<br>الإدارة</div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
-        // --- إعداداتك الخاصة ---
-        const botUsername = "Golden_Claim_Bot"; 
-        const ADMIN_UID = "YT0h3DbbgJWaGMBhf2LzVWwuqk42"; // الـ UID الخاص بك تم وضعه هنا
-        // -----------------------
-
+        const ADMIN_UID = "YT0h3DbbgJWaGMBhf2LzVWwuqk42";
+        
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
             authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -106,114 +143,84 @@
         firebase.initializeApp(firebaseConfig);
 
         let userData = {};
-        let currentLevelName = "";
+        let currentLevel = "";
 
         firebase.auth().onAuthStateChanged(user => {
             if(user) {
-                handleLogin(user.uid);
-                // إظهار لوحة الإدارة إذا كان المستخدم هو أنت
-                if(user.uid === ADMIN_UID) {
-                    document.getElementById('admin-link').style.display = 'block';
-                }
+                if(user.uid === ADMIN_UID) document.getElementById('admin-link').style.display = 'block';
+                sync(user.uid);
             } else {
                 firebase.auth().signInAnonymously();
             }
         });
 
-        function handleLogin(uid) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const refBy = urlParams.get('tgWebAppStartParam');
-            const userRef = firebase.database().ref('users/' + uid);
-
-            userRef.once('value', (s) => {
-                if(!s.exists()) {
-                    userRef.set({ balance: 0, last: 0 });
-                    if(refBy && refBy !== uid) {
-                        firebase.database().ref('users/' + refBy).transaction(d => {
-                            if(d) { d.balance = (d.balance || 0) + 50; }
-                            return d;
-                        });
-                    }
-                }
-                sync(uid);
-            });
-        }
-
         function sync(uid) {
             firebase.database().ref('users/' + uid).on('value', s => {
                 userData = s.val() || {balance:0, last:0};
-                document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
-                document.getElementById('ref-url').value = `https://t.me/${botUsername}/start?startapp=${uid}`;
-                updateLevelUI(userData.balance || 0);
-                updateTimer();
+                const b = userData.balance || 0;
+                document.getElementById('balance').innerText = b.toFixed(4);
+                document.getElementById('w-balance').innerText = b.toFixed(2);
+                document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "مستكشف الذهب";
+                updateLevel(b);
             });
         }
 
-        function updateLevelUI(bal) {
-            const tag = document.getElementById('level-tag');
-            const coinImg = document.getElementById('coin-img');
-            let img = ""; let name = ""; let cls = "";
+        function updateLevel(bal) {
+            const bar = document.getElementById('p-bar');
+            const txt = document.getElementById('lvl-text');
+            const badge = document.getElementById('lvl-badge');
+            let p = 0; let name = ""; let next = 5000;
 
-            if (bal >= 500000000) { name = "سيد المجرة 🌌✨"; cls = "lvl-10"; img = "https://cdn-icons-png.flaticon.com/512/2534/2534033.png"; }
-            else if (bal >= 100000000) { name = "التاج الأسطوري V3 🔥"; cls = "lvl-9"; img = "https://cdn-icons-png.flaticon.com/512/5424/5424564.png"; }
-            else if (bal >= 20000000) { name = "التاج المطور 🛡️"; cls = "lvl-8"; img = "https://cdn-icons-png.flaticon.com/512/9724/9724450.png"; }
-            else if (bal >= 5000000) { name = "تاج الإمبراطور 🤴"; cls = "lvl-7"; img = "https://cdn-icons-png.flaticon.com/512/2311/2311053.png"; }
-            else if (bal >= 1000000) { name = "تاج الملوك 👑"; cls = "lvl-6"; img = "https://cdn-icons-png.flaticon.com/512/1041/1041168.png"; }
-            else if (bal >= 100000) { name = "ألماسي 💎"; cls = "lvl-4"; img = "https://cdn-icons-png.flaticon.com/512/2950/2950150.png"; }
-            else if (bal >= 20000) { name = "ذهبي 🥇"; cls = "lvl-3"; img = "https://cdn-icons-png.flaticon.com/512/2529/2529391.png"; }
-            else if (bal >= 5000) { name = "فضي 🥈"; cls = "lvl-2"; img = "https://cdn-icons-png.flaticon.com/512/2529/2529397.png"; }
-            else { name = "برونزي 🥉"; cls = "lvl-1"; img = "https://cdn-icons-png.flaticon.com/512/2529/2529396.png"; }
+            if(bal >= 1000000) { name="تاج الملوك"; p=100; next=1000000; }
+            else if(bal >= 100000) { name="ألماسي"; p=(bal/1000000)*100; next=1000000; }
+            else if(bal >= 20000) { name="ذهبي"; p=(bal/100000)*100; next=100000; }
+            else if(bal >= 5000) { name="فضي"; p=(bal/20000)*100; next=20000; }
+            else { name="برونزي"; p=(bal/5000)*100; next=5000; }
 
-            if (currentLevelName !== "" && currentLevelName !== name) {
-                document.getElementById('level-up-sound').play();
-                tg.showAlert(`رائع! ارتقيت إلى: ${name}`);
+            bar.style.width = p + "%";
+            txt.innerText = "مستوى: " + name;
+            badge.innerText = name.toUpperCase();
+            document.getElementById('lvl-percent').innerText = Math.floor(p) + "%";
+            
+            if(currentLevel !== "" && currentLevel !== name) {
+                document.getElementById('snd-lvl').play();
+                tg.showAlert("تمت ترقية مستواك إلى: " + name);
             }
-            currentLevelName = name;
-            tag.innerText = name;
-            tag.className = "level-badge " + cls;
-            if(coinImg.src !== img) coinImg.src = img;
+            currentLevel = name;
         }
 
         function handleMine() {
-            document.getElementById('click-sound').currentTime = 0;
-            document.getElementById('click-sound').play();
+            document.getElementById('snd-click').currentTime = 0;
+            document.getElementById('snd-click').play();
             const now = Date.now();
-            if (now - (userData.last || 0) >= 300000) {
+            if(now - (userData.last || 0) >= 300000) {
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
                     balance: (userData.balance || 0) + 0.001,
                     last: now
                 });
-                tg.HapticFeedback.impactOccurred('light');
+                tg.HapticFeedback.impactOccurred('medium');
             } else {
-                tg.showAlert("المعدن يحتاج للراحة! ❄️");
+                tg.showAlert("المنجم يبرد الآن.. انتظر قليلاً ❄️");
             }
         }
 
-        function updateTimer() {
-            const rem = 300000 - (Date.now() - (userData.last || 0));
-            document.getElementById('timer').innerText = rem > 0 ? `جاهز خلال: ${Math.floor(rem/60000)}:${Math.floor((rem%60000)/1000)}` : "جاهز للمطالبة! ⚡";
-        }
-
-        function copyRef() {
-            navigator.clipboard.writeText(document.getElementById('ref-url').value);
-            tg.showAlert("تم النسخ!");
+        function showTab(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active-page');
+            el.classList.add('active');
         }
 
         function loadAdminStats() {
             firebase.database().ref('users').once('value', s => {
-                let users = 0; let coins = 0;
-                s.forEach(u => { users++; coins += (u.val().balance || 0); });
-                document.getElementById('total-users').innerText = users;
-                document.getElementById('total-coins').innerText = coins.toFixed(2);
+                let u=0; let c=0;
+                s.forEach(x => { u++; c += (x.val().balance || 0); });
+                document.getElementById('total-u').innerText = u;
+                document.getElementById('total-c').innerText = c.toFixed(2);
             });
         }
 
-        function showTab(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        }
+        new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
     </script>
 </body>
 </html>
