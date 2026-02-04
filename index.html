@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Viral Edition</title>
+    <title>Golden Claim | Master Admin Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -14,72 +14,85 @@
 
     <style>
         :root { --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --accent: #2d333b; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
-        .top-info { display: flex; justify-content: space-between; padding: 15px; background: #111; border-bottom: 1px solid #222; align-items: center; }
-        .stat-box { background: var(--card); padding: 5px 12px; border-radius: 12px; border: 1px solid var(--accent); font-size: 11px; }
-        .page { display: none; height: 82vh; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
-        .active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* ستايل الإحالة */
-        .ref-box { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--accent); text-align: center; margin-top: 15px; }
-        .ref-link-input { width: 100%; background: #000; border: 1px dashed var(--gold); color: var(--gold); padding: 10px; border-radius: 10px; margin: 10px 0; font-size: 12px; text-align: center; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; text-align: center; }
         
-        .task-item { background: var(--card); padding: 15px; border-radius: 18px; border: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .coin-btn { width: 180px; height: 180px; border-radius: 50%; margin: 20px auto; background: radial-gradient(circle, #222, #000); border: 8px solid #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #151515; display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; }
-        .nav-link { text-align: center; color: #555; flex: 1; font-size: 11px; cursor: pointer; }
+        .level-badge { padding: 6px 15px; border-radius: 50px; font-weight: 900; font-size: 11px; display: inline-block; margin-top: 15px; }
+        .lvl-1 { background: #cd7f32; } .lvl-2 { background: #c0c0c0; color: #000; }
+        .lvl-3 { background: #f3ba2f; color: #000; } .lvl-4 { background: #b9f2ff; color: #000; }
+        .lvl-5 { background: #6366f1; } .lvl-6 { background: #8b5cf6; }
+        .lvl-7 { background: #ec4899; } .lvl-8 { background: linear-gradient(to right, #f43f5e, #fb923c); }
+        .lvl-9 { background: linear-gradient(to right, #8b5cf6, #d946ef); border: 2px solid gold; }
+        .lvl-10 { background: radial-gradient(circle, #fff, #f3ba2f); color: #000; animation: glow 1s infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 0 5px #f3ba2f; } to { box-shadow: 0 0 20px #f3ba2f; } }
+
+        .coin-btn { width: 190px; height: 190px; border-radius: 50%; margin: 20px auto; background: radial-gradient(circle, #222, #000); border: 8px solid #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
+        .coin-btn:active { transform: scale(0.92); }
+        
+        .page { display: none; height: 85vh; padding: 20px; overflow-y: auto; }
+        .active { display: block; }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #151515; display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222; z-index: 100; }
+        .nav-link { color: #555; font-size: 11px; cursor: pointer; flex: 1; }
         .nav-link.active { color: var(--gold); }
-        .btn-main { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-main { width: 100%; padding: 12px; background: var(--gold); color:black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="top-info">
+    <audio id="click-sound" src="https://www.soundjay.com/buttons/button-16.mp3" preload="auto"></audio>
+    <audio id="level-up-sound" src="https://www.soundjay.com/buttons/button-09.mp3" preload="auto"></audio>
+
+    <div style="display:flex; justify-content:space-between; padding:15px; background:#111; border-bottom:1px solid #222;">
         <div id="ton-connect"></div>
-        <div class="stat-box">الربح/ساعة: <span style="color:var(--gold)" id="p-hour">0.0000</span></div>
+        <div style="background:var(--card); padding:5px 12px; border-radius:12px; font-size:11px;">الربح/نقرة: <span style="color:var(--gold)">+0.001</span></div>
     </div>
 
     <div id="home" class="page active">
-        <div style="text-align:center;">
-            <h1 id="balance" style="font-size: 40px; margin: 0;">0.0000</h1>
-            <p style="color: var(--gold); font-size: 12px;">GOLDEN COIN</p>
-        </div>
+        <div id="level-tag" class="level-badge lvl-1">مزامنة...</div>
+        <h1 id="balance" style="font-size: 45px; margin: 10px 0 0 0;">0.0000</h1>
+        <p style="color: var(--gold); font-size: 12px; margin-bottom: 15px;">GOLDEN CLAIM</p>
         <div class="coin-btn" onclick="handleMine()">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="100">
+            <img id="coin-img" src="https://cdn-icons-png.flaticon.com/512/2529/2529396.png" width="100">
         </div>
-        <div id="timer" style="text-align:center; color:var(--gold); font-size: 14px;">مزامنة...</div>
+        <div id="timer" style="color:var(--gold); font-weight:bold; font-size:14px;">تحميل...</div>
     </div>
 
     <div id="friends" class="page">
-        <h2 style="text-align:center; color:var(--gold);">دعوة الأصدقاء 👥</h2>
-        <div class="ref-box">
-            <p style="font-size:14px;">احصل على <b style="color:var(--gold)">50.0000</b> عن كل صديق يدخل من رابطك!</p>
-            <input type="text" id="ref-url" class="ref-link-input" readonly value="جاري إنشاء الرابط...">
+        <h2>دعوة الأصدقاء 👥</h2>
+        <div style="background:var(--card); padding:20px; border-radius:20px; border:1px solid var(--accent);">
+            <p>سيكافئك النظام بـ 50 عملة لكل إحالة!</p>
+            <input type="text" id="ref-url" readonly style="width:90%; padding:10px; background:#000; color:var(--gold); border:1px solid #333; border-radius:10px; text-align:center;">
             <button class="btn-main" onclick="copyRef()">نسخ رابط الدعوة</button>
-        </div>
-        <div style="margin-top:20px; text-align:center;">
-            <p>عدد أصدقائك: <span id="ref-count" style="color:var(--gold); font-weight:bold;">0</span></p>
         </div>
     </div>
 
-    <div id="wallet" class="page">
-        <h3 style="text-align:center;">المحفظة</h3>
-        <div style="background:var(--card); padding:20px; border-radius:20px; text-align:center; border:1px solid var(--accent);">
-            <p id="w-bal" style="font-size:30px; color:var(--gold); margin:10px 0;">0.0000</p>
-            <button class="btn-main" onclick="tg.showAlert('السحب سيفتح قريباً!')">سحب العملات</button>
+    <div id="admin" class="page">
+        <h2 style="color:var(--gold);">لوحة الإدارة ⚙️</h2>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div style="background:var(--card); padding:15px; border-radius:15px;">
+                <p style="font-size:11px;">المستخدمين</p>
+                <h3 id="total-users" style="color:var(--gold)">0</h3>
+            </div>
+            <div style="background:var(--card); padding:15px; border-radius:15px;">
+                <p style="font-size:11px;">إجمالي العملات</p>
+                <h3 id="total-coins" style="color:var(--gold)">0</h3>
+            </div>
         </div>
+        <button class="btn-main" onclick="loadAdminStats()" style="background:#444; color:white;">تحديث الإحصائيات</button>
     </div>
 
     <nav class="bottom-nav">
         <div class="nav-link active" onclick="showTab('home', this)">⛏️<br>تعدين</div>
         <div class="nav-link" onclick="showTab('friends', this)">👥<br>الأصدقاء</div>
-        <div class="nav-link" onclick="showTab('wallet', this)">💰<br>المحفظة</div>
+        <div id="admin-link" class="nav-link" style="display:none;" onclick="showTab('admin', this)">⚙️<br>الإدارة</div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        // --- إعداداتك الخاصة ---
+        const botUsername = "Golden_Claim_Bot"; 
+        const ADMIN_UID = "YT0h3DbbgJWaGMBhf2LzVWwuqk42"; // الـ UID الخاص بك تم وضعه هنا
+        // -----------------------
 
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
@@ -93,77 +106,106 @@
         firebase.initializeApp(firebaseConfig);
 
         let userData = {};
-        const botUsername = "Golden_Claim_Bot"; // استبدله بـ يوزر بوتك الحقيقي بدون @
+        let currentLevelName = "";
 
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) handleUserAuth(user.uid);
-            else firebase.auth().signInAnonymously();
+        firebase.auth().onAuthStateChanged(user => {
+            if(user) {
+                handleLogin(user.uid);
+                // إظهار لوحة الإدارة إذا كان المستخدم هو أنت
+                if(user.uid === ADMIN_UID) {
+                    document.getElementById('admin-link').style.display = 'block';
+                }
+            } else {
+                firebase.auth().signInAnonymously();
+            }
         });
 
-        function handleUserAuth(uid) {
+        function handleLogin(uid) {
             const urlParams = new URLSearchParams(window.location.search);
-            const referrer = urlParams.get('tgWebAppStartParam'); // يحصل على ID الداعي من الرابط
-
+            const refBy = urlParams.get('tgWebAppStartParam');
             const userRef = firebase.database().ref('users/' + uid);
-            userRef.once('value').then((s) => {
-                if (!s.exists()) {
-                    // مستخدم جديد - فحص هل جاء عبر إحالة؟
-                    let startData = { balance: 0, last: 0, profitHour: 0, refCount: 0 };
-                    userRef.set(startData);
-                    
-                    if (referrer && referrer !== uid) {
-                        rewardReferrer(referrer);
+
+            userRef.once('value', (s) => {
+                if(!s.exists()) {
+                    userRef.set({ balance: 0, last: 0 });
+                    if(refBy && refBy !== uid) {
+                        firebase.database().ref('users/' + refBy).transaction(d => {
+                            if(d) { d.balance = (d.balance || 0) + 50; }
+                            return d;
+                        });
                     }
                 }
-                startSync(uid);
+                sync(uid);
             });
         }
 
-        function rewardReferrer(referrerId) {
-            const refRef = firebase.database().ref('users/' + referrerId);
-            refRef.transaction((data) => {
-                if (data) {
-                    data.balance = (data.balance || 0) + 50.0; // جائزة الإحالة
-                    data.refCount = (data.refCount || 0) + 1;
-                }
-                return data;
-            });
-        }
-
-        function startSync(uid) {
-            firebase.database().ref('users/' + uid).on('value', (s) => {
-                userData = s.val();
+        function sync(uid) {
+            firebase.database().ref('users/' + uid).on('value', s => {
+                userData = s.val() || {balance:0, last:0};
                 document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
-                document.getElementById('w-bal').innerText = (userData.balance || 0).toFixed(4);
-                document.getElementById('ref-count').innerText = userData.refCount || 0;
                 document.getElementById('ref-url').value = `https://t.me/${botUsername}/start?startapp=${uid}`;
-                updateTimerDisplay();
+                updateLevelUI(userData.balance || 0);
+                updateTimer();
             });
         }
 
-        function copyRef() {
-            const copyText = document.getElementById("ref-url");
-            copyText.select();
-            navigator.clipboard.writeText(copyText.value);
-            tg.showAlert("تم نسخ رابط الإحالة! أرسله لأصدقائك 🚀");
+        function updateLevelUI(bal) {
+            const tag = document.getElementById('level-tag');
+            const coinImg = document.getElementById('coin-img');
+            let img = ""; let name = ""; let cls = "";
+
+            if (bal >= 500000000) { name = "سيد المجرة 🌌✨"; cls = "lvl-10"; img = "https://cdn-icons-png.flaticon.com/512/2534/2534033.png"; }
+            else if (bal >= 100000000) { name = "التاج الأسطوري V3 🔥"; cls = "lvl-9"; img = "https://cdn-icons-png.flaticon.com/512/5424/5424564.png"; }
+            else if (bal >= 20000000) { name = "التاج المطور 🛡️"; cls = "lvl-8"; img = "https://cdn-icons-png.flaticon.com/512/9724/9724450.png"; }
+            else if (bal >= 5000000) { name = "تاج الإمبراطور 🤴"; cls = "lvl-7"; img = "https://cdn-icons-png.flaticon.com/512/2311/2311053.png"; }
+            else if (bal >= 1000000) { name = "تاج الملوك 👑"; cls = "lvl-6"; img = "https://cdn-icons-png.flaticon.com/512/1041/1041168.png"; }
+            else if (bal >= 100000) { name = "ألماسي 💎"; cls = "lvl-4"; img = "https://cdn-icons-png.flaticon.com/512/2950/2950150.png"; }
+            else if (bal >= 20000) { name = "ذهبي 🥇"; cls = "lvl-3"; img = "https://cdn-icons-png.flaticon.com/512/2529/2529391.png"; }
+            else if (bal >= 5000) { name = "فضي 🥈"; cls = "lvl-2"; img = "https://cdn-icons-png.flaticon.com/512/2529/2529397.png"; }
+            else { name = "برونزي 🥉"; cls = "lvl-1"; img = "https://cdn-icons-png.flaticon.com/512/2529/2529396.png"; }
+
+            if (currentLevelName !== "" && currentLevelName !== name) {
+                document.getElementById('level-up-sound').play();
+                tg.showAlert(`رائع! ارتقيت إلى: ${name}`);
+            }
+            currentLevelName = name;
+            tag.innerText = name;
+            tag.className = "level-badge " + cls;
+            if(coinImg.src !== img) coinImg.src = img;
         }
 
         function handleMine() {
+            document.getElementById('click-sound').currentTime = 0;
+            document.getElementById('click-sound').play();
             const now = Date.now();
             if (now - (userData.last || 0) >= 300000) {
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: (userData.balance || 0) + 0.0010,
+                    balance: (userData.balance || 0) + 0.001,
                     last: now
                 });
-                tg.HapticFeedback.impactOccurred('medium');
+                tg.HapticFeedback.impactOccurred('light');
             } else {
-                tg.showAlert("انتظر اكتمال الوقت ❄️");
+                tg.showAlert("المعدن يحتاج للراحة! ❄️");
             }
         }
 
-        function updateTimerDisplay() {
+        function updateTimer() {
             const rem = 300000 - (Date.now() - (userData.last || 0));
             document.getElementById('timer').innerText = rem > 0 ? `جاهز خلال: ${Math.floor(rem/60000)}:${Math.floor((rem%60000)/1000)}` : "جاهز للمطالبة! ⚡";
+        }
+
+        function copyRef() {
+            navigator.clipboard.writeText(document.getElementById('ref-url').value);
+            tg.showAlert("تم النسخ!");
+        }
+
+        function loadAdminStats() {
+            firebase.database().ref('users').once('value', s => {
+                let users = 0; let coins = 0;
+                s.forEach(u => { users++; coins += (u.val().balance || 0); });
+                document.getElementById('total-users').innerText = users;
+                document.getElementById('total-coins').innerText = coins.toFixed(2);
+            });
         }
 
         function showTab(id, el) {
@@ -172,8 +214,6 @@
             document.getElementById(id).classList.add('active');
             el.classList.add('active');
         }
-
-        new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
     </script>
 </body>
 </html>
