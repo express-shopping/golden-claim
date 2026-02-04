@@ -3,362 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hamster Pro Clone</title>
+    <title>Golden Claim | Hamster Edition</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
     <style>
-        :root {
-            --bg-color: #0b0e11;
-            --card-bg: #1c1f24;
-            --gold: #f3ba2f;
-            --text-main: #ffffff;
-            --text-sub: #848b94;
-            --energy-color: #f3ba2f;
+        /* [1] قسم التصميم العالمي - ألوان هامتسر الأصلية */
+        :root { 
+            --gold: #f3ba2f; --bg: #000; --card: #1c1f24; --accent: #2d333b; 
+        }
+        body { 
+            margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; 
+            overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
-        body {
-            margin: 0; padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            overflow: hidden;
-            user-select: none; /* يمنع ظهور المربع الأزرق عند النقر المتكرر */
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* رأس الصفحة - معلومات المستخدم */
-        .user-header {
-            display: flex; justify-content: space-between;
-            padding: 15px; align-items: center;
-        }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { 
-            width: 40px; height: 40px; border-radius: 10px; 
-            background: url('https://img.icons8.com/fluency/48/user-male-circle.png') no-repeat center;
-            background-size: cover; border: 1px solid var(--gold);
-        }
-        
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        .settings-btn { cursor: pointer; width: 24px; opacity: 0.8; }
-
-        .profit-box {
-            background: var(--card-bg); border-radius: 12px;
-            padding: 5px 12px; border: 1px solid #333;
-        }
-
-        /* المهام اليومية */
-        .daily-rewards {
-            display: flex; justify-content: space-around;
-            padding: 10px; gap: 10px;
-        }
-        .reward-card {
-            background: var(--card-bg); flex: 1;
-            border-radius: 15px; padding: 12px 5px;
-            text-align: center; border: 1px solid #2d333b;
-            cursor: pointer; transition: 0.3s;
-        }
-        .reward-card:active { transform: scale(0.95); background: #25282e; }
-        .reward-card img { width: 28px; margin-bottom: 5px; }
-        .reward-card div { font-size: 10px; font-weight: bold; color: var(--text-sub); }
-
-        /* الرصيد */
-        .balance-section {
-            text-align: center; margin: 25px 0;
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-        }
-        .balance-section img { width: 45px; }
-        .balance-section span { font-size: 42px; font-weight: 900; }
-
-        /* منطقة النقر */
-        .hamster-container {
-            position: relative; width: 280px; height: 280px;
-            margin: 0 auto; display: flex; justify-content: center; align-items: center;
-        }
-        .glow-circle {
-            position: absolute; width: 220px; height: 220px;
-            background: radial-gradient(circle, rgba(243, 186, 47, 0.2) 0%, transparent 70%);
-            border-radius: 50%; z-index: 1;
-        }
-        .hamster-main-img {
-            width: 230px; height: 230px; z-index: 2;
-            cursor: pointer; transition: transform 0.05s;
-            border-radius: 50%; border: 8px solid rgba(255,255,255,0.05);
-            object-fit: cover;
-        }
-        .hamster-main-img:active { transform: scale(0.92); }
-
-        /* شريط الطاقة (الفيل) */
-        .energy-section {
-            width: 80%; margin: 20px auto;
-        }
-        .energy-text {
-            display: flex; justify-content: space-between;
-            font-size: 14px; margin-bottom: 5px; font-weight: bold;
-        }
-        .energy-bar-bg {
-            width: 100%; height: 12px; background: #222; border-radius: 10px; overflow: hidden;
-        }
-        .energy-bar-fill {
-            width: 100%; height: 100%; background: linear-gradient(90deg, #f3ba2f, #ffea00);
-            transition: width 0.2s;
-        }
-
-        /* تأثير النقر المتطاير */
-        .click-animation {
-            position: absolute; color: white; font-weight: bold; font-size: 24px;
-            pointer-events: none; animation: floatUp 0.8s ease-out forwards; z-index: 10;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-100px); }
-        }
-
-        /* التنقل السفلي */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: #1c1f24; display: flex; justify-content: space-around;
-            padding: 10px 0 25px 0; border-top: 1px solid #333; z-index: 100;
-        }
-        .nav-item {
-            text-align: center; font-size: 11px; color: var(--text-sub); flex: 1; cursor: pointer;
-        }
-        .nav-item.active { color: var(--gold); }
-        .nav-item img { width: 24px; display: block; margin: 0 auto 4px; filter: grayscale(1); }
-        .nav-item.active img { filter: grayscale(0); }
+        /* شريط المعلومات العلوي */
+        .top-info { display: flex; justify-content: space-between; padding: 15px; background: #111; border-bottom: 1px solid #222; }
+        .stat-box { background: var(--card); padding: 5px 15px; border-radius: 12px; border: 1px solid var(--accent); font-size: 12px; }
 
         /* الصفحات */
-        .page { display: none; padding: 20px; height: 75vh; overflow-y: auto; padding-bottom: 100px; }
-        .page.active { display: block; }
+        .page { display: none; height: 85vh; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
+        .active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* كروت الترقية */
-        .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .upgrade-card {
-            background: var(--card-bg); padding: 15px; border-radius: 15px;
-            border: 1px solid #333; text-align: center;
+        /* الرصيد والعملة الكبيرة (Home) */
+        .balance-hero { text-align: center; margin-top: 20px; }
+        .coin-btn { 
+            width: 260px; height: 260px; border-radius: 50%; margin: 30px auto;
+            background: radial-gradient(circle, #222, #000); border: 8px solid #1a1a1a;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s;
         }
-        .upgrade-card h4 { margin: 5px 0; font-size: 14px; }
-        .upgrade-card p { font-size: 11px; color: var(--gold); margin: 5px 0; }
-        .buy-btn {
-            background: var(--gold); color: black; border: none; padding: 5px 15px;
-            border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;
-        }
+        .coin-btn:active { transform: scale(0.92); border-color: var(--gold); }
 
-        .empty-state { text-align: center; margin-top: 50px; color: var(--text-sub); }
+        /* كروت التطوير (Upgrades) - تصميم راقي جداً */
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .u-card { 
+            background: var(--card); border-radius: 20px; padding: 15px; text-align: center;
+            border: 1px solid var(--accent); position: relative;
+        }
+        .u-card img { width: 50px; height: 50px; border-radius: 12px; margin-bottom: 10px; }
+        .u-card b { display: block; font-size: 14px; }
+        .u-card span { color: var(--gold); font-weight: 900; font-size: 14px; margin-top: 10px; display: block; }
+        .buy-btn { width: 100%; background: #2d333b; border: none; color: white; padding: 8px; border-radius: 10px; margin-top: 10px; font-weight: bold; }
+
+        /* القائمة السفلية (Navigation) */
+        .bottom-nav { 
+            position: fixed; bottom: 0; width: 100%; background: #151515; 
+            display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #222;
+        }
+        .nav-link { text-align: center; color: #555; flex: 1; font-size: 11px; }
+        .nav-link.active { color: var(--gold); }
     </style>
 </head>
 <body>
 
-    <div class="user-header">
-        <div class="user-info">
-            <div class="avatar" id="user-photo"></div>
-            <div>
-                <div style="font-weight: bold; font-size: 14px;" id="username">MUGAHED-54</div>
-                <div style="color: var(--gold); font-size: 11px;">CEO ></div>
-            </div>
-        </div>
-        <div class="header-actions">
-            <div class="profit-box">
-                <div style="font-size: 9px; color: #888; text-align: center;">الربح في الساعة</div>
-                <div style="font-weight: bold; color: var(--gold); text-align: center;" id="profit-val">+0</div>
-            </div>
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png" class="settings-btn" onclick="alert('الاعدادات قادمة قريباً')">
-        </div>
+    <div class="top-info">
+        <div id="ton-connect"></div>
+        <div class="stat-box">الربح بالساعة: <span style="color:var(--gold)" id="p-hour">0.00</span></div>
     </div>
 
-    <div class="daily-rewards">
-        <div class="reward-card" onclick="alert('Daily Combo: ابحث عن الكروت الثلاثة!')">
-            <img src="https://img.icons8.com/fluency/48/gift.png">
-            <div>الكومبو</div>
+    <div id="home" class="page active">
+        <div class="balance-hero">
+            <h1 id="balance" style="font-size: 50px; margin: 0; color: #fff;">0.0000</h1>
+            <p style="color: var(--gold); font-weight: bold;">GOLDEN COIN</p>
         </div>
-        <div class="reward-card" onclick="alert('Cipher: الشفرة اليومية هي Morse Code')">
-            <img src="https://img.icons8.com/fluency/48/key.png">
-            <div>الشفرة</div>
+        <div class="coin-btn" onclick="mine()">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="160">
         </div>
-        <div class="reward-card" onclick="alert('تم استلام المكافأة اليومية!')">
-            <img src="https://img.icons8.com/fluency/48/calendar.png">
-            <div>المكافأة</div>
-        </div>
+        <div id="timer" style="text-align:center; font-weight:900; color:var(--gold);">جاهز للتعدين! ⚡</div>
     </div>
 
-    <div id="exchange-page" class="page active">
-        <div class="balance-section">
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
-            <span id="balance">0</span>
-        </div>
-
-        <div class="hamster-container" id="tap-area">
-            <div class="glow-circle"></div>
-            <img id="click-btn" src="https://img.freepik.com/premium-photo/cute-hamster-businessman-suit-generative-ai_955925-45.jpg" class="hamster-main-img">
-        </div>
-
-        <div class="energy-section">
-            <div class="energy-text">
-                <span>⚡ <span id="current-energy">1000</span> / 1000</span>
+    <div id="shop" class="page">
+        <h3 style="color:var(--gold)">سوق البطاقات 🚀</h3>
+        <div class="cards-grid">
+            <div class="u-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/743/743007.png">
+                <b>سيارة رياضية</b>
+                <small style="color:#888">+0.005 /ساعة</small>
+                <span id="car-price">50.00</span>
+                <button class="buy-btn" onclick="buyCard('car', 50, 0.005)">تطوير</button>
             </div>
-            <div class="energy-bar-bg">
-                <div class="energy-bar-fill" id="energy-fill"></div>
+            <div class="u-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/609/609803.png">
+                <b>فيلا ملكية</b>
+                <small style="color:#888">+0.02 /ساعة</small>
+                <span id="house-price">200.0</span>
+                <button class="buy-btn" onclick="buyCard('house', 200, 0.02)">تطوير</button>
             </div>
         </div>
     </div>
 
-    <div id="mine-page" class="page">
-        <h3 style="text-align: center;">سوق الترقيات</h3>
-        <div class="upgrade-grid">
-            <div class="upgrade-card">
-                <h4>كرت التعدين البدائي</h4>
-                <p>+500 ربح/ساعة</p>
-                <button class="buy-btn" onclick="buyUpgrade(500, 2000)">شراء 2000 🪙</button>
-            </div>
-            <div class="upgrade-card">
-                <h4>مزرعة الهامستر</h4>
-                <p>+1200 ربح/ساعة</p>
-                <button class="buy-btn" onclick="buyUpgrade(1200, 5000)">شراء 5000 🪙</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="friends-page" class="page">
-        <h3 style="text-align: center;">دعوة الأصدقاء</h3>
-        <div class="empty-state">
-            <img src="https://img.icons8.com/fluency/96/group.png" style="width: 80px;"><br><br>
-            دعوة صديق = +5,000 عملة<br>
-            دعوة صديق (Telegram Premium) = +25,000 عملة
-            <br><br>
-            <button class="buy-btn" style="width: auto; padding: 10px 40px;" onclick="alert('تم نسخ رابط الدعوة!')">Invite a friend</button>
-        </div>
-    </div>
-
-    <div id="airdrop-page" class="page">
-        <h3 style="text-align: center;">المحفظة (Airdrop)</h3>
-        <div class="empty-state">
-            <img src="https://img.icons8.com/fluency/96/wallet.png" style="width: 80px;"><br><br>
-            اربط محفظتك (TON) لتكون جاهزاً للإدراج
-            <br><br>
-            <button class="buy-btn" style="width: auto; padding: 10px 40px; background: #007aff; color: white;">Connect TON Wallet</button>
+    <div id="wallet" class="page">
+        <h3 style="color:var(--gold)">المحفظة والسحب 💰</h3>
+        <div style="background:var(--card); padding:20px; border-radius:20px; border:1px solid var(--accent); text-align:center;">
+            <p>رصيدك الحالي: <b id="w-bal" style="color:var(--gold)">0.00</b></p>
+            <button class="buy-btn" style="background:var(--gold); color:black;" onclick="tg.showAlert('سيتم فتح السحب عند الوصول لـ 1000 ذهب')">سحب إلى TON</button>
         </div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="showPage('exchange-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/ffffff/coins.png">Exchange
-        </div>
-        <div class="nav-item" onclick="showPage('mine-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/848b94/pick-axe.png">Mine
-        </div>
-        <div class="nav-item" onclick="showPage('friends-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/848b94/group.png">Friends
-        </div>
-        <div class="nav-item" onclick="showPage('airdrop-page', this)">
-            <img src="https://img.icons8.com/ios-filled/50/848b94/wallet.png">Airdrop
-        </div>
+        <div class="nav-link active" onclick="showTab('home', this)">⛏️<br>تعدين</div>
+        <div class="nav-link" onclick="showTab('shop', this)">🚀<br>تطوير</div>
+        <div class="nav-link" onclick="showTab('wallet', this)">💰<br>المحفظة</div>
     </div>
 
     <script>
-        let balance = 0;
-        let profitPerHour = 0;
-        let energy = 1000;
-        let maxEnergy = 1000;
-        let tapValue = 1;
+        // [7] البرمجة والمنطق (لا تلمس إعدادات فايربيس)
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-        // تبديل الصفحات
-        function showPage(pageId, element) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => {
-                i.classList.remove('active');
-                i.querySelector('img').style.filter = "grayscale(1)";
-            });
-            
-            document.getElementById(pageId).classList.add('active');
-            element.classList.add('active');
-            element.querySelector('img').style.filter = "grayscale(0)";
-        }
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
+            authDomain: "goldenclaim-6863a.firebaseapp.com",
+            databaseURL: "https://goldenclaim-6863a-default-rtdb.firebaseio.com",
+            projectId: "goldenclaim-6863a",
+            storageBucket: "goldenclaim-6863a.firebasestorage.app",
+            messagingSenderId: "817930053370",
+            appId: "1:817930053370:web:2e0a807e47c4a7ad868b43"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const uid = tg.initDataUnsafe.user?.id || "test_user";
 
-        // معالجة النقر
-        const clickBtn = document.getElementById('click-btn');
-        const tapArea = document.getElementById('tap-area');
-
-        clickBtn.addEventListener('click', (e) => {
-            if (energy >= tapValue) {
-                balance += tapValue;
-                energy -= tapValue;
-                
-                // تأثير الرقم +1
-                createClickAnim(e);
-                
-                // تحديث الواجهة
-                updateDisplay();
-                
-                // اهتزاز الموبايل
-                if (window.Telegram.WebApp.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-                }
-            } else {
-                alert("طاقة غير كافية!");
-            }
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect'
         });
 
-        function createClickAnim(e) {
-            const anim = document.createElement('div');
-            anim.className = 'click-animation';
-            anim.innerText = `+${tapValue}`;
-            anim.style.left = `${e.clientX - 20}px`;
-            anim.style.top = `${e.clientY - 40}px`;
-            document.body.appendChild(anim);
-            
-            setTimeout(() => anim.remove(), 800);
+        let u = { balance: 0, last: 0, power: 0.0001, profitHour: 0 };
+
+        function sync() {
+            db.ref('users/' + uid).on('value', s => {
+                if(s.exists()){
+                    u = s.val();
+                    document.getElementById('balance').innerText = u.balance.toFixed(4);
+                    document.getElementById('w-bal').innerText = u.balance.toFixed(4);
+                    document.getElementById('p-hour').innerText = (u.profitHour || 0).toFixed(4);
+                    updateTimer();
+                } else {
+                    db.ref('users/' + uid).set(u);
+                }
+            });
         }
 
-        // نظام الشراء والترقية
-        function buyUpgrade(profitAdd, cost) {
-            if (balance >= cost) {
-                balance -= cost;
-                profitPerHour += profitAdd;
-                updateDisplay();
-                alert("تمت الترقية بنجاح!");
+        function mine() {
+            const now = Date.now();
+            if (now - (u.last || 0) >= 300000) {
+                db.ref('users/' + uid).update({
+                    balance: (u.balance || 0) + (u.power || 0.0001) + (u.profitHour || 0),
+                    last: now
+                });
+                tg.HapticFeedback.impactOccurred('heavy');
             } else {
-                alert("رصيدك لا يكفي!");
+                tg.showAlert("المعدن ساخن! انتظر اكتمال الـ 5 دقائق ❄️");
             }
         }
 
-        // تحديث البيانات على الشاشة
-        function updateDisplay() {
-            document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
-            document.getElementById('profit-val').innerText = `+${profitPerHour}`;
-            document.getElementById('current-energy').innerText = energy;
-            
-            let energyPercent = (energy / maxEnergy) * 100;
-            document.getElementById('energy-fill').style.width = energyPercent + "%";
-        }
-
-        // استعادة الطاقة تلقائياً (مثل اللعبة الأصلية)
-        setInterval(() => {
-            if (energy < maxEnergy) {
-                energy += 1;
-                updateDisplay();
-            }
-        }, 1500);
-
-        // ربح تلقائي من (Profit per hour)
-        setInterval(() => {
-            if (profitPerHour > 0) {
-                balance += (profitPerHour / 3600);
-                updateDisplay();
-            }
-        }, 1000);
-
-        // تهيئة Telegram WebApp
-        window.Telegram.WebApp.expand();
-        
-        // محاولة جلب اسم وصورة المستخدم من تليجرام
-        const user = window.Telegram.WebApp.initDataUnsafe.user;
-        if (user) {
-            document.getElementById('username').innerText = user.first_name;
-            if (user.photo_url) {
-                document.getElementById('user-photo').style.backgroundImage = `url('${user.photo_url}')`;
+        function buyCard(id, price, addProfit) {
+            if(u.balance >= price) {
+                db.ref('users/' + uid).update({
+                    balance: u.balance - price,
+                    profitHour: (u.profitHour || 0) + addProfit
+                });
+                tg.showAlert("تم شراء الكرت بنجاح! زاد ربحك بالساعة 🚀");
+            } else {
+                tg.showAlert("رصيدك لا يكفي! ❌");
             }
         }
 
-        updateDisplay();
+        function showTab(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function updateTimer() {
+            const rem = 300000 - (Date.now() - (u.last || 0));
+            if (rem > 0) {
+                const m = Math.floor(rem / 60000);
+                const s = Math.floor((rem % 60000) / 1000);
+                document.getElementById('timer').innerText = `المطالبة خلال: ${m}:${s < 10 ? '0'+s : s}`;
+                setTimeout(updateTimer, 1000);
+            } else {
+                document.getElementById('timer').innerText = "جاهز للتعدين! ⚡";
+            }
+        }
+
+        sync();
     </script>
 </body>
 </html>
+
