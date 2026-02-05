@@ -231,87 +231,169 @@
         </div>
 
         <div class="upgrade-card">
-            <span class="lvl-tag-royal" id="lvl-c3">Lvl 0</span>
-            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);">💎</div>
-            <span class="card-title">المنقب الماسي</span>
-            <span class="price-tag">التكلفة: <b id="pr-c3">100</b></span>
-            <button id="btn-c3" class="card-btn" onclick="royalUpgrade('c3', 100)">تطوير</button>
-        </div>
+<style>
+    /* منع المربع الأزرق نهائياً في كل التطبيق */
+    * { -webkit-tap-highlight-color: transparent; outline: none; }
 
-        <div class="upgrade-card">
-            <span class="lvl-tag-royal" id="lvl-c4">Lvl 0</span>
-            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(112, 0, 255, 0.3);">🛰️</div>
-            <span class="card-title">القمر الصناعي</span>
-            <span class="price-tag">التكلفة: <b id="pr-c4">500</b></span>
-            <button id="btn-c4" class="card-btn" onclick="royalUpgrade('c4', 500)">تطوير</button>
-        </div>
+    .cards-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 15px; 
+        padding: 10px; 
+    }
 
-        <div class="upgrade-card">
-            <span class="lvl-tag-royal" id="lvl-c5">Lvl 0</span>
-            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(0, 255, 135, 0.3);">🤖</div>
-            <span class="card-title">مساعد AI</span>
-            <span class="price-tag">التكلفة: <b id="pr-c5">2000</b></span>
-            <button id="btn-c5" class="card-btn" onclick="royalUpgrade('c5', 2000)">تطوير</button>
-        </div>
+    .upgrade-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 20px 10px;
+        text-align: center;
+        position: relative;
+        transition: transform 0.2s;
+    }
 
-        <div class="upgrade-card">
-            <span class="lvl-tag-royal" id="lvl-c6">Lvl 0</span>
-            <div class="card-icon-circle" style="box-shadow: 0 0 20px rgba(243, 186, 47, 0.4);">👑</div>
-            <span class="card-title">التاج الملكي</span>
-            <span class="price-tag">التكلفة: <b id="pr-c6">10000</b></span>
-            <button id="btn-c6" class="card-btn" onclick="royalUpgrade('c6', 10000)">تطوير</button>
-        </div>
+    .card-icon-circle {
+        width: 55px; height: 55px; 
+        background: rgba(0,0,0,0.4);
+        border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 12px; font-size: 26px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
 
-    </div>
+    .lvl-tag-royal {
+        position: absolute; top: 12px; right: 12px;
+        background: linear-gradient(45deg, #f3ba2f, #ffaa00);
+        color: #000; font-size: 10px; font-weight: 900;
+        padding: 2px 7px; border-radius: 6px;
+    }
+
+    .card-title { font-size: 13px; font-weight: bold; color: #fff; display: block; }
+    .profit-boost { font-size: 10px; color: var(--green); margin-top: 4px; display: block; }
+    .price-tag { font-size: 12px; color: #888; margin: 8px 0; display: block; }
+    .price-tag b { color: var(--gold); }
+
+    /* الزر الراقي */
+    .card-btn {
+        width: 90%; padding: 10px; border-radius: 14px; border: none;
+        background: var(--pink); color: white; font-weight: bold;
+        font-size: 12px; cursor: pointer; transition: all 0.3s ease;
+    }
+    
+    /* لون الزر عند النجاح */
+    .btn-success-animate { background: var(--green) !important; color: black !important; transform: scale(1.05); }
+</style>
+
+<div id="upgrades" class="page">
+    <h2 style="text-align:center; color:var(--blue); font-size:22px; margin-bottom:5px;">مصنع الطاقة الملكي ⚡</h2>
+    <p style="text-align:center; color:#666; font-size:12px; margin-bottom:20px;">كل تطوير يزيد من ربح النقرة الواحدة</p>
+    
+    <div class="cards-grid" id="cards-container">
+        </div>
 </div>
 
 <script>
-    // نظام تخزين المستويات المتطور
-    let upgradesData = {
-        c1: 0, c2: 0, c3: 0, c4: 0, c5: 0, c6: 0
-    };
+    // بيانات الكروت الـ 12
+    const cardsConfig = [
+        { id: 'c1', name: 'محرك التوربو', icon: '🚀', base: 10, boost: 0.0001, color: '#ff007f' },
+        { id: 'c2', name: 'البطارية النووية', icon: '🔋', base: 50, boost: 0.0005, color: '#00d2ff' },
+        { id: 'c3', name: 'المنقب الماسي', icon: '💎', base: 200, boost: 0.0020, color: '#fff' },
+        { id: 'c4', name: 'قمر صناعي', icon: '🛰️', base: 1000, boost: 0.0100, color: '#7000ff' },
+        { id: 'c5', name: 'مساعد AI', icon: '🤖', base: 5000, boost: 0.0500, color: '#00ff87' },
+        { id: 'c6', name: 'التاج الملكي', icon: '👑', base: 20000, boost: 0.2000, color: '#f3ba2f' },
+        { id: 'c7', name: 'منصة تعدين', icon: '🖥️', base: 100000, boost: 1.0000, color: '#ff4444' },
+        { id: 'c8', name: 'قلب النجم', icon: '☀️', base: 500000, boost: 5.0000, color: '#ffcc00' },
+        { id: 'c9', name: 'مفاعل الثقب', icon: '🕳️', base: 2000000, boost: 25.000, color: '#4444ff' },
+        { id: 'c10', name: 'درع النيون', icon: '🛡️', base: 10000000, boost: 100.00, color: '#00ffff' },
+        { id: 'c11', name: 'سفينة الفضاء', icon: '🛸', base: 50000000, boost: 500.00, color: '#cc00ff' },
+        { id: 'c12', name: 'بوابة الأبعاد', icon: '🌀', base: 200000000, boost: 2000.0, color: '#00ff00' }
+    ];
 
-    function royalUpgrade(id, base) {
-        let currentLvl = upgradesData[id];
-        let cost = base + (currentLvl * base * 1.5); // السعر يزداد بنسبة 1.5 في كل مستوى
+    let upgradesData = {}; // سيتم تحميلها من Firebase
+
+    function renderCards() {
+        const container = document.getElementById('cards-container');
+        container.innerHTML = '';
+        cardsConfig.forEach(card => {
+            const lvl = upgradesData[card.id] || 0;
+            const cost = card.base + (lvl * card.base * 2);
+            const html = `
+                <div class="upgrade-card">
+                    <span class="lvl-tag-royal" id="lvl-${card.id}">Lvl ${lvl}</span>
+                    <div class="card-icon-circle" style="box-shadow: 0 0 15px ${card.color}44;">${card.icon}</div>
+                    <span class="card-title">${card.name}</span>
+                    <span class="profit-boost">+${card.boost} /نقرة</span>
+                    <span class="price-tag">التكلفة: <b id="pr-${card.id}">${cost.toFixed(0)}</b></span>
+                    <button id="btn-${card.id}" class="card-btn" onclick="applyRoyalUpgrade('${card.id}', ${card.base}, ${card.boost})">تطوير</button>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    }
+
+    function applyRoyalUpgrade(id, base, boost) {
+        let currentLvl = upgradesData[id] || 0;
+        let cost = base + (currentLvl * base * 2);
 
         if (userData.balance >= cost) {
             userData.balance -= cost;
-            upgradesData[id]++;
+            upgradesData[id] = currentLvl + 1;
             
-            // تحديث الواجهة فوراً
-            const btn = document.getElementById('btn-' + id);
-            btn.classList.add('btn-upgraded');
-            btn.innerText = "UPGRADED! ✓";
+            // تحديث "الربح لكل نقرة" الفعلي في بيانات المستخدم
+            userData.profitPerTap = (userData.profitPerTap || 0.001) + boost;
 
+            const btn = document.getElementById('btn-' + id);
+            btn.classList.add('btn-success-animate');
+            btn.innerText = "تم التطوير ✨";
+
+            // تحديث الواجهة
             document.getElementById('lvl-' + id).innerText = "Lvl " + upgradesData[id];
-            let nextCost = base + (upgradesData[id] * base * 1.5);
-            document.getElementById('price-' + id).innerText = nextCost.toFixed(0);
-            
-            // تحديث الداتابيز
+            let nextCost = base + (upgradesData[id] * base * 2);
+            document.getElementById('pr-' + id).innerText = nextCost.toFixed(0);
+
+            // حفظ في Firebase
             firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
                 balance: userData.balance,
-                upgrades: upgradesData
+                upgrades: upgradesData,
+                profitPerTap: userData.profitPerTap
             });
 
-            // اهتزاز وتغيير اللون المؤقت
-            tg.HapticFeedback.impactOccurred('heavy');
             setTimeout(() => {
-                btn.classList.remove('btn-upgraded');
+                btn.classList.remove('btn-success-animate');
                 btn.innerText = "تطوير";
             }, 800);
+
+            tg.HapticFeedback.impactOccurred('medium');
         } else {
             tg.HapticFeedback.notificationOccurred('error');
             const btn = document.getElementById('btn-' + id);
-            btn.style.background = '#441111';
-            btn.innerText = "رصيد غير كافٍ";
-            setTimeout(() => {
-                btn.style.background = '';
-                btn.innerText = "تطوير";
-            }, 1000);
+            btn.style.background = '#440000';
+            setTimeout(() => btn.style.background = '', 500);
         }
     }
+
+    // تعديل دالة التعدين الرئيسية لتستخدم profitPerTap
+    function handleMine() {
+        document.getElementById('snd-click').currentTime = 0;
+        document.getElementById('snd-click').play();
+        const now = Date.now();
+        if(now - (userData.last || 0) >= 300000) {
+            // إضافة الربح بناءً على الكروت
+            let reward = userData.profitPerTap || 0.001;
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                balance: (userData.balance || 0) + reward,
+                last: now
+            });
+            tg.HapticFeedback.impactOccurred('medium');
+        } else {
+            tg.showAlert("المنجم يبرد الآن.. انتظر قليلاً ❄️");
+        }
+    }
+
+    // تحميل الكروت عند بدء التشغيل
+    setTimeout(renderCards, 2000); 
 </script>
+
 
 
 
