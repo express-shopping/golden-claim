@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Global Tasks</title>
+    <title>Golden Claim | Pro Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -14,65 +14,58 @@
 
     <style>
         :root { 
-            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --green: #00ff87; --red: #ff416c;
+            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --green: #00ff87;
             --bg: #050507; --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1);
         }
         
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; outline: none; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; height: 100vh; }
+        .neon-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, rgba(112, 0, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 0% 100%, rgba(255, 0, 127, 0.1) 0%, transparent 40%); z-index: -1; }
 
-        .neon-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% -20%, rgba(112, 0, 255, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 0% 100%, rgba(255, 0, 127, 0.1) 0%, transparent 40%);
-            z-index: -1;
-        }
+        /* --- Header --- */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); position: relative; z-index: 10; }
+        .user-container { display: flex; align-items: center; gap: 10px; background: linear-gradient(90deg, rgba(0, 210, 255, 0.1), transparent); padding: 5px 15px; border-radius: 30px; border-left: 3px solid var(--blue); }
+        .user-img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue); box-shadow: 0 0 10px var(--blue); }
+        .user-name { font-weight: 900; font-size: 12px; color: white; }
 
-        /* Header UI */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); }
-        .user-container { display: flex; align-items: center; gap: 10px; background: var(--glass); padding: 5px 15px; border-radius: 30px; border-left: 3px solid var(--blue); }
-        .user-img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue); }
-        .user-name { font-weight: 900; font-size: 12px; }
-
-        /* Stats Bar */
+        /* --- Stats Bar --- */
         .stats-bar { display: flex; justify-content: space-around; background: rgba(255,255,255,0.02); padding: 10px; margin: 10px; border-radius: 18px; border: 1px solid var(--glass-border); }
+        .stat-item { text-align: center; flex: 1; }
         .stat-val { font-size: 13px; font-weight: bold; color: var(--green); display: block; }
         .stat-label { font-size: 9px; color: #777; text-transform: uppercase; }
 
-        /* Daily Rewards Grid */
-        .daily-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 15px; }
-        .day-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px; padding: 10px 5px; text-align: center; transition: 0.3s; }
-        .day-card.active { border-color: var(--gold); background: rgba(243, 186, 47, 0.1); box-shadow: 0 0 10px rgba(243, 186, 47, 0.2); }
-        .day-card.claimed { opacity: 0.4; background: #000; }
-        .day-num { font-size: 10px; color: #888; display: block; }
-        .day-gift { font-size: 18px; margin: 5px 0; display: block; }
-        .day-reward { font-size: 10px; font-weight: bold; color: var(--gold); }
-
-        /* Tasks Section */
-        .tasks-list { padding: 0 15px 120px 15px; }
-        .task-item { 
-            background: linear-gradient(90deg, var(--glass), transparent); 
-            border: 1px solid var(--glass-border); border-radius: 20px; 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 12px 18px; margin-bottom: 10px; transition: 0.3s;
-        }
-        .task-info { display: flex; align-items: center; gap: 12px; }
-        .task-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .task-name { font-size: 14px; font-weight: bold; display: block; }
-        .task-prize { font-size: 11px; color: var(--green); }
-        .task-btn { background: var(--blue); color: #000; border: none; padding: 6px 15px; border-radius: 10px; font-weight: 900; font-size: 11px; cursor: pointer; }
-        .task-btn.done { background: var(--glass); color: #555; pointer-events: none; }
-
-        /* Navigation */
-        .nav-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(25px); display: flex; justify-content: space-around; padding: 15px 0; border-radius: 30px; border: 1px solid var(--glass-border); z-index: 1000; }
-        .nav-item { color: #444; font-size: 10px; text-align: center; flex: 1; transition: 0.3s; font-weight: bold; }
-        .nav-item.active { color: var(--blue); text-shadow: 0 0 10px var(--blue); }
-
-        .page { display: none; height: 85vh; overflow-y: auto; }
-        .active-page { display: block; animation: fadeIn 0.4s ease; }
+        /* --- Page Management --- */
+        .page { display: none; height: calc(100vh - 180px); overflow-y: auto; padding-bottom: 50px; }
+        .active-page { display: block !important; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .claim-main-btn { width: 92%; margin: 10px 4%; padding: 15px; border-radius: 15px; border: none; background: linear-gradient(90deg, var(--gold), #ff9f00); color: #000; font-weight: 900; font-size: 16px; cursor: pointer; box-shadow: 0 5px 20px rgba(243, 186, 47, 0.3); }
+        /* --- Mine Page --- */
+        .balance-display { text-align: center; margin-top: 30px; }
+        .balance-main { font-size: 55px; font-weight: 900; margin: 0; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .coin-btn-container { width: 220px; height: 220px; margin: 40px auto; display: flex; align-items: center; justify-content: center; position: relative; }
+        .coin-btn { width: 100%; height: 100%; border-radius: 50%; transition: 0.1s; cursor: pointer; filter: drop-shadow(0 0 20px rgba(243, 186, 47, 0.1)); }
+        .coin-btn:active { transform: scale(0.92); }
+
+        /* --- Tasks & Daily Rewards --- */
+        .daily-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 15px; }
+        .day-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 5px; text-align: center; }
+        .day-card.active { border-color: var(--gold); background: rgba(243, 186, 47, 0.1); }
+        .task-item { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px; display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin: 8px 15px; }
+
+        /* --- Boost Page (Cards) --- */
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+        .u-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px; text-align: center; position: relative; }
+        .u-lvl { position: absolute; top: 10px; right: 10px; background: var(--gold); color: black; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 5px; }
+        .u-btn { width: 100%; padding: 10px; border-radius: 12px; border: none; background: var(--pink); color: white; font-weight: bold; margin-top: 10px; }
+
+        /* --- Friends Page --- */
+        .ref-card { background: var(--glass); margin: 15px; padding: 20px; border-radius: 20px; border: 1px solid var(--glass-border); text-align: center; }
+        .ref-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; border: 1px dashed var(--blue); font-size: 11px; margin: 10px 0; color: var(--blue); word-break: break-all; }
+
+        /* --- Navigation --- */
+        .nav-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid var(--glass-border); z-index: 100; }
+        .nav-item { color: #555; font-size: 10px; text-align: center; flex: 1; transition: 0.3s; font-weight: bold; cursor: pointer; }
+        .nav-item.active { color: var(--blue); text-shadow: 0 0 10px var(--blue); }
     </style>
 </head>
 <body>
@@ -80,8 +73,8 @@
 
     <div class="header">
         <div class="user-container">
-            <img id="u-img" class="user-img" src="" alt="">
-            <span id="u-name" class="user-name">...</span>
+            <img id="u-img" class="user-img" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="">
+            <span id="u-name" class="user-name">LOADING...</span>
         </div>
         <div id="ton-connect"></div>
     </div>
@@ -89,63 +82,55 @@
     <div class="stats-bar">
         <div class="stat-item"><span class="stat-label">Balance</span><span class="stat-val" id="top-bal">0.00</span></div>
         <div class="stat-item"><span class="stat-label">Per Hour</span><span class="stat-val" id="top-hour">0.00</span></div>
-        <div class="stat-item"><span class="stat-label">Day</span><span class="stat-val" id="top-day" style="color:var(--gold)">1</span></div>
+        <div class="stat-item"><span class="stat-label">Friends</span><span class="stat-val" id="top-friends">0</span></div>
     </div>
 
-    <div id="home" class="page active-page">
-        <div style="text-align: center; margin-top: 40px;">
-            <h1 id="balance" style="font-size: 55px; font-weight: 900; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">0.0000</h1>
-            <p style="color:#555; margin-top: -5px;">TOTAL EARNINGS</p>
-            <div style="margin-top: 50px;">
-                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="200" onclick="handleMine()" style="cursor: pointer;">
-            </div>
+    <div id="p-mine" class="page active-page">
+        <div class="balance-display">
+            <h1 id="balance" class="balance-main">0.0000</h1>
+            <p style="color:#555; font-size: 12px; margin-top: 5px;">GOLDEN EARNINGS</p>
+        </div>
+        <div class="coin-btn-container">
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" class="coin-btn" onclick="handleMine()">
         </div>
     </div>
 
-    <div id="tasks" class="page">
-        <h3 style="padding: 15px 20px 0 20px; color: var(--gold);">Daily Login 🎁</h3>
-        <div class="daily-grid" id="daily-grid">
-            </div>
-        <button class="claim-main-btn" id="claim-day-btn" onclick="claimDailyReward()">CLAIM DAILY REWARD</button>
-
-        <h3 style="padding: 10px 20px; color: var(--blue);">Social Missions ⚡</h3>
-        <div class="tasks-list">
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-icon" style="background: #0088cc1a; color: #0088cc;">✈️</div>
-                    <div><span class="task-name">Join Telegram</span><span class="task-prize">+200 Coins</span></div>
-                </div>
-                <button class="task-btn" onclick="completeTask(this, 200, 'https://t.me/yourchannel')">JOIN</button>
-            </div>
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-icon" style="background: #ff00001a; color: #ff0000;">🎬</div>
-                    <div><span class="task-name">Watch YouTube</span><span class="task-prize">+200 Coins</span></div>
-                </div>
-                <button class="task-btn" onclick="completeTask(this, 200, 'https://youtube.com')">WATCH</button>
-            </div>
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-icon" style="background: #1877f21a; color: #1877f2;">👥</div>
-                    <div><span class="task-name">Facebook Follow</span><span class="task-prize">+200 Coins</span></div>
-                </div>
-                <button class="task-btn" onclick="completeTask(this, 200, 'https://facebook.com')">FOLLOW</button>
-            </div>
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-icon" style="background: #ee1d521a; color: #ee1d52;">🎵</div>
-                    <div><span class="task-name">TikTok Quest</span><span class="task-prize">+200 Coins</span></div>
-                </div>
-                <button class="task-btn" onclick="completeTask(this, 200, 'https://tiktok.com')">GO</button>
-            </div>
+    <div id="p-tasks" class="page">
+        <h3 style="padding: 10px 20px; color: var(--gold); margin:0;">Daily Rewards</h3>
+        <div class="daily-grid" id="daily-grid"></div>
+        <button id="claim-btn" class="u-btn" style="width:90%; margin: 0 5% 20px 5%; background: var(--gold); color:black;" onclick="claimDaily()">CLAIM DAILY BONUS</button>
+        
+        <h3 style="padding: 10px 20px; color: var(--blue); margin:0;">Social Tasks</h3>
+        <div class="task-item">
+            <span>✈️ Telegram Channel</span>
+            <button class="u-btn" style="width:80px; margin:0;" onclick="doTask(this, 200, 'https://t.me')">JOIN</button>
         </div>
+        <div class="task-item">
+            <span>🎬 Subscribe YouTube</span>
+            <button class="u-btn" style="width:80px; margin:0;" onclick="doTask(this, 200, 'https://youtube.com')">WATCH</button>
+        </div>
+    </div>
+
+    <div id="p-boost" class="page">
+        <h3 style="text-align:center; color: var(--pink);">Empire Upgrades</h3>
+        <div class="cards-grid" id="cards-list"></div>
+    </div>
+
+    <div id="p-friends" class="page">
+        <div class="ref-card">
+            <span style="color:var(--gold); font-weight:900;">INVITE FRIENDS</span>
+            <p style="font-size:11px; color:#888;">Get 500 Coins for each friend</p>
+            <div class="ref-box" id="ref-link">...loading...</div>
+            <button class="u-btn" style="background:var(--blue); color:black;" onclick="copyRef()">COPY LINK</button>
+        </div>
+        <div id="friends-list" style="padding: 0 15px;"></div>
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="showTab('home', this)">⛏️<br>MINE</div>
-        <div class="nav-item" onclick="showTab('tasks', this)">🎯<br>TASKS</div>
-        <div class="nav-item" onclick="showTab('home', this)">⚡<br>BOOST</div>
-        <div class="nav-item" onclick="showTab('home', this)">💰<br>WALLET</div>
+        <div class="nav-item active" onclick="showTab('p-mine', this)">⛏️<br>MINE</div>
+        <div class="nav-item" onclick="showTab('p-tasks', this)">🎯<br>TASKS</div>
+        <div class="nav-item" onclick="showTab('p-boost', this)">⚡<br>BOOST</div>
+        <div class="nav-item" onclick="showTab('p-friends', this)">👥<br>FRIENDS</div>
     </nav>
 
     <script>
@@ -162,7 +147,12 @@
         firebase.initializeApp(firebaseConfig);
 
         let userData = {};
-        const dailyRewards = [100, 300, 500, 700, 900, 1100, 1500];
+        const cardConfigs = [
+            { id: 'c1', name: 'Turbo Motor', icon: '🚀', base: 10, hour: 0.1 },
+            { id: 'c2', name: 'Nuclear Battery', icon: '🔋', base: 50, hour: 0.5 },
+            { id: 'c3', name: 'Diamond Drill', icon: '💎', base: 250, hour: 2.0 },
+            { id: 'c4', name: 'Satellite', icon: '🛰️', base: 1000, hour: 10.0 }
+        ];
 
         firebase.auth().onAuthStateChanged(user => {
             if(user) syncUser(user.uid);
@@ -170,87 +160,95 @@
         });
 
         function syncUser(uid) {
-            const db = firebase.database().ref('users/' + uid);
-            db.on('value', s => {
-                userData = s.val() || { balance: 0, profitHour: 0, dailyDay: 1, lastClaim: 0, socialTasks: {} };
+            firebase.database().ref('users/' + uid).on('value', s => {
+                userData = s.val() || { balance: 0, profitHour: 0, friends: 0, dailyDay: 1, upgrades: {} };
                 updateUI();
-                renderDailyGrid();
+                renderDaily();
+                renderCards();
             });
+            document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || 'user'}`;
         }
 
         function updateUI() {
             document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
             document.getElementById('top-bal').innerText = (userData.balance || 0).toFixed(2);
             document.getElementById('top-hour').innerText = (userData.profitHour || 0).toFixed(2);
-            document.getElementById('top-day').innerText = (userData.dailyDay || 1);
-            document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "User").toUpperCase();
-            document.getElementById('u-img').src = tg.initDataUnsafe.user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            document.getElementById('top-friends').innerText = (userData.friends || 0);
+            document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "PLAYER").toUpperCase();
+            if(tg.initDataUnsafe.user?.photo_url) document.getElementById('u-img').src = tg.initDataUnsafe.user.photo_url;
         }
 
-        function renderDailyGrid() {
+        function showTab(pageId, el) {
+            // إخفاء كل الصفحات
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            // إظهار الصفحة المطلوبة فقط
+            document.getElementById(pageId).classList.add('active-page');
+            
+            // تحديث شكل القائمة السفلية
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+            
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function renderDaily() {
             const grid = document.getElementById('daily-grid');
             grid.innerHTML = '';
-            const currentDay = userData.dailyDay || 1;
-            
-            for(let i=1; i<=7; i++) {
-                let status = '';
-                if(i < currentDay) status = 'claimed';
-                else if(i === currentDay) status = 'active';
-
-                grid.innerHTML += `
-                    <div class="day-card ${status}">
-                        <span class="day-num">Day ${i}</span>
-                        <span class="day-gift">${i === 7 ? '👑' : '💎'}</span>
-                        <span class="day-reward">${dailyRewards[i-1]}</span>
-                    </div>
-                `;
+            const rewards = [100, 300, 500, 700, 900, 1100, 1500, 2000];
+            for(let i=1; i<=8; i++) {
+                const active = i === userData.dailyDay ? 'active' : '';
+                grid.innerHTML += `<div class="day-card ${active}"><small>Day ${i}</small><br><b>${rewards[i-1]}</b></div>`;
             }
         }
 
-        function claimDailyReward() {
-            const now = Date.now();
-            const last = userData.lastClaim || 0;
-            const oneDay = 24 * 60 * 60 * 1000;
+        function renderCards() {
+            const list = document.getElementById('cards-list');
+            list.innerHTML = '';
+            cardConfigs.forEach(c => {
+                const lvl = (userData.upgrades && userData.upgrades[c.id]) || 0;
+                const price = Math.floor(c.base * Math.pow(1.8, lvl));
+                list.innerHTML += `
+                    <div class="u-card">
+                        <span class="u-lvl">Lvl ${lvl}</span>
+                        <div style="font-size:25px;">${c.icon}</div>
+                        <div style="font-size:12px; font-weight:bold;">${c.name}</div>
+                        <div style="color:var(--green); font-size:10px;">+$${c.hour}/hr</div>
+                        <div style="font-size:11px; color:var(--gold);">Cost: ${price}</div>
+                        <button class="u-btn" onclick="buyUpgrade('${c.id}', ${c.base}, ${c.hour})">UPGRADE</button>
+                    </div>
+                `;
+            });
+        }
 
-            if (now - last >= oneDay) {
-                let currentDay = userData.dailyDay || 1;
-                let reward = dailyRewards[currentDay - 1];
-                
-                let nextDay = currentDay + 1;
-                if(nextDay > 7) nextDay = 1; // Reset after week
-
+        function buyUpgrade(id, base, hP) {
+            const lvl = (userData.upgrades && userData.upgrades[id]) || 0;
+            const price = Math.floor(base * Math.pow(1.8, lvl));
+            if(userData.balance >= price) {
+                const ups = userData.upgrades || {};
+                ups[id] = lvl + 1;
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: (userData.balance || 0) + reward,
-                    dailyDay: nextDay,
-                    lastClaim: now
+                    balance: userData.balance - price,
+                    upgrades: ups,
+                    profitHour: (userData.profitHour || 0) + hP
                 });
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
-                const btn = document.getElementById('claim-day-btn');
-                btn.innerText = "COME BACK TOMORROW!";
-                btn.style.background = "#333";
-                setTimeout(() => { btn.innerText = "CLAIM DAILY REWARD"; btn.style.background = ""; }, 2000);
+                tg.HapticFeedback.notificationOccurred('error');
             }
         }
 
-        function completeTask(btn, amount, url) {
-            window.open(url, '_blank');
-            btn.innerText = "VERIFYING...";
-            setTimeout(() => {
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: (userData.balance || 0) + amount
-                });
-                btn.innerText = "CLAIMED ✓";
-                btn.classList.add('done');
-                tg.HapticFeedback.impactOccurred('medium');
-            }, 3000);
+        function handleMine() {
+            const reward = 0.001;
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                balance: (userData.balance || 0) + reward
+            });
+            tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function showTab(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active-page');
-            el.classList.add('active');
+        function copyRef() {
+            const link = document.getElementById('ref-link').innerText;
+            navigator.clipboard.writeText(link);
+            tg.HapticFeedback.notificationOccurred('success');
         }
 
         new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
