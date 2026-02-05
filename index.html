@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Empire Edition</title>
+    <title>Golden Claim | Royal Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -14,47 +14,52 @@
 
     <style>
         :root { 
-            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --green: #00ff87;
+            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --green: #00ff87; --red: #ff4b2b;
             --bg: #050507; --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1);
         }
         
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; outline: none; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; height: 100vh; }
-        .neon-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, rgba(112, 0, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 0% 100%, rgba(255, 0, 127, 0.1) 0%, transparent 40%); z-index: -1; }
+        .neon-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, rgba(112, 0, 255, 0.15) 0%, transparent 50%); z-index: -1; }
 
-        /* Navigation & Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: 100; position: relative; }
-        .user-container { display: flex; align-items: center; gap: 10px; background: var(--glass); padding: 5px 12px; border-radius: 30px; border-left: 2px solid var(--blue); }
-        .user-img { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--blue); }
-        
-        .stats-bar { display: flex; justify-content: space-around; background: rgba(255,255,255,0.02); padding: 10px; margin: 10px; border-radius: 18px; border: 1px solid var(--glass-border); }
-        .stat-item { text-align: center; }
-        .stat-val { font-size: 13px; font-weight: bold; color: var(--green); display: block; }
-        .stat-label { font-size: 9px; color: #777; text-transform: uppercase; }
+        /* --- Level System --- */
+        .level-section { padding: 10px 20px; }
+        .level-info { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 5px; color: var(--blue); }
+        .level-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border); }
+        #level-progress { width: 0%; height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); transition: 0.5s; }
 
-        /* Pages Framework */
-        .page { display: none; height: calc(100vh - 190px); overflow-y: auto; padding: 10px 15px 100px 15px; }
-        .active-page { display: block !important; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        /* --- Header --- */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); }
+        .user-container { display: flex; align-items: center; gap: 8px; background: var(--glass); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--glass-border); }
+        .user-img { width: 25px; height: 25px; border-radius: 50%; border: 1.5px solid var(--gold); }
 
-        /* Task Buttons Style */
-        .task-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px; display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; margin-bottom: 10px; transition: 0.3s; }
-        .task-info { display: flex; align-items: center; gap: 12px; }
-        .task-icon { font-size: 20px; }
-        .task-btn { background: var(--pink); border: none; color: white; padding: 8px 18px; border-radius: 12px; font-weight: 900; font-size: 12px; transition: 0.4s; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 0, 127, 0.2); }
-        .task-btn.completed { background: var(--green) !important; color: #000; box-shadow: 0 0 15px var(--green); }
+        /* --- Page Management --- */
+        .page { display: none; height: calc(100vh - 180px); overflow-y: auto; padding: 15px; }
+        .active-page { display: block !important; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Upgrade Cards Style */
-        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .u-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 15px; text-align: center; position: relative; transition: 0.3s; }
-        .u-lvl { position: absolute; top: 8px; right: 10px; background: var(--gold); color: black; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 6px; }
-        .u-btn { width: 100%; padding: 12px; border-radius: 15px; border: none; background: var(--pink); color: white; font-weight: 900; margin-top: 10px; transition: 0.3s; }
-        .u-btn.low-balance { background: #333 !important; color: #777; }
+        /* --- Mine Page & Energy Bar --- */
+        .coin-btn { width: 200px; height: 200px; margin: 30px auto; display: block; filter: drop-shadow(0 0 20px rgba(243, 186, 47, 0.2)); transition: 0.1s; }
+        .energy-container { width: 80%; margin: 20px auto; text-align: center; }
+        .energy-bar-bg { width: 100%; height: 12px; background: #111; border-radius: 20px; border: 1px solid #333; position: relative; overflow: hidden; }
+        #energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--gold), #fff); box-shadow: 0 0 10px var(--gold); transition: 0.2s; }
 
-        /* Nav Bar */
-        .nav-bar { position: fixed; bottom: 15px; left: 5%; width: 90%; background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(25px); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 30px; border: 1px solid var(--glass-border); z-index: 1000; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
-        .nav-item { color: #555; font-size: 10px; text-align: center; flex: 1; transition: 0.3s; font-weight: 900; }
-        .nav-item.active { color: var(--blue); }
+        /* --- Daily Rewards Grid --- */
+        .daily-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+        .day-box { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 5px; text-align: center; transition: 0.3s; }
+        .day-box.active { border-color: var(--gold); background: rgba(243, 186, 47, 0.15); box-shadow: 0 0 10px rgba(243, 186, 47, 0.2); }
+
+        /* --- Tasks & Wallet Cards --- */
+        .royal-card { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
+        .btn-action { width: 100%; padding: 12px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-pink { background: var(--pink); color: #fff; }
+        .btn-blue { background: var(--blue); color: #000; }
+
+        /* --- Nav Bar --- */
+        .nav-bar { position: fixed; bottom: 15px; left: 5%; width: 90%; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 10px 0; border-radius: 25px; border: 1px solid var(--glass-border); }
+        .nav-item { color: #555; font-size: 10px; text-align: center; flex: 1; font-weight: bold; }
+        .nav-item.active { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
     </style>
 </head>
 <body>
@@ -63,43 +68,59 @@
     <div class="header">
         <div class="user-container">
             <img id="u-img" class="user-img" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
-            <span id="u-name" style="font-size: 11px; font-weight: 900;">...</span>
+            <span id="u-name" style="font-size: 10px; font-weight: 900;">PLAYER</span>
         </div>
         <div id="ton-connect"></div>
     </div>
 
-    <div class="stats-bar">
-        <div class="stat-item"><span class="stat-label">Balance</span><span class="stat-val" id="top-bal">0.00</span></div>
-        <div class="stat-item"><span class="stat-label">Hourly</span><span class="stat-val" id="top-hour">0.00</span></div>
-        <div class="stat-item"><span class="stat-label">Friends</span><span class="stat-val" id="top-friends">0</span></div>
+    <div class="level-section">
+        <div class="level-info">
+            <span id="lvl-name">BRONZE AGE</span>
+            <span id="lvl-percent">0%</span>
+        </div>
+        <div class="level-bar-bg"><div id="level-progress"></div></div>
     </div>
 
     <div id="p-mine" class="page active-page">
-        <div style="text-align: center; margin-top: 40px;">
-            <h1 id="balance" style="font-size: 55px; font-weight: 900; margin: 0; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0.0000</h1>
-            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="220" onclick="handleMine()" style="margin-top: 40px; filter: drop-shadow(0 0 30px rgba(243, 186, 47, 0.2)); transition: 0.1s;" onactive="this.style.transform='scale(0.95)'">
+        <div style="text-align:center;">
+            <h1 id="balance" style="font-size: 50px; font-weight: 900; color: var(--gold); margin: 10px 0;">0.0000</h1>
+            <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" class="coin-btn" onclick="handleMine()">
+            <div class="energy-container">
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+                    <span>⚡ ENERGY</span>
+                    <span id="energy-val">1000/1000</span>
+                </div>
+                <div class="energy-bar-bg"><div id="energy-fill"></div></div>
+            </div>
         </div>
     </div>
 
     <div id="p-tasks" class="page">
-        <h3 style="color: var(--gold); margin: 10px 0;">Social Missions</h3>
+        <h3 style="color:var(--gold);">Daily Rewards</h3>
+        <div class="daily-grid" id="daily-grid"></div>
+        <button class="btn-action btn-gold" onclick="claimDaily()">CLAIM DAILY BONUS</button>
         
-        <div id="tasks-container">
-            </div>
+        <h3 style="color:var(--pink); margin-top:20px;">Social Tasks</h3>
+        <div id="tasks-list"></div>
     </div>
 
     <div id="p-boost" class="page">
-        <h3 style="color: var(--blue); text-align: center;">Empire Upgrades ⚡</h3>
-        <div class="cards-grid" id="cards-list">
-            </div>
+        <h3 style="color:var(--blue); text-align:center;">Empire Upgrades ⚡</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" id="cards-container"></div>
     </div>
 
-    <div id="p-friends" class="page">
-        <div style="background: var(--glass); padding: 25px; border-radius: 20px; text-align: center; border: 1px solid var(--glass-border);">
-            <h2 style="color: var(--gold); margin:0;">INVITE FRIENDS</h2>
-            <p style="font-size: 12px; color: #888;">Earn +500 for every friend!</p>
-            <div id="ref-link" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; font-size: 10px; color: var(--blue); margin: 15px 0; border: 1px dashed var(--blue); word-break: break-all;">...</div>
-            <button class="u-btn" style="background: var(--blue); color: black;" onclick="copyRef()">COPY LINK</button>
+    <div id="p-wallet" class="page">
+        <div class="royal-card" style="text-align:center; border-left: 4px solid var(--gold);">
+            <span style="color:var(--gold); font-size:12px; font-weight:900;">TOTAL BALANCE</span>
+            <h2 id="wall-bal" style="font-size:35px; margin:5px 0;">0.00</h2>
+            <button class="btn-action btn-pink" onclick="tg.showPopup({message:'Withdrawals open after Listing!'})">WITHDRAW TO TON</button>
+        </div>
+
+        <div class="royal-card" style="border-left: 4px solid var(--blue);">
+            <h4 style="margin:0; color:var(--blue);">Invite & Earn</h4>
+            <p style="font-size:11px; color:#777;">Share link and get 500 Gold Coins</p>
+            <div id="ref-link" style="background:#000; padding:10px; border-radius:10px; font-size:9px; color:var(--blue); margin-bottom:10px; border:1px dashed var(--blue);">...</div>
+            <button class="btn-action btn-blue" onclick="copyRef()">COPY INVITE LINK</button>
         </div>
     </div>
 
@@ -107,12 +128,11 @@
         <div class="nav-item active" onclick="showTab('p-mine', this)">⛏️<br>MINE</div>
         <div class="nav-item" onclick="showTab('p-tasks', this)">🎯<br>TASKS</div>
         <div class="nav-item" onclick="showTab('p-boost', this)">⚡<br>BOOST</div>
-        <div class="nav-item" onclick="showTab('p-friends', this)">👥<br>FRIENDS</div>
+        <div class="nav-item" onclick="showTab('p-wallet', this)">💰<br>WALLET</div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
-        // تكوين Firebase (نفس إعداداتك الأصلية)
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
             authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -124,21 +144,18 @@
         };
         firebase.initializeApp(firebaseConfig);
 
-        let userData = {};
-        const socials = [
-            { id: 't1', name: 'Telegram', icon: '✈️', reward: 500, url: 'https://t.me' },
-            { id: 't2', name: 'YouTube', icon: '🎬', reward: 500, url: 'https://youtube.com' },
-            { id: 't3', name: 'Facebook', icon: '💙', reward: 300, url: 'https://facebook.com' },
-            { id: 't4', name: 'Instagram', icon: '📸', reward: 400, url: 'https://instagram.com' },
-            { id: 't5', name: 'TikTok', icon: '🎵', reward: 400, url: 'https://tiktok.com' },
-            { id: 't6', name: 'X (Twitter)', icon: '🖤', reward: 300, url: 'https://x.com' }
-        ];
-
+        let userData = { balance: 0, energy: 1000, dailyDay: 1, profitHour: 0, upgrades: {}, completedTasks: {} };
         const cardConfigs = [
-            { id: 'c1', name: 'Turbo Motor', icon: '🚀', base: 10, hour: 0.1 },
-            { id: 'c2', name: 'Nuclear Battery', icon: '🔋', base: 50, hour: 0.5 },
-            { id: 'c3', name: 'Diamond Drill', icon: '💎', base: 250, hour: 2.0 },
-            { id: 'c4', name: 'Satellite', icon: '🛰️', base: 1000, hour: 10.0 }
+            {id:'c1', name:'Turbo', icon:'🚀', base:10, hr:0.1},
+            {id:'c2', name:'Nuclear', icon:'🔋', base:50, hr:0.5},
+            {id:'c3', name:'Drill', icon:'💎', base:250, hr:2.0},
+            {id:'c4', name:'Satellite', icon:'🛰️', base:1000, hr:10.0}
+        ];
+        const socials = [
+            {id:'s1', name:'Telegram', icon:'✈️', r:500, url:'https://t.me'},
+            {id:'s2', name:'YouTube', icon:'🎬', r:500, url:'https://youtube.com'},
+            {id:'s3', name:'TikTok', icon:'🎵', r:400, url:'https://tiktok.com'},
+            {id:'s4', name:'X/Twitter', icon:'🖤', r:300, url:'https://x.com'}
         ];
 
         firebase.auth().onAuthStateChanged(user => {
@@ -147,117 +164,112 @@
         });
 
         function syncUser(uid) {
-            firebase.database().ref('users/' + uid).on('value', s => {
-                userData = s.val() || { balance: 0, profitHour: 0, friends: 0, upgrades: {}, completedTasks: {} };
+            firebase.database().ref('users/'+uid).on('value', s => {
+                const data = s.val();
+                if(data) userData = {...userData, ...data};
                 updateUI();
+                renderDaily();
                 renderTasks();
                 renderCards();
             });
-            document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || 'user'}`;
+            document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || '123'}`;
         }
 
         function updateUI() {
-            document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
-            document.getElementById('top-bal').innerText = (userData.balance || 0).toFixed(2);
-            document.getElementById('top-hour').innerText = (userData.profitHour || 0).toFixed(2);
-            document.getElementById('top-friends').innerText = (userData.friends || 0);
+            document.getElementById('balance').innerText = (userData.balance).toFixed(4);
+            document.getElementById('wall-bal').innerText = (userData.balance).toFixed(2);
+            document.getElementById('energy-val').innerText = `${Math.floor(userData.energy)}/1000`;
+            document.getElementById('energy-fill').style.width = (userData.energy/10) + '%';
+            
+            // Level logic
+            const progress = (userData.balance % 10000) / 100;
+            document.getElementById('level-progress').style.width = progress + '%';
+            document.getElementById('lvl-percent').innerText = Math.floor(progress) + '%';
             document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "PLAYER").toUpperCase();
-            if(tg.initDataUnsafe.user?.photo_url) document.getElementById('u-img').src = tg.initDataUnsafe.user.photo_url;
+        }
+
+        function handleMine() {
+            if(userData.energy >= 1) {
+                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+                    balance: userData.balance + 0.001,
+                    energy: userData.energy - 1
+                });
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        function renderDaily() {
+            const grid = document.getElementById('daily-grid');
+            grid.innerHTML = '';
+            for(let i=1; i<=8; i++) {
+                const active = i === userData.dailyDay ? 'active' : '';
+                grid.innerHTML += `<div class="day-box ${active}"><small>Day ${i}</small><br><b>${i*100}</b></div>`;
+            }
         }
 
         function renderTasks() {
-            const container = document.getElementById('tasks-container');
-            container.innerHTML = '';
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = '';
             socials.forEach(s => {
-                const isDone = userData.completedTasks && userData.completedTasks[s.id];
-                container.innerHTML += `
-                    <div class="task-card">
-                        <div class="task-info">
-                            <span class="task-icon">${s.icon}</span>
-                            <div>
-                                <div style="font-weight:900; font-size:13px;">Join ${s.name}</div>
-                                <div style="color:var(--green); font-size:10px;">+${s.reward} Coins</div>
-                            </div>
-                        </div>
-                        <button class="task-btn ${isDone ? 'completed' : ''}" onclick="doTask('${s.id}', ${s.reward}, '${s.url}')">
-                            ${isDone ? 'CLAIMED ✓' : 'JOIN'}
-                        </button>
-                    </div>
-                `;
+                const done = userData.completedTasks && userData.completedTasks[s.id];
+                list.innerHTML += `
+                    <div class="royal-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px;">
+                        <span>${s.icon} ${s.name}</span>
+                        <button class="btn-action btn-gold" style="width:80px; margin:0;" onclick="doTask('${s.id}', ${s.r}, '${s.url}')">${done ? '✓' : 'JOIN'}</button>
+                    </div>`;
             });
         }
 
-        function doTask(id, reward, url) {
-            if(userData.completedTasks && userData.completedTasks[id]) return;
+        function doTask(id, r, url) {
             tg.openLink(url);
             setTimeout(() => {
                 const tasks = userData.completedTasks || {};
                 tasks[id] = true;
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: (userData.balance || 0) + reward,
+                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+                    balance: userData.balance + r,
                     completedTasks: tasks
                 });
-                tg.HapticFeedback.notificationOccurred('success');
             }, 2000);
         }
 
         function renderCards() {
-            const list = document.getElementById('cards-list');
-            list.innerHTML = '';
+            const cont = document.getElementById('cards-container');
+            cont.innerHTML = '';
             cardConfigs.forEach(c => {
                 const lvl = (userData.upgrades && userData.upgrades[c.id]) || 0;
-                const price = Math.floor(c.base * Math.pow(1.8, lvl));
-                const canAfford = userData.balance >= price;
-                
-                list.innerHTML += `
-                    <div class="u-card">
-                        <span class="u-lvl">Lvl ${lvl}</span>
-                        <div style="font-size:30px; margin-bottom:5px;">${c.icon}</div>
-                        <div style="font-weight:900; font-size:12px;">${c.name}</div>
-                        <div style="color:var(--green); font-size:10px;">+$${c.hour}/hr</div>
-                        <button class="u-btn ${!canAfford ? 'low-balance' : ''}" onclick="buyUpgrade('${c.id}', ${price}, ${c.hour})">
-                            ${canAfford ? 'UPGRADE - ' + price : 'LOW BALANCE'}
-                        </button>
-                    </div>
-                `;
+                const cost = Math.floor(c.base * Math.pow(1.8, lvl));
+                cont.innerHTML += `
+                    <div class="day-box" style="padding:15px;">
+                        <span style="font-size:20px;">${c.icon}</span><br>
+                        <small>Lvl ${lvl}</small><br>
+                        <b style="color:var(--green)">+$${c.hr}/h</b><br>
+                        <button class="btn-action btn-pink" style="font-size:10px;" onclick="buyUp('${c.id}',${cost},${c.hr})">${cost}</button>
+                    </div>`;
             });
         }
 
-        function buyUpgrade(id, price, hP) {
-            if(userData.balance >= price) {
+        function buyUp(id, cost, hr) {
+            if(userData.balance >= cost) {
                 const ups = userData.upgrades || {};
                 ups[id] = (ups[id] || 0) + 1;
-                firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: userData.balance - price,
+                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+                    balance: userData.balance - cost,
                     upgrades: ups,
-                    profitHour: (userData.profitHour || 0) + hP
+                    profitHour: (userData.profitHour || 0) + hr
                 });
-                tg.HapticFeedback.impactOccurred('medium');
-            } else {
-                tg.HapticFeedback.notificationOccurred('error');
             }
         }
 
-        function handleMine() {
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                balance: (userData.balance || 0) + 0.001
-            });
-            tg.HapticFeedback.impactOccurred('light');
-        }
-
-        function showTab(pageId, el) {
+        function showTab(id, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.getElementById(pageId).classList.add('active-page');
+            document.getElementById(id).classList.add('active-page');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             el.classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
         }
 
         function copyRef() {
-            const link = document.getElementById('ref-link').innerText;
-            navigator.clipboard.writeText(link);
-            tg.showPopup({ message: "Referral link copied!" });
-            tg.HapticFeedback.notificationOccurred('success');
+            navigator.clipboard.writeText(document.getElementById('ref-link').innerText);
+            tg.showPopup({message: "Link Copied!"});
         }
 
         new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
