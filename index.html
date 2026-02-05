@@ -181,17 +181,20 @@
             </div>
     </div>
     <div id="p-wallet" class="page">
-        <div class="u-card" style="border-top: 3px solid var(--gold);">
-            <p style="font-size:12px; color:#888;">MY WALLET</p>
-            <h2 id="w-bal" style="font-size:35px; color:var(--gold);">0.00</h2>
-            <button id="btn-withdraw" class="btn-premium btn-gold" onclick="handleWithdraw()">WITHDRAW</button>
-        </div>
-        <div class="u-card" style="margin-top:15px;">
-            <p style="font-size:11px;">Your Referral Link</p>
-            <div id="ref-link" style="font-size:9px; background:#000; padding:10px; border-radius:10px; margin:10px 0; color:var(--blue);">...</div>
-            <button id="btn-copy" class="btn-premium btn-gold" style="background:#0088cc; color:#fff;" onclick="copyRef()">COPY LINK</button>
-        </div>
+    <div class="u-card" style="border-top: 3px solid var(--gold);">
+        <p style="font-size:12px; color:#888;">MY WALLET</p>
+        <h2 id="w-bal" style="font-size:35px; color:var(--gold);">0.00</h2>
+        <button id="btn-withdraw" class="btn-premium btn-gold" onclick="handleWithdraw()">WITHDRAW</button>
     </div>
+
+    <div class="u-card" style="margin-top:15px;">
+        <p style="font-size:11px;">Your Referral Link</p>
+        <div id="ref-link" style="font-size:9px; background:#000; padding:10px; border-radius:10px; margin:10px 0; color:var(--blue); word-break: break-all;">
+            https://t.me/Golden_Claim_Bot?start=...
+        </div>
+        <button id="btn-copy" class="btn-premium btn-gold" style="background:#0088cc; color:#fff;" onclick="copyRef()">COPY LINK</button>
+    </div>
+</div>
 
     <nav class="nav-bar">
         <div class="nav-item active" onclick="showTab('p-mine', this)">⛏️<br>MINE</div>
@@ -419,13 +422,55 @@
             }
         }
 
-        // 6. دالة نسخ رابط الإحالة
-        function copyRef() {
-            const link = document.getElementById('ref-link').innerText;
-            navigator.clipboard.writeText(link).then(() => {
-                tg.showPopup({message: "Referral Link Copied!"});
-            });
-        }
+        // دالة السحب المميزة مع تأثير الانتظار
+function handleWithdraw() {
+    const btn = document.getElementById('btn-withdraw');
+    const originalText = btn.innerText;
+    
+    // تغيير حالة الزر عند الضغط
+    btn.innerText = "PROCESSING...";
+    btn.disabled = true;
+
+    setTimeout(() => {
+        btn.innerText = "WITHDRAWN!";
+        btn.classList.replace('btn-gold', 'btn-success');
+        
+        tg.showPopup({
+            title: 'Withdrawal Request',
+            message: 'Your withdrawal request has been submitted successfully!'
+        });
+
+        // إعادة الزر لحالته الطبيعية بعد ثانيتين
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('btn-success', 'btn-gold');
+            btn.disabled = false;
+        }, 2000);
+    }, 2000);
+}
+
+// دالة نسخ الرابط مع تغيير لون الزر
+function copyRef() {
+    const btn = document.getElementById('btn-copy');
+    const linkText = document.getElementById('ref-link').innerText;
+
+    navigator.clipboard.writeText(linkText).then(() => {
+        const originalText = btn.innerText;
+        const originalBg = btn.style.background;
+
+        btn.innerText = "LINK COPIED!";
+        btn.style.background = "var(--green)";
+        btn.style.color = "#000";
+
+        tg.HapticFeedback.notificationOccurred('success');
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = originalBg;
+            btn.style.color = "#fff";
+        }, 2000);
+    });
+}
 
         // 7. دالة التنقل بين الصفحات (المسؤولة عن عمل الأزرار السفلية)
         function showTab(id, el) {
@@ -469,4 +514,5 @@
     </script>
 </body>
 </html>
+
 
