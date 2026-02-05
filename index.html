@@ -170,60 +170,149 @@
         card3: 0
     };
 
-    function upgradeCard(cardId, basePrice) {
-        // 1. حساب السعر الحالي بناءً على المستوى
-        // المعادلة: السعر الأساسي + (المستوى * السعر الأساسي)
-        let currentLvl = cardLevels[cardId];
-        let cost = basePrice + (currentLvl * basePrice);
-
-        // 2. التحقق من الرصيد
-        if (userData.balance >= cost) {
-            // خصم الرصيد
-            userData.balance -= cost;
-            cardLevels[cardId]++; // زيادة المستوى
-            
-            // 3. تأثير بصري للزر (من الوردي للأخضر)
-            const btn = document.getElementById('btn-' + cardId);
-            btn.classList.add('btn-success');
-            btn.innerText = "تم التطوير! ✨";
-
-            // تحديث واجهة الكرت
-            document.getElementById('lvl-' + cardId).innerText = "Lvl " + cardLevels[cardId];
-            let nextPrice = basePrice + (cardLevels[cardId] * basePrice);
-            document.getElementById('price-' + cardId).innerText = nextPrice.toFixed(2);
-
-            // تحديث الرصيد العام في Firebase
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                balance: userData.balance,
-                // يمكنك أيضاً حفظ مستويات الكروت في الداتابيز هنا
-                upgrades: cardLevels 
-            });
-
-            // إعادة لون الزر بعد ثانية واحدة
-            setTimeout(() => {
-                btn.classList.remove('btn-success');
-                btn.innerText = "تطوير الوردي";
-            }, 1000);
-
-            tg.HapticFeedback.impactOccurred('medium');
-        } else {
-            // إذا لم يتوفر رصيد، هزة خفيفة تنبه المستخدم
-            tg.HapticFeedback.notificationOccurred('error');
-            const btn = document.getElementById('btn-' + cardId);
-            btn.style.background = 'red';
-            setTimeout(() => btn.style.background = '', 500);
-        }
+<style>
+    /* تحسينات إضافية للتصميم الراقي */
+    .upgrade-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 15px;
+        text-align: center;
+        transition: 0.3s;
+        position: relative;
+    }
+    .upgrade-card:hover { border-color: var(--blue); background: rgba(0, 210, 255, 0.05); }
+    
+    .card-icon-circle {
+        width: 50px; height: 50px; background: rgba(0,0,0,0.3);
+        border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; margin: 0 auto 10px; font-size: 24px;
+        border: 1px solid rgba(255,255,255,0.1);
     }
 
-    // دالة للتحقق من فتح الكروت المقفلة (استناداً لعدد الإحالات)
-    function checkFriendLocks() {
-        let friendsCount = userData.friends || 0;
-        if (friendsCount >= 10) {
-            document.getElementById('card-locked-10').classList.remove('locked');
-            document.getElementById('overlay-10').style.display = 'none';
+    .lvl-tag-royal {
+        position: absolute; top: 10px; right: 10px;
+        background: linear-gradient(45deg, var(--gold), #ff8c00);
+        color: black; font-size: 9px; font-weight: 900;
+        padding: 2px 8px; border-radius: 5px;
+    }
+
+    .price-tag { font-size: 12px; color: #bbb; display: block; margin: 5px 0; }
+    .price-tag b { color: var(--gold); }
+
+    .card-btn {
+        width: 100%; padding: 10px; border-radius: 12px; border: none;
+        background: var(--pink); color: white; font-weight: bold;
+        font-size: 12px; cursor: pointer; transition: 0.3s;
+    }
+    .btn-upgraded { background: var(--green) !important; color: black !important; }
+</style>
+
+<div id="upgrades" class="page">
+    <h2 style="text-align:center; font-size:20px; color:var(--blue); margin-bottom:5px;">مركز التطوير الإمبراطوري 💎</h2>
+    <p style="text-align:center; font-size:11px; color:#777; margin-bottom:20px;">طور معداتك لزيادة كفاءة المنجم</p>
+    
+    <div class="cards-grid">
+        
+        <div class="upgrade-card">
+            <span class="lvl-tag-royal" id="lvl-c1">Lvl 0</span>
+            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);">🚀</div>
+            <span class="card-title">محرك التوربو</span>
+            <span class="price-tag">التكلفة: <b id="pr-c1">10</b></span>
+            <button id="btn-c1" class="card-btn" onclick="royalUpgrade('c1', 10)">تطوير</button>
+        </div>
+
+        <div class="upgrade-card">
+            <span class="lvl-tag-royal" id="lvl-c2">Lvl 0</span>
+            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);">🔋</div>
+            <span class="card-title">البطارية النووية</span>
+            <span class="price-tag">التكلفة: <b id="pr-c2">25</b></span>
+            <button id="btn-c2" class="card-btn" onclick="royalUpgrade('c2', 25)">تطوير</button>
+        </div>
+
+        <div class="upgrade-card">
+            <span class="lvl-tag-royal" id="lvl-c3">Lvl 0</span>
+            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);">💎</div>
+            <span class="card-title">المنقب الماسي</span>
+            <span class="price-tag">التكلفة: <b id="pr-c3">100</b></span>
+            <button id="btn-c3" class="card-btn" onclick="royalUpgrade('c3', 100)">تطوير</button>
+        </div>
+
+        <div class="upgrade-card">
+            <span class="lvl-tag-royal" id="lvl-c4">Lvl 0</span>
+            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(112, 0, 255, 0.3);">🛰️</div>
+            <span class="card-title">القمر الصناعي</span>
+            <span class="price-tag">التكلفة: <b id="pr-c4">500</b></span>
+            <button id="btn-c4" class="card-btn" onclick="royalUpgrade('c4', 500)">تطوير</button>
+        </div>
+
+        <div class="upgrade-card">
+            <span class="lvl-tag-royal" id="lvl-c5">Lvl 0</span>
+            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(0, 255, 135, 0.3);">🤖</div>
+            <span class="card-title">مساعد AI</span>
+            <span class="price-tag">التكلفة: <b id="pr-c5">2000</b></span>
+            <button id="btn-c5" class="card-btn" onclick="royalUpgrade('c5', 2000)">تطوير</button>
+        </div>
+
+        <div class="upgrade-card">
+            <span class="lvl-tag-royal" id="lvl-c6">Lvl 0</span>
+            <div class="card-icon-circle" style="box-shadow: 0 0 20px rgba(243, 186, 47, 0.4);">👑</div>
+            <span class="card-title">التاج الملكي</span>
+            <span class="price-tag">التكلفة: <b id="pr-c6">10000</b></span>
+            <button id="btn-c6" class="card-btn" onclick="royalUpgrade('c6', 10000)">تطوير</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // نظام تخزين المستويات المتطور
+    let upgradesData = {
+        c1: 0, c2: 0, c3: 0, c4: 0, c5: 0, c6: 0
+    };
+
+    function royalUpgrade(id, base) {
+        let currentLvl = upgradesData[id];
+        let cost = base + (currentLvl * base * 1.5); // السعر يزداد بنسبة 1.5 في كل مستوى
+
+        if (userData.balance >= cost) {
+            userData.balance -= cost;
+            upgradesData[id]++;
+            
+            // تحديث الواجهة فوراً
+            const btn = document.getElementById('btn-' + id);
+            btn.classList.add('btn-upgraded');
+            btn.innerText = "UPGRADED! ✓";
+
+            document.getElementById('lvl-' + id).innerText = "Lvl " + upgradesData[id];
+            let nextCost = base + (upgradesData[id] * base * 1.5);
+            document.getElementById('price-' + id).innerText = nextCost.toFixed(0);
+            
+            // تحديث الداتابيز
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                balance: userData.balance,
+                upgrades: upgradesData
+            });
+
+            // اهتزاز وتغيير اللون المؤقت
+            tg.HapticFeedback.impactOccurred('heavy');
+            setTimeout(() => {
+                btn.classList.remove('btn-upgraded');
+                btn.innerText = "تطوير";
+            }, 800);
+        } else {
+            tg.HapticFeedback.notificationOccurred('error');
+            const btn = document.getElementById('btn-' + id);
+            btn.style.background = '#441111';
+            btn.innerText = "رصيد غير كافٍ";
+            setTimeout(() => {
+                btn.style.background = '';
+                btn.innerText = "تطوير";
+            }, 1000);
         }
     }
 </script>
+
 
 
     <div id="wallet" class="page">
