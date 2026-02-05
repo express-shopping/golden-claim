@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Ultimate Edition</title>
+    <title>Golden Claim | Developer Mode</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -20,119 +20,176 @@
         
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; outline: none; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; height: 100vh; }
-        .neon-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% -20%, rgba(112, 0, 255, 0.15) 0%, transparent 50%); z-index: -1; }
+        
+        /* Mining Circle Animation */
+        .coin-container { position: relative; width: 220px; height: 220px; margin: 40px auto; }
+        .mining-circle { 
+            width: 100%; height: 100%; border-radius: 50%; 
+            background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+            box-shadow: 0 0 30px rgba(243, 186, 47, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s, box-shadow 0.3s; cursor: pointer;
+            border: 4px solid rgba(243, 186, 47, 0.1);
+        }
+        .mining-circle:active { transform: scale(0.95); box-shadow: 0 0 50px rgba(243, 186, 47, 0.5); }
+        .mining-circle img { width: 80%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        
+        /* Glow Effect for Mining */
+        .glow-pulse { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--gold); opacity: 0; pointer-events: none; }
+        .active-mine .glow-pulse { animation: pulseGlow 0.5s ease-out; }
+        @keyframes pulseGlow { from { transform: scale(1); opacity: 0.4; } to { transform: scale(1.3); opacity: 0; } }
 
-        /* Header & Stats */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); }
-        .user-container { display: flex; align-items: center; gap: 10px; background: linear-gradient(90deg, rgba(0, 210, 255, 0.1), transparent); padding: 5px 15px; border-radius: 30px; border-left: 3px solid var(--blue); }
-        .user-img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue); object-fit: cover; }
-        .user-name { font-weight: 900; font-size: 12px; color: #fff; }
+        /* General Styles */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); }
+        .user-container { display: flex; align-items: center; gap: 12px; }
+        .user-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--blue); background: #111; }
+        
+        .page { display: none; height: calc(100vh - 220px); overflow-y: auto; padding: 15px; }
+        .active-page { display: block !important; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .stats-bar { display: flex; justify-content: space-around; padding: 10px; background: var(--glass); margin: 10px; border-radius: 15px; border: 1px solid var(--glass-border); }
-        .stat-item { text-align: center; }
-        .stat-label { font-size: 8px; color: #aaa; display: block; }
-        .stat-val { font-size: 12px; font-weight: bold; color: var(--green); }
+        /* Buttons & Cards */
+        .btn-premium { 
+            width: 100%; padding: 14px; border-radius: 15px; border: none; font-weight: 900; 
+            font-family: 'Cairo'; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-success { background: var(--green) !important; color: #000 !important; }
+        .btn-error { background: var(--red) !important; color: #fff !important; }
 
-        /* Level Section (Rank) */
-        .lvl-box { padding: 0 20px; margin-bottom: 10px; }
-        .lvl-info { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; color: var(--blue); margin-bottom: 5px; }
-        .progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); transition: 0.5s; }
+        .u-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 24px; padding: 18px; text-align: center; position: relative; }
 
-        /* Pages */
-        .page { display: none; height: calc(100vh - 280px); overflow-y: auto; padding: 15px; padding-bottom: 120px; }
-        .active-page { display: block !important; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Mine Page */
-        .balance-main { font-size: 45px; font-weight: 900; text-align: center; margin: 15px 0; color: var(--gold); text-shadow: 0 0 20px rgba(243, 186, 47, 0.3); }
-        .coin-btn { width: 200px; height: 200px; margin: 20px auto; display: block; cursor: pointer; transition: 0.1s; }
-        .coin-btn:active { transform: scale(0.92); }
-
-        /* Boost Page (RE-DESIGNED) */
+        /* ============================================================ */
+                /* تصميم شبكة الكروت */
         .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .u-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 22px; padding: 15px; text-align: center; position: relative; transition: 0.3s; }
+        
+        /* تصميم الكارت الراقي */
+        .u-card { 
+            background: var(--glass); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 22px; 
+            padding: 15px; 
+            text-align: center; 
+            position: relative; 
+            transition: 0.3s; 
+        }
+
+        /* حالة الكارت المقفل */
         .u-card.locked { opacity: 0.6; filter: grayscale(1); }
-        .lock-msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); border-radius: 22px; font-size: 10px; z-index: 5; color: var(--gold); padding: 10px; font-weight: bold; text-align: center; }
-        .u-lvl { position: absolute; top: 10px; right: 10px; background: var(--gold); color: #000; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 5px; }
+        
+        /* رسالة القفل التي تظهر فوق الكارت */
+        .lock-msg { 
+            position: absolute; inset: 0; 
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            background: rgba(0,0,0,0.85); 
+            border-radius: 22px; 
+            font-size: 10px; z-index: 5; 
+            color: var(--gold); padding: 10px; 
+            font-weight: bold; text-align: center; 
+        }
+
+        /* شارة المستوى (Level) */
+        .u-lvl { 
+            position: absolute; top: 10px; right: 10px; 
+            background: var(--gold); color: #000; 
+            font-size: 9px; font-weight: 900; 
+            padding: 2px 6px; border-radius: 5px; 
+        }
+
         .u-icon { font-size: 30px; margin-bottom: 5px; display: block; }
         .u-title { font-size: 13px; font-weight: bold; display: block; color: #fff; }
         .u-profit { font-size: 10px; color: var(--green); display: block; margin: 4px 0; }
         .u-price { font-size: 12px; color: #ccc; display: block; margin-bottom: 10px; }
         .u-price b { color: var(--gold); }
-        .u-btn { width: 100%; padding: 10px; border-radius: 12px; border: none; background: var(--pink); color: white; font-weight: bold; cursor: pointer; font-family: 'Cairo'; }
 
-        /* Tasks Page */
-        .royal-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 18px; padding: 15px; margin-bottom: 15px; }
-        .daily-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-        .day-box { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px; text-align: center; font-size: 9px; }
-        .day-box.active { border-color: var(--gold); background: rgba(243,186,47,0.1); }
-        .task-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--glass-border); }
-        .btn-task { padding: 8px 15px; border-radius: 20px; border: none; font-weight: 900; font-size: 11px; cursor: pointer; font-family: 'Cairo'; min-width: 80px; }
-        .btn-join { background: var(--gold); color: #000; }
-        .btn-done { background: var(--green) !important; color: #000 !important; }
+        /* زر الترقية */
+        .u-btn { 
+            width: 100%; padding: 10px; border-radius: 12px; 
+            border: none; background: var(--pink); 
+            color: white; font-weight: bold; 
+            cursor: pointer; font-family: 'Cairo'; 
+        }
+        
+        /* ألوان التنبيه داخل الأزرار */
+        .btn-error { background: var(--red) !important; }
+        .btn-success { background: var(--green) !important; color: #000 !important; }
 
-        /* Navigation */
-        .nav-bar { position: fixed; bottom: 15px; left: 5%; width: 90%; background: rgba(10, 10, 15, 0.95); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid var(--glass-border); z-index: 100; }
-        .nav-item { color: #555; font-size: 10px; text-align: center; flex: 1; font-weight: bold; cursor: pointer; }
+        /* ============================================================ */
+        
+        /* مثال: .your-new-card-style { ... } */
+
+        /* ============================================================ */
+
+        .nav-bar { position: fixed; bottom: 15px; left: 5%; width: 90%; background: #0a0a0f; display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .nav-item { color: #555; font-size: 10px; text-align: center; flex: 1; }
         .nav-item.active { color: var(--gold); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px; }
+        .stat-card { background: var(--glass); padding: 8px; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); }
+        
+        .lvl-bar-container { padding: 0 20px; margin: 10px 0; }
+        .lvl-bar-bg { width: 100%; height: 6px; background: #222; border-radius: 10px; overflow: hidden; }
+        .lvl-bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); transition: 0.5s; width: 0%; }
     </style>
 </head>
 <body>
-    <div class="neon-bg"></div>
-
     <div class="header">
         <div class="user-container">
-            <img id="u-img" class="user-img" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
-            <span id="u-name" class="user-name">PLAYER</span>
+            <img id="u-img" class="user-img" src="">
+            <span id="u-name" style="font-size: 12px; font-weight: bold;">...</span>
         </div>
         <div id="ton-connect"></div>
     </div>
 
-    <div class="stats-bar">
-        <div class="stat-item"><span class="stat-label">TAP</span><span class="stat-val" id="st-tap">+0.001</span></div>
-        <div class="stat-item"><span class="stat-label">HOURLY</span><span class="stat-val" id="st-hr">0.00</span></div>
-        <div class="stat-item"><span class="stat-label">FRIENDS</span><span class="stat-val" id="st-ref">0</span></div>
+    <div class="stats-grid">
+        <div class="stat-card"><span style="font-size:8px; color:#888;">TAP</span><br><b id="st-tap" style="color:var(--green);">+0.001</b></div>
+        <div class="stat-card"><span style="font-size:8px; color:#888;">HOURLY</span><br><b id="st-hr" style="color:var(--blue);">0.00</b></div>
+        <div class="stat-card"><span style="font-size:8px; color:#888;">FRIENDS</span><br><b id="st-ref" style="color:var(--gold);">0</b></div>
     </div>
 
-    <div class="lvl-box">
-        <div class="lvl-info"><span id="lvl-txt">Rank: Bronze</span><span id="lvl-pct">0%</span></div>
-        <div class="progress-bg"><div id="p-bar" class="progress-fill"></div></div>
+    <div class="lvl-bar-container">
+        <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:4px;">
+            <span id="rank-name">Rank: Bronze</span>
+            <span id="rank-pct">0%</span>
+        </div>
+        <div class="lvl-bar-bg"><div id="p-bar" class="lvl-bar-fill"></div></div>
     </div>
 
     <div id="p-mine" class="page active-page">
-        <h1 id="balance" class="balance-main">0.0000</h1>
-        <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" class="coin-btn" onclick="handleMine()">
-        <div style="text-align:center; font-size:12px; margin-top:20px;">⚡ ENERGY: <span id="en-txt">1000/1000</span></div>
-        <div style="width:70%; height:8px; background:#222; margin:10px auto; border-radius:10px; overflow:hidden;">
-            <div id="energy-fill" style="width:100%; height:100%; background:var(--gold); transition:0.3s;"></div>
+        <h1 id="balance" style="text-align:center; font-size:45px; color:var(--gold); margin:10px 0;">0.0000</h1>
+        <div class="coin-container" id="mine-container">
+            <div class="glow-pulse"></div>
+            <div class="mining-circle" onclick="handleMine()">
+                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
+            </div>
         </div>
+        <div style="text-align:center; font-size:12px; color:#aaa;">⚡ Energy: <span id="en-txt">1000/1000</span></div>
     </div>
 
     <div id="p-tasks" class="page">
-        <div class="royal-card">
-            <h3 style="margin:0; color:var(--gold); font-size:16px;">📅 Daily Reward</h3>
-            <div class="daily-grid" id="daily-grid"></div>
-            <button style="width:100%; padding:12px; margin-top:10px; background:var(--gold); border:none; border-radius:12px; font-weight:900;" onclick="claimDaily()">CLAIM BONUS</button>
+        <div class="u-card" style="margin-bottom:15px;">
+            <h3 style="margin:0; color:var(--gold);">Daily Reward</h3>
+            <div id="daily-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:10px 0;"></div>
+            <button id="btn-daily" class="btn-premium btn-gold" onclick="claimDaily()">CLAIM DAILY</button>
         </div>
-        <h3 style="color:var(--blue); margin-top:20px;">Social Quests</h3>
         <div id="tasks-list"></div>
     </div>
 
-    <div id="p-boost" class="page">
-        <div class="cards-grid" id="cards-list"></div>
+        <div id="p-boost" class="page">
+        <div class="cards-grid" id="cards-list">
+            </div>
     </div>
-
     <div id="p-wallet" class="page">
-        <div class="royal-card" style="text-align: center;">
-            <p style="font-size:12px; color:#aaa;">BALANCE</p>
+        <div class="u-card" style="border-top: 3px solid var(--gold);">
+            <p style="font-size:12px; color:#888;">MY WALLET</p>
             <h2 id="w-bal" style="font-size:35px; color:var(--gold);">0.00</h2>
-            <button style="width:100%; padding:15px; background:var(--pink); border:none; border-radius:12px; color:white; font-weight:900;">WITHDRAW</button>
+            <button id="btn-withdraw" class="btn-premium btn-gold" onclick="handleWithdraw()">WITHDRAW</button>
         </div>
-        <div class="royal-card">
-            <h4 style="margin:0; color:var(--blue);">Invite Friends</h4>
-            <div id="ref-link" style="font-size:9px; background:#000; padding:10px; margin:15px 0; border:1px dashed #333;">Loading...</div>
-            <button style="width:100%; padding:10px; background:var(--blue); border:none; border-radius:10px; font-weight:900;" onclick="copyRef()">COPY LINK</button>
+        <div class="u-card" style="margin-top:15px;">
+            <p style="font-size:11px;">Your Referral Link</p>
+            <div id="ref-link" style="font-size:9px; background:#000; padding:10px; border-radius:10px; margin:10px 0; color:var(--blue);">...</div>
+            <button id="btn-copy" class="btn-premium btn-gold" style="background:#0088cc; color:#fff;" onclick="copyRef()">COPY LINK</button>
         </div>
     </div>
 
@@ -145,6 +202,8 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
+
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
             authDomain: "goldenclaim-6863a.firebaseapp.com",
@@ -158,7 +217,53 @@
 
         let userData = { balance: 0, energy: 1000, dailyDay: 1, lastClaim: 0, upgrades: {}, completedTasks: {}, profitHour: 0, profitTap: 0.001, friends: 0 };
 
-        // 50+ Cards with advanced requirements
+        firebase.auth().onAuthStateChanged(user => {
+            if(user) {
+                const userPhoto = tg.initDataUnsafe.user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                document.getElementById('u-img').src = userPhoto;
+                document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "Guest").toUpperCase();
+                syncUser(user.uid);
+            } else firebase.auth().signInAnonymously();
+        });
+
+        function syncUser(uid) {
+            firebase.database().ref('users/'+uid).on('value', s => {
+                const data = s.val();
+                if(data) userData = {...userData, ...data};
+                updateUI();
+                renderCards(); // استدعاء دالة عرض البطاقات
+                renderTasks();
+                renderDaily();
+            });
+            document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || '6396618007'}`;
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
+            document.getElementById('w-bal').innerText = (userData.balance || 0).toFixed(2);
+            document.getElementById('st-tap').innerText = "+" + (userData.profitTap || 0.001).toFixed(4);
+            document.getElementById('st-hr').innerText = (userData.profitHour || 0).toFixed(2);
+            document.getElementById('en-txt').innerText = Math.floor(userData.energy) + "/1000";
+            let p = (userData.balance % 1000) / 10;
+            document.getElementById('p-bar').style.width = p + "%";
+            document.getElementById('rank-pct').innerText = Math.floor(p) + "%";
+        }
+
+        function handleMine() {
+            if(userData.energy >= 1) {
+                const container = document.getElementById('mine-container');
+                container.classList.add('active-mine');
+                setTimeout(() => container.classList.remove('active-mine'), 200);
+                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+                    balance: userData.balance + (userData.profitTap || 0.001),
+                    energy: userData.energy - 1
+                });
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        /* ============================================================ */
+                // نظام الـ 55 كارت مع شروط متقدمة
         const cardConfigs = [
             { id: 'c1', name: 'Eco Engine', icon: '🍃', base: 100, tap: 0.0001, hour: 0.1, reqFriends: 0 },
             { id: 'c2', name: 'Nitro Boost', icon: '🚀', base: 500, tap: 0.0005, hour: 0.5, reqFriends: 0 },
@@ -167,6 +272,7 @@
             { id: 'c5', name: 'AI Server', icon: '🧠', base: 15000, tap: 0.01, hour: 15.0, reqFriends: 3, reqCardId: 'c2', reqCardLvl: 10 }
         ];
 
+        // توليد بقية الـ 55 كارت تلقائياً بنفس المنطق
         for(let i=6; i<=55; i++) {
             cardConfigs.push({
                 id: 'c'+i, name: 'Module X-'+i, icon: '⚙️', base: 2000 * i, tap: 0.002 * i, hour: 10 * i,
@@ -174,59 +280,26 @@
             });
         }
 
-        const socials = [
-            {id:'t1', name:'Telegram Channel', icon:'✈️', r:1000, url:'https://t.me'},
-            {id:'t2', name:'YouTube Subscribe', icon:'🎬', r:2000, url:'https://youtube.com'},
-            {id:'t3', name:'Follow TikTok', icon:'🎵', r:1000, url:'https://tiktok.com'},
-            {id:'t4', name:'Follow X', icon:'🐦', r:1000, url:'https://x.com'}
-        ];
+        /* ============================================================ */
 
-        firebase.auth().onAuthStateChanged(user => {
-            if(user) syncUser(user.uid);
-            else firebase.auth().signInAnonymously();
-        });
-
-        function syncUser(uid) {
-            firebase.database().ref('users/'+uid).on('value', s => {
-                const data = s.val();
-                if(data) userData = {...userData, ...data};
-                updateUI();
-                renderCards();
-                renderTasks();
-                renderDaily();
-            });
-            document.getElementById('ref-link').innerText = `https://t.me/Bot?start=${tg.initDataUnsafe.user?.id || '000'}`;
-        }
-
-        function updateUI() {
-            document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
-            document.getElementById('w-bal').innerText = (userData.balance || 0).toFixed(2);
-            document.getElementById('st-tap').innerText = "+" + (userData.profitTap || 0.001).toFixed(4);
-            document.getElementById('st-hr').innerText = (userData.profitHour || 0).toFixed(2);
-            document.getElementById('st-ref').innerText = (userData.friends || 0);
-            document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "PLAYER");
-            
-            // Level Rank Logic
-            let progress = (userData.balance % 1000) / 10;
-            document.getElementById('p-bar').style.width = progress + "%";
-            document.getElementById('lvl-pct').innerText = Math.floor(progress) + "%";
-            document.getElementById('lvl-txt').innerText = userData.balance > 10000 ? "Rank: Gold" : "Rank: Bronze";
-        }
-
-        function renderCards() {
+                function renderCards() {
             const list = document.getElementById('cards-list');
             if(!list) return;
             list.innerHTML = '';
+            
             cardConfigs.forEach(c => {
                 const lvl = (userData.upgrades && userData.upgrades[c.id]) || 0;
                 const price = Math.floor(c.base * Math.pow(1.5, lvl));
                 let lockMsg = "";
                 let locked = false;
 
+                // التحقق من شرط الأصدقاء
                 if(userData.friends < c.reqFriends) {
                     locked = true; 
                     lockMsg = `🔒 Invite ${c.reqFriends} Friends`;
-                } else if(c.reqCardId) {
+                } 
+                // التحقق من شرط ليفل كارت آخر
+                else if(c.reqCardId) {
                     const tLvl = (userData.upgrades && userData.upgrades[c.reqCardId]) || 0;
                     if(tLvl < c.reqCardLvl) {
                         locked = true;
@@ -243,41 +316,63 @@
                         <span class="u-title">${c.name}</span>
                         <span class="u-profit">+$${c.hour}/hr</span>
                         <span class="u-price">Cost: <b>${price}</b></span>
-                        <button class="u-btn" onclick="buyBoost('${c.id}', ${price}, ${c.tap}, ${c.hour})">UPGRADE</button>
+                        <button id="btn-${c.id}" class="u-btn" onclick="buyBoost('${c.id}', ${price}, ${c.tap}, ${c.hour})">UPGRADE</button>
                     </div>`;
             });
         }
 
         function buyBoost(id, price, tP, hP) {
+            const btn = document.getElementById('btn-'+id);
             if(userData.balance >= price) {
                 const ups = userData.upgrades || {};
                 ups[id] = (ups[id] || 0) + 1;
+                
                 firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
                     balance: userData.balance - price,
                     upgrades: ups,
-                    profitTap: userData.profitTap + tP,
-                    profitHour: userData.profitHour + hP
+                    profitTap: (userData.profitTap || 0.001) + tP,
+                    profitHour: (userData.profitHour || 0) + hP
                 });
+                
+                btn.innerText = "SUCCESS";
+                btn.classList.add('btn-success');
                 tg.HapticFeedback.impactOccurred('medium');
+            } else {
+                btn.innerText = "LOW BALANCE";
+                btn.classList.add('btn-error');
+                setTimeout(() => {
+                    btn.innerText = "UPGRADE";
+                    btn.classList.remove('btn-error');
+                }, 1000);
             }
         }
 
+        /* ============================================================ */
+
+                // 1. مصفوفة المهام الاجتماعية
+        const socials = [
+            {id:'s1', name:'Telegram Channel', r:1000, url:'https://t.me/your_channel'},
+            {id:'s2', name:'YouTube Subscribe', r:2000, url:'https://youtube.com/your_channel'},
+            {id:'s3', name:'Follow TikTok', r:1500, url:'https://tiktok.com/@your_account'}
+        ];
+
+        // 2. دالة عرض المهام
         function renderTasks() {
             const list = document.getElementById('tasks-list');
-            list.innerHTML = '';
+            if(!list) return;
+            list.innerHTML = '<h3 style="color:var(--blue); margin-left:10px;">Social Tasks</h3>';
             socials.forEach(s => {
                 const done = userData.completedTasks && userData.completedTasks[s.id];
                 list.innerHTML += `
-                    <div class="task-row">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span>${s.icon}</span>
-                            <div style="font-size:11px;"><b>${s.name}</b><br><span style="color:var(--gold)">+${s.r}</span></div>
-                        </div>
-                        <button class="btn-task ${done ? 'btn-done' : 'btn-join'}" onclick="doTask('${s.id}','${s.url}',${s.r})">${done ? 'DONE' : 'JOIN'}</button>
+                    <div class="u-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; margin-bottom:10px;">
+                        <div style="font-size:12px; text-align:left;"><b>${s.name}</b><br><span style="color:var(--gold);">+${s.r} Coins</span></div>
+                        <button id="btn-${s.id}" class="u-btn ${done ? 'btn-success' : ''}" style="width:80px; font-size:10px;" 
+                            onclick="${done ? '' : `doTask('${s.id}','${s.url}',${s.r})`}">${done ? 'DONE' : 'JOIN'}</button>
                     </div>`;
             });
         }
 
+        // 3. دالة تنفيذ المهمة
         function doTask(id, url, r) {
             tg.openLink(url);
             setTimeout(() => {
@@ -288,61 +383,89 @@
                         balance: userData.balance + r,
                         completedTasks: tasks
                     });
+                    tg.showPopup({message: "Task Completed! +" + r});
                 }
-            }, 3000);
+            }, 5000); // ينتظر 5 ثوانٍ ليتأكد من الزيارة
         }
 
+        // 4. دالة عرض المكافأة اليومية
         function renderDaily() {
             const grid = document.getElementById('daily-grid');
+            if(!grid) return;
             grid.innerHTML = '';
             for(let i=1; i<=8; i++) {
-                grid.innerHTML += `<div class="day-box ${i === userData.dailyDay ? 'active' : ''}">Day ${i}<br>+${i*500}</div>`;
+                const isCurrent = (i === userData.dailyDay);
+                grid.innerHTML += `
+                    <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px; font-size:8px; border:1px solid ${isCurrent ? 'var(--gold)' : 'transparent'}">
+                        Day ${i}<br><span style="color:var(--gold);">+${i*500}</span>
+                    </div>`;
             }
         }
 
+        // 5. دالة المطالبة بالمكافأة اليومية
         function claimDaily() {
             const now = Date.now();
-            if(now - userData.lastClaim > 86400000) {
+            const oneDay = 24 * 60 * 60 * 1000;
+            if(now - (userData.lastClaim || 0) > oneDay) {
+                const bonus = (userData.dailyDay || 1) * 500;
                 firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                    balance: userData.balance + (userData.dailyDay * 500),
-                    dailyDay: userData.dailyDay >= 8 ? 1 : userData.dailyDay + 1,
+                    balance: userData.balance + bonus,
+                    dailyDay: userData.dailyDay >= 8 ? 1 : (userData.dailyDay || 1) + 1,
                     lastClaim: now
                 });
-            } else tg.showPopup({message: "Wait until tomorrow!"});
-        }
-
-        function handleMine() {
-            if(userData.energy >= 1) {
-                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                    balance: userData.balance + userData.profitTap,
-                    energy: userData.energy - 1
-                });
-                tg.HapticFeedback.impactOccurred('light');
+                tg.showPopup({message: "Claimed: " + bonus + " Coins!"});
+            } else {
+                tg.showPopup({message: "Come back tomorrow!"});
             }
         }
 
-        function showTab(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.getElementById(id).classList.add('active-page');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
-
+        // 6. دالة نسخ رابط الإحالة
         function copyRef() {
-            navigator.clipboard.writeText(document.getElementById('ref-link').innerText);
-            tg.showPopup({message: "Link Copied!"});
+            const link = document.getElementById('ref-link').innerText;
+            navigator.clipboard.writeText(link).then(() => {
+                tg.showPopup({message: "Referral Link Copied!"});
+            });
         }
 
+        // 7. دالة التنقل بين الصفحات (المسؤولة عن عمل الأزرار السفلية)
+        function showTab(id, el) {
+            // إخفاء كل الصفحات
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            // إظهار الصفحة المطلوبة
+            const targetPage = document.getElementById(id);
+            if(targetPage) targetPage.classList.add('active-page');
+            
+            // تحديث شكل أزرار القائمة
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(el) el.classList.add('active');
+            
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        // 8. العداد الزمني (للربح التلقائي واستعادة الطاقة)
         setInterval(() => {
-            if(userData.profitHour > 0) {
-                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                    balance: userData.balance + (userData.profitHour / 3600),
-                    energy: Math.min(1000, (userData.energy || 0) + 1)
-                });
+            if(firebase.auth().currentUser) {
+                const updates = {};
+                // زيادة الرصيد بناءً على ربح الساعة
+                if(userData.profitHour > 0) {
+                    updates['balance'] = userData.balance + (userData.profitHour / 3600);
+                }
+                // استعادة الطاقة تلقائياً (1 طاقة كل ثانية)
+                if(userData.energy < 1000) {
+                    updates['energy'] = Math.min(1000, (userData.energy || 0) + 1);
+                }
+                
+                if(Object.keys(updates).length > 0) {
+                    firebase.database().ref('users/'+firebase.auth().currentUser.uid).update(updates);
+                }
             }
         }, 1000);
 
-        new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
+        // 9. ربط محفظة TON
+        new TON_CONNECT_UI.TonConnectUI({ 
+            manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', 
+            buttonRootId: 'ton-connect' 
+        });
     </script>
 </body>
 </html>
