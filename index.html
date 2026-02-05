@@ -113,41 +113,118 @@
         </div>
     </div>
 
-    <div id="upgrades" class="page">
-        <h2 style="text-align:center; font-size:18px; color:var(--blue);">تطوير المعدات ⚡</h2>
-        <div class="cards-grid">
-            <div class="upgrade-card">
-                <div class="card-icon">🚀</div>
-                <span class="card-title">محرك التوربو</span>
-                <span class="card-desc">زيادة سرعة التعدين +5%</span>
-                <button class="card-btn" onclick="tg.showAlert('تم تفعيل المحرك!')">تطوير</button>
-            </div>
-            <div class="upgrade-card locked" id="card-10">
-                <div class="lock-overlay">
-                    <span>🔒 مقفل</span>
-                    <span>دعوة 10 أصدقاء</span>
-                </div>
-                <div class="card-icon">💎</div>
-                <span class="card-title">المنقب الماسي</span>
-                <span class="card-desc">مضاعفة الأرباح x2</span>
-            </div>
-            <div class="upgrade-card">
-                <div class="card-icon">🔋</div>
-                <span class="card-title">بطارية فائقة</span>
-                <span class="card-desc">تقليل وقت الانتظار 10%</span>
-                <button class="card-btn">تطوير</button>
-            </div>
-            <div class="upgrade-card locked">
-                <div class="lock-overlay">
-                    <span>🔒 مقفل</span>
-                    <span>دعوة 20 صديق</span>
-                </div>
-                <div class="card-icon">👑</div>
-                <span class="card-title">التاج الملكي</span>
-                <span class="card-desc">زيادة وقت التعدين +200%</span>
-            </div>
+    <style>
+    /* تصميم الأزرار المطور */
+    .card-btn { 
+        width: 100%; margin-top: 10px; padding: 10px; 
+        background: var(--pink); border: none; border-radius: 12px; 
+        font-size: 11px; font-weight: bold; color: white; 
+        cursor: pointer; transition: background 0.3s ease;
+    }
+    .btn-success { background: var(--green) !important; color: black !important; }
+    
+    .lvl-tag-small {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 6px; border-radius: 5px;
+        font-size: 10px; margin-left: 5px; color: var(--blue);
+    }
+</style>
+
+<div id="upgrades" class="page">
+    <h2 style="text-align:center; font-size:18px; color:var(--blue); margin-bottom:20px;">مركز التطوير الملكي ⚡</h2>
+    <div class="cards-grid">
+        
+        <div class="upgrade-card">
+            <div class="card-icon">🚀</div>
+            <span class="card-title">محرك التوربو <span id="lvl-card1" class="lvl-tag-small">Lvl 0</span></span>
+            <span class="card-desc">السعر الحالي: <b id="price-card1" style="color:var(--gold)">10</b></span>
+            <button id="btn-card1" class="card-btn" onclick="upgradeCard('card1', 10)">تطوير الوردي</button>
         </div>
+
+        <div class="upgrade-card">
+            <div class="card-icon">🔋</div>
+            <span class="card-title">البطارية النووية <span id="lvl-card2" class="lvl-tag-small">Lvl 0</span></span>
+            <span class="card-desc">السعر الحالي: <b id="price-card2" style="color:var(--gold)">15</b></span>
+            <button id="btn-card2" class="card-btn" onclick="upgradeCard('card2', 15)">تطوير الوردي</button>
+        </div>
+
+        <div class="upgrade-card locked" id="card-locked-10">
+            <div id="overlay-10" class="lock-overlay">
+                <span>🔒 مقفل</span>
+                <span>دعوة 10 أصدقاء</span>
+            </div>
+            <div class="card-icon">📡</div>
+            <span class="card-title">الرادار المطور <span id="lvl-card3" class="lvl-tag-small">Lvl 0</span></span>
+            <span class="card-desc">السعر: <b id="price-card3" style="color:var(--gold)">50</b></span>
+            <button id="btn-card3" class="card-btn" onclick="upgradeCard('card3', 50)">تطوير</button>
+        </div>
+
     </div>
+</div>
+
+<script>
+    // نظام تخزين مستويات الكروت
+    let cardLevels = {
+        card1: 0,
+        card2: 0,
+        card3: 0
+    };
+
+    function upgradeCard(cardId, basePrice) {
+        // 1. حساب السعر الحالي بناءً على المستوى
+        // المعادلة: السعر الأساسي + (المستوى * السعر الأساسي)
+        let currentLvl = cardLevels[cardId];
+        let cost = basePrice + (currentLvl * basePrice);
+
+        // 2. التحقق من الرصيد
+        if (userData.balance >= cost) {
+            // خصم الرصيد
+            userData.balance -= cost;
+            cardLevels[cardId]++; // زيادة المستوى
+            
+            // 3. تأثير بصري للزر (من الوردي للأخضر)
+            const btn = document.getElementById('btn-' + cardId);
+            btn.classList.add('btn-success');
+            btn.innerText = "تم التطوير! ✨";
+
+            // تحديث واجهة الكرت
+            document.getElementById('lvl-' + cardId).innerText = "Lvl " + cardLevels[cardId];
+            let nextPrice = basePrice + (cardLevels[cardId] * basePrice);
+            document.getElementById('price-' + cardId).innerText = nextPrice.toFixed(2);
+
+            // تحديث الرصيد العام في Firebase
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                balance: userData.balance,
+                // يمكنك أيضاً حفظ مستويات الكروت في الداتابيز هنا
+                upgrades: cardLevels 
+            });
+
+            // إعادة لون الزر بعد ثانية واحدة
+            setTimeout(() => {
+                btn.classList.remove('btn-success');
+                btn.innerText = "تطوير الوردي";
+            }, 1000);
+
+            tg.HapticFeedback.impactOccurred('medium');
+        } else {
+            // إذا لم يتوفر رصيد، هزة خفيفة تنبه المستخدم
+            tg.HapticFeedback.notificationOccurred('error');
+            const btn = document.getElementById('btn-' + cardId);
+            btn.style.background = 'red';
+            setTimeout(() => btn.style.background = '', 500);
+        }
+    }
+
+    // دالة للتحقق من فتح الكروت المقفلة (استناداً لعدد الإحالات)
+    function checkFriendLocks() {
+        let friendsCount = userData.friends || 0;
+        if (friendsCount >= 10) {
+            document.getElementById('card-locked-10').classList.remove('locked');
+            document.getElementById('overlay-10').style.display = 'none';
+        }
+    }
+</script>
+
 
     <div id="wallet" class="page">
         <h2 style="text-align:center;">المحفظة الملكية 💰</h2>
