@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golden Claim | Royal Edition</title>
+    <title>Golden Claim | Empire Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -14,399 +14,129 @@
 
     <style>
         :root { 
-            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --accent: #7000ff;
-            --bg: #030305; --glass: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.1);
+            --gold: #f3ba2f; --blue: #00d2ff; --pink: #ff007f; --green: #00ff87;
+            --bg: #050507; --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1);
         }
         
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; -webkit-user-select: none; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; outline: none; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; }
 
-        /* خلفية نيون متحركة */
+        /* الخلفية النيون */
         .neon-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% -20%, var(--accent) 0%, transparent 50%),
-                        radial-gradient(circle at -10% 100%, var(--pink) 0%, transparent 30%);
-            z-index: -1; opacity: 0.4;
+            background: radial-gradient(circle at 50% -20%, rgba(112, 0, 255, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 0% 100%, rgba(255, 0, 127, 0.1) 0%, transparent 40%);
+            z-index: -1;
         }
 
-        /* الهيدر مع صورة المستخدم */
-        .header { display: flex; justify-content: space-between; padding: 15px 20px; align-items: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
-        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--glass); padding: 5px 12px; border-radius: 30px; border: 1px solid var(--glass-border); }
-        .user-img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--blue); background: #222; object-fit: cover; }
-        .user-name { font-size: 12px; font-weight: bold; color: #eee; }
+        /* الهيدر */
+        .header { display: flex; justify-content: space-between; padding: 15px; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); border-bottom: 1px solid var(--glass-border); }
+        .user-info { display: flex; align-items: center; gap: 10px; background: var(--glass); padding: 5px 12px; border-radius: 25px; border: 1px solid var(--glass-border); }
+        .user-img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--blue); background: #222; }
+        
+        .stats-bar { display: flex; justify-content: space-around; background: rgba(255,255,255,0.02); padding: 10px; margin: 10px; border-radius: 15px; }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 10px; color: #888; display: block; }
+        .stat-val { font-size: 12px; font-weight: bold; color: var(--green); }
 
         /* شريط المستوى */
-        .lvl-section { padding: 10px 25px; }
-        .lvl-info { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: var(--blue); }
-        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); box-shadow: 0 0 10px var(--blue); transition: 1s ease; }
+        .lvl-box { padding: 0 20px; margin-top: 5px; }
+        .lvl-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--blue); margin-bottom: 5px; }
+        .progress-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); box-shadow: 0 0 10px var(--blue); transition: 1s; }
 
-        /* منطقة الرصيد والوقت */
+        /* التعدين الرئيسي */
         .main-display { text-align: center; margin-top: 20px; }
-        .balance-num { font-size: 55px; font-weight: 900; margin: 0; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px rgba(243, 186, 47, 0.3)); }
-        .timer-pill { display: inline-flex; align-items: center; background: rgba(0,0,0,0.5); padding: 4px 15px; border-radius: 20px; font-size: 12px; color: var(--gold); border: 1px solid rgba(243, 186, 47, 0.2); margin-top: 5px; }
+        .balance-main { font-size: 55px; font-weight: 900; margin: 0; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .timer-badge { display: inline-block; background: rgba(0,0,0,0.5); padding: 4px 15px; border-radius: 20px; font-size: 12px; color: var(--gold); border: 1px solid rgba(243, 186, 47, 0.2); }
 
-        /* دائرة النقر الفخمة */
-        .click-zone { position: relative; width: 240px; height: 240px; margin: 30px auto; display: flex; align-items: center; justify-content: center; }
-        .main-coin { width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, #151515, #000); border: 2px solid var(--glass-border); cursor: pointer; position: relative; z-index: 5; transition: 0.1s; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(0,0,0,0.5); -webkit-tap-highlight-color: transparent; }
-        .main-coin:active { transform: scale(0.94); border-color: var(--blue); }
-        .coin-glow { position: absolute; width: 220px; height: 220px; border-radius: 50%; background: var(--blue); filter: blur(60px); opacity: 0.15; z-index: 1; }
+        .coin-zone { position: relative; width: 230px; height: 230px; margin: 30px auto; display: flex; align-items: center; justify-content: center; }
+        .coin-btn { width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, #1a1a1a, #000); border: 2px solid var(--glass-border); position: relative; z-index: 5; transition: 0.1s; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(0,0,0,0.5); cursor: pointer; }
+        .coin-btn:active { transform: scale(0.92); border-color: var(--blue); }
+        .coin-glow { position: absolute; width: 100%; height: 100%; background: var(--blue); filter: blur(60px); opacity: 0.1; }
 
-        /* نظام الكروت */
-        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px; }
-        .upgrade-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 18px; padding: 15px; position: relative; overflow: hidden; transition: 0.3s; }
-        .upgrade-card.locked { opacity: 0.6; filter: grayscale(1); }
-        .lock-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; z-index: 10; }
-        .card-icon { font-size: 24px; margin-bottom: 8px; }
-        .card-title { font-size: 13px; font-weight: bold; display: block; }
-        .card-desc { font-size: 10px; color: #aaa; }
-        .card-btn { width: 100%; margin-top: 10px; padding: 6px; background: var(--blue); border: none; border-radius: 8px; font-size: 11px; font-weight: bold; color: black; }
+        /* الكروت */
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; padding-bottom: 120px; }
+        .u-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 22px; padding: 15px; text-align: center; position: relative; }
+        .u-lvl { position: absolute; top: 10px; right: 10px; background: var(--gold); color: #000; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 5px; }
+        .u-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+        .u-title { font-size: 13px; font-weight: bold; display: block; }
+        .u-profit { font-size: 10px; color: var(--green); margin-bottom: 8px; display: block; }
+        .u-price { font-size: 11px; color: #888; margin-bottom: 10px; display: block; }
+        .u-price b { color: var(--gold); }
+        .u-btn { width: 100%; padding: 10px; border-radius: 12px; border: none; background: var(--pink); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .u-btn.success { background: var(--green) !important; color: black !important; }
 
         /* القائمة السفلية */
-        .bottom-nav { position: fixed; bottom: 20px; left: 5%; width: 90%; background: rgba(10, 10, 15, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid var(--glass-border); z-index: 1000; }
-        .nav-item { color: #666; font-size: 11px; text-align: center; flex: 1; transition: 0.3s; cursor: pointer; }
+        .nav-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid var(--glass-border); z-index: 1000; }
+        .nav-item { color: #555; font-size: 11px; text-align: center; flex: 1; cursor: pointer; }
         .nav-item.active { color: var(--blue); filter: drop-shadow(0 0 5px var(--blue)); }
 
-        /* التنبيهات */
-        .modal { background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; width: 80%; }
-        
-        .page { display: none; padding: 15px; height: 78vh; overflow-y: auto; padding-bottom: 100px; }
-        .active-page { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        .page { display: none; height: 80vh; overflow-y: auto; padding-top: 10px; }
+        .active-page { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="neon-bg"></div>
-    
     <audio id="snd-click" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <div class="header">
-        <div class="user-profile">
+        <div class="user-info">
             <img id="u-img" class="user-img" src="" alt="">
-            <span class="user-name" id="u-name">Loading...</span>
+            <span id="u-name" class="user-name">...</span>
         </div>
         <div id="ton-connect"></div>
     </div>
 
-    <div class="lvl-section">
-        <div class="lvl-info">
-            <span id="lvl-txt">مستوى: برونزي</span>
-            <span id="lvl-pct">0%</span>
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-label">ربح النقرة</span>
+            <span class="stat-val" id="stat-tap">+0.001</span>
         </div>
-        <div class="progress-container"><div class="progress-bar" id="p-bar"></div></div>
+        <div class="stat-item" style="border-left: 1px solid #222; border-right: 1px solid #222; padding: 0 20px;">
+            <span class="stat-label">ربح الساعة</span>
+            <span class="stat-val" id="stat-hour">0.00</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">الأصدقاء</span>
+            <span class="stat-val" id="stat-friends">0</span>
+        </div>
+    </div>
+
+    <div class="lvl-box">
+        <div class="lvl-info"><span id="lvl-txt">مستوى: برونزي</span><span id="lvl-pct">0%</span></div>
+        <div class="progress-bg"><div id="p-bar" class="progress-fill"></div></div>
     </div>
 
     <div id="home" class="page active-page">
         <div class="main-display">
-            <h1 class="balance-num" id="balance">0.0000</h1>
-            <div class="timer-pill">
-                <span id="timer-icon">⏳</span>&nbsp;
-                <span id="timer-val">05:00</span>
-            </div>
+            <h1 id="balance" class="balance-main">0.0000</h1>
+            <div class="timer-badge">⏳ <span id="timer-val">05:00</span></div>
         </div>
-
-        <div class="click-zone">
+        <div class="coin-zone">
             <div class="coin-glow"></div>
-            <div class="main-coin" onclick="handleMine()">
-                <img id="coin-img" src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="110">
+            <div class="coin-btn" onclick="handleMine()">
+                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png" width="110">
             </div>
         </div>
     </div>
 
-    <style>
-    /* تصميم الأزرار المطور */
-    .card-btn { 
-        width: 100%; margin-top: 10px; padding: 10px; 
-        background: var(--pink); border: none; border-radius: 12px; 
-        font-size: 11px; font-weight: bold; color: white; 
-        cursor: pointer; transition: background 0.3s ease;
-    }
-    .btn-success { background: var(--green) !important; color: black !important; }
-    
-    .lvl-tag-small {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 2px 6px; border-radius: 5px;
-        font-size: 10px; margin-left: 5px; color: var(--blue);
-    }
-</style>
-
-<div id="upgrades" class="page">
-    <h2 style="text-align:center; font-size:18px; color:var(--blue); margin-bottom:20px;">مركز التطوير الملكي ⚡</h2>
-    <div class="cards-grid">
-        
-        <div class="upgrade-card">
-            <div class="card-icon">🚀</div>
-            <span class="card-title">محرك التوربو <span id="lvl-card1" class="lvl-tag-small">Lvl 0</span></span>
-            <span class="card-desc">السعر الحالي: <b id="price-card1" style="color:var(--gold)">10</b></span>
-            <button id="btn-card1" class="card-btn" onclick="upgradeCard('card1', 10)">تطوير الوردي</button>
-        </div>
-
-        <div class="upgrade-card">
-            <div class="card-icon">🔋</div>
-            <span class="card-title">البطارية النووية <span id="lvl-card2" class="lvl-tag-small">Lvl 0</span></span>
-            <span class="card-desc">السعر الحالي: <b id="price-card2" style="color:var(--gold)">15</b></span>
-            <button id="btn-card2" class="card-btn" onclick="upgradeCard('card2', 15)">تطوير الوردي</button>
-        </div>
-
-        <div class="upgrade-card locked" id="card-locked-10">
-            <div id="overlay-10" class="lock-overlay">
-                <span>🔒 مقفل</span>
-                <span>دعوة 10 أصدقاء</span>
-            </div>
-            <div class="card-icon">📡</div>
-            <span class="card-title">الرادار المطور <span id="lvl-card3" class="lvl-tag-small">Lvl 0</span></span>
-            <span class="card-desc">السعر: <b id="price-card3" style="color:var(--gold)">50</b></span>
-            <button id="btn-card3" class="card-btn" onclick="upgradeCard('card3', 50)">تطوير</button>
-        </div>
-
+    <div id="upgrades" class="page">
+        <h2 style="text-align:center; color:var(--blue); font-size:18px;">المصنع الملكي ⚡</h2>
+        <div class="cards-grid" id="cards-list"></div>
     </div>
-</div>
-
-<script>
-    // نظام تخزين مستويات الكروت
-    let cardLevels = {
-        card1: 0,
-        card2: 0,
-        card3: 0
-    };
-
-<style>
-    /* تحسينات إضافية للتصميم الراقي */
-    .upgrade-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 15px;
-        text-align: center;
-        transition: 0.3s;
-        position: relative;
-    }
-    .upgrade-card:hover { border-color: var(--blue); background: rgba(0, 210, 255, 0.05); }
-    
-    .card-icon-circle {
-        width: 50px; height: 50px; background: rgba(0,0,0,0.3);
-        border-radius: 50%; display: flex; align-items: center;
-        justify-content: center; margin: 0 auto 10px; font-size: 24px;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .lvl-tag-royal {
-        position: absolute; top: 10px; right: 10px;
-        background: linear-gradient(45deg, var(--gold), #ff8c00);
-        color: black; font-size: 9px; font-weight: 900;
-        padding: 2px 8px; border-radius: 5px;
-    }
-
-    .price-tag { font-size: 12px; color: #bbb; display: block; margin: 5px 0; }
-    .price-tag b { color: var(--gold); }
-
-    .card-btn {
-        width: 100%; padding: 10px; border-radius: 12px; border: none;
-        background: var(--pink); color: white; font-weight: bold;
-        font-size: 12px; cursor: pointer; transition: 0.3s;
-    }
-    .btn-upgraded { background: var(--green) !important; color: black !important; }
-</style>
-
-<div id="upgrades" class="page">
-    <h2 style="text-align:center; font-size:20px; color:var(--blue); margin-bottom:5px;">مركز التطوير الإمبراطوري 💎</h2>
-    <p style="text-align:center; font-size:11px; color:#777; margin-bottom:20px;">طور معداتك لزيادة كفاءة المنجم</p>
-    
-    <div class="cards-grid">
-        
-        <div class="upgrade-card">
-            <span class="lvl-tag-royal" id="lvl-c1">Lvl 0</span>
-            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);">🚀</div>
-            <span class="card-title">محرك التوربو</span>
-            <span class="price-tag">التكلفة: <b id="pr-c1">10</b></span>
-            <button id="btn-c1" class="card-btn" onclick="royalUpgrade('c1', 10)">تطوير</button>
-        </div>
-
-        <div class="upgrade-card">
-            <span class="lvl-tag-royal" id="lvl-c2">Lvl 0</span>
-            <div class="card-icon-circle" style="box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);">🔋</div>
-            <span class="card-title">البطارية النووية</span>
-            <span class="price-tag">التكلفة: <b id="pr-c2">25</b></span>
-            <button id="btn-c2" class="card-btn" onclick="royalUpgrade('c2', 25)">تطوير</button>
-        </div>
-
-        <div class="upgrade-card">
-<style>
-    /* منع المربع الأزرق نهائياً في كل التطبيق */
-    * { -webkit-tap-highlight-color: transparent; outline: none; }
-
-    .cards-grid { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        gap: 15px; 
-        padding: 10px; 
-    }
-
-    .upgrade-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 24px;
-        padding: 20px 10px;
-        text-align: center;
-        position: relative;
-        transition: transform 0.2s;
-    }
-
-    .card-icon-circle {
-        width: 55px; height: 55px; 
-        background: rgba(0,0,0,0.4);
-        border-radius: 50%; 
-        display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 12px; font-size: 26px;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .lvl-tag-royal {
-        position: absolute; top: 12px; right: 12px;
-        background: linear-gradient(45deg, #f3ba2f, #ffaa00);
-        color: #000; font-size: 10px; font-weight: 900;
-        padding: 2px 7px; border-radius: 6px;
-    }
-
-    .card-title { font-size: 13px; font-weight: bold; color: #fff; display: block; }
-    .profit-boost { font-size: 10px; color: var(--green); margin-top: 4px; display: block; }
-    .price-tag { font-size: 12px; color: #888; margin: 8px 0; display: block; }
-    .price-tag b { color: var(--gold); }
-
-    /* الزر الراقي */
-    .card-btn {
-        width: 90%; padding: 10px; border-radius: 14px; border: none;
-        background: var(--pink); color: white; font-weight: bold;
-        font-size: 12px; cursor: pointer; transition: all 0.3s ease;
-    }
-    
-    /* لون الزر عند النجاح */
-    .btn-success-animate { background: var(--green) !important; color: black !important; transform: scale(1.05); }
-</style>
-
-<div id="upgrades" class="page">
-    <h2 style="text-align:center; color:var(--blue); font-size:22px; margin-bottom:5px;">مصنع الطاقة الملكي ⚡</h2>
-    <p style="text-align:center; color:#666; font-size:12px; margin-bottom:20px;">كل تطوير يزيد من ربح النقرة الواحدة</p>
-    
-    <div class="cards-grid" id="cards-container">
-        </div>
-</div>
-
-<script>
-    // بيانات الكروت الـ 12
-    const cardsConfig = [
-        { id: 'c1', name: 'محرك التوربو', icon: '🚀', base: 10, boost: 0.0001, color: '#ff007f' },
-        { id: 'c2', name: 'البطارية النووية', icon: '🔋', base: 50, boost: 0.0005, color: '#00d2ff' },
-        { id: 'c3', name: 'المنقب الماسي', icon: '💎', base: 200, boost: 0.0020, color: '#fff' },
-        { id: 'c4', name: 'قمر صناعي', icon: '🛰️', base: 1000, boost: 0.0100, color: '#7000ff' },
-        { id: 'c5', name: 'مساعد AI', icon: '🤖', base: 5000, boost: 0.0500, color: '#00ff87' },
-        { id: 'c6', name: 'التاج الملكي', icon: '👑', base: 20000, boost: 0.2000, color: '#f3ba2f' },
-        { id: 'c7', name: 'منصة تعدين', icon: '🖥️', base: 100000, boost: 1.0000, color: '#ff4444' },
-        { id: 'c8', name: 'قلب النجم', icon: '☀️', base: 500000, boost: 5.0000, color: '#ffcc00' },
-        { id: 'c9', name: 'مفاعل الثقب', icon: '🕳️', base: 2000000, boost: 25.000, color: '#4444ff' },
-        { id: 'c10', name: 'درع النيون', icon: '🛡️', base: 10000000, boost: 100.00, color: '#00ffff' },
-        { id: 'c11', name: 'سفينة الفضاء', icon: '🛸', base: 50000000, boost: 500.00, color: '#cc00ff' },
-        { id: 'c12', name: 'بوابة الأبعاد', icon: '🌀', base: 200000000, boost: 2000.0, color: '#00ff00' }
-    ];
-
-    let upgradesData = {}; // سيتم تحميلها من Firebase
-
-    function renderCards() {
-        const container = document.getElementById('cards-container');
-        container.innerHTML = '';
-        cardsConfig.forEach(card => {
-            const lvl = upgradesData[card.id] || 0;
-            const cost = card.base + (lvl * card.base * 2);
-            const html = `
-                <div class="upgrade-card">
-                    <span class="lvl-tag-royal" id="lvl-${card.id}">Lvl ${lvl}</span>
-                    <div class="card-icon-circle" style="box-shadow: 0 0 15px ${card.color}44;">${card.icon}</div>
-                    <span class="card-title">${card.name}</span>
-                    <span class="profit-boost">+${card.boost} /نقرة</span>
-                    <span class="price-tag">التكلفة: <b id="pr-${card.id}">${cost.toFixed(0)}</b></span>
-                    <button id="btn-${card.id}" class="card-btn" onclick="applyRoyalUpgrade('${card.id}', ${card.base}, ${card.boost})">تطوير</button>
-                </div>
-            `;
-            container.innerHTML += html;
-        });
-    }
-
-    function applyRoyalUpgrade(id, base, boost) {
-        let currentLvl = upgradesData[id] || 0;
-        let cost = base + (currentLvl * base * 2);
-
-        if (userData.balance >= cost) {
-            userData.balance -= cost;
-            upgradesData[id] = currentLvl + 1;
-            
-            // تحديث "الربح لكل نقرة" الفعلي في بيانات المستخدم
-            userData.profitPerTap = (userData.profitPerTap || 0.001) + boost;
-
-            const btn = document.getElementById('btn-' + id);
-            btn.classList.add('btn-success-animate');
-            btn.innerText = "تم التطوير ✨";
-
-            // تحديث الواجهة
-            document.getElementById('lvl-' + id).innerText = "Lvl " + upgradesData[id];
-            let nextCost = base + (upgradesData[id] * base * 2);
-            document.getElementById('pr-' + id).innerText = nextCost.toFixed(0);
-
-            // حفظ في Firebase
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                balance: userData.balance,
-                upgrades: upgradesData,
-                profitPerTap: userData.profitPerTap
-            });
-
-            setTimeout(() => {
-                btn.classList.remove('btn-success-animate');
-                btn.innerText = "تطوير";
-            }, 800);
-
-            tg.HapticFeedback.impactOccurred('medium');
-        } else {
-            tg.HapticFeedback.notificationOccurred('error');
-            const btn = document.getElementById('btn-' + id);
-            btn.style.background = '#440000';
-            setTimeout(() => btn.style.background = '', 500);
-        }
-    }
-
-    // تعديل دالة التعدين الرئيسية لتستخدم profitPerTap
-    function handleMine() {
-        document.getElementById('snd-click').currentTime = 0;
-        document.getElementById('snd-click').play();
-        const now = Date.now();
-        if(now - (userData.last || 0) >= 300000) {
-            // إضافة الربح بناءً على الكروت
-            let reward = userData.profitPerTap || 0.001;
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                balance: (userData.balance || 0) + reward,
-                last: now
-            });
-            tg.HapticFeedback.impactOccurred('medium');
-        } else {
-            tg.showAlert("المنجم يبرد الآن.. انتظر قليلاً ❄️");
-        }
-    }
-
-    // تحميل الكروت عند بدء التشغيل
-    setTimeout(renderCards, 2000); 
-</script>
-
-
-
 
     <div id="wallet" class="page">
-        <h2 style="text-align:center;">المحفظة الملكية 💰</h2>
-        <div style="background:var(--glass); border:1px solid var(--glass-border); padding:30px; border-radius:25px; text-align:center;">
-            <p style="color:#888; font-size:12px;">الرصيد القابل للسحب</p>
-            <h1 style="color:var(--gold); font-size:40px;" id="w-bal">0.00</h1>
-            <button onclick="tg.showAlert('السحب سيفتح عند الإدراج قريباً!')" style="width:100%; padding:15px; background:linear-gradient(45deg, var(--blue), var(--pink)); border:none; border-radius:15px; color:white; font-weight:bold; margin-top:20px;">طلب سحب</button>
+        <h2 style="text-align:center;">المحفظة 💰</h2>
+        <div style="background:var(--glass); margin:20px; padding:30px; border-radius:25px; text-align:center; border:1px solid var(--glass-border);">
+            <p style="color:#888;">الرصيد القابل للسحب</p>
+            <h1 id="w-bal" style="color:var(--gold); font-size:45px;">0.00</h1>
+            <button class="u-btn" style="margin-top:20px;" onclick="tg.showAlert('السحب سيفتح قريباً!')">طلب سحب</button>
         </div>
     </div>
 
-    <nav class="bottom-nav">
+    <nav class="nav-bar">
         <div class="nav-item active" onclick="showTab('home', this)">⛏️<br>تعدين</div>
         <div class="nav-item" onclick="showTab('upgrades', this)">⚡<br>تطوير</div>
         <div class="nav-item" onclick="showTab('wallet', this)">💰<br>المحفظة</div>
@@ -428,80 +158,131 @@
         firebase.initializeApp(firebaseConfig);
 
         let userData = {};
-
-        // تهيئة بيانات المستخدم
-        function initUser() {
-            const user = tg.initDataUnsafe.user;
-            if(user) {
-                document.getElementById('u-name').innerText = user.first_name;
-                document.getElementById('u-img').src = user.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-            }
-        }
+        const cards = [
+            { id: 'c1', name: 'محرك توربو', icon: '🚀', base: 10, tap: 0.0002, hour: 0.1 },
+            { id: 'c2', name: 'بطارية نووية', icon: '🔋', base: 50, tap: 0.001, hour: 0.5 },
+            { id: 'c3', name: 'منقب ماسي', icon: '💎', base: 250, tap: 0.005, hour: 2.0 },
+            { id: 'c4', name: 'قمر صناعي', icon: '🛰️', base: 1000, tap: 0.02, hour: 10.0 },
+            { id: 'c5', name: 'مساعد AI', icon: '🤖', base: 5000, tap: 0.1, hour: 50.0 },
+            { id: 'c6', name: 'تاج الملوك', icon: '👑', base: 25000, tap: 0.5, hour: 250.0 },
+            { id: 'c7', name: 'مفاعل نيون', icon: '⚛️', base: 100000, tap: 2.0, hour: 1000 },
+            { id: 'c8', name: 'سفينة فضاء', icon: '🛸', base: 500000, tap: 10.0, hour: 5000 }
+        ];
 
         firebase.auth().onAuthStateChanged(user => {
-            if(user) { sync(user.uid); initUser(); }
-            else firebase.auth().signInAnonymously();
+            if(user) {
+                initUser(user.uid);
+            } else {
+                firebase.auth().signInAnonymously();
+            }
         });
 
-        function sync(uid) {
-            firebase.database().ref('users/' + uid).on('value', s => {
-                userData = s.val() || {balance:0, last:0, friends:0};
+        function initUser(uid) {
+            const userRef = firebase.database().ref('users/' + uid);
+            userRef.on('value', s => {
+                userData = s.val() || { balance: 0, last: 0, profitTap: 0.001, profitHour: 0, upgrades: {}, lastSync: Date.now() };
+                
+                // حساب الأرباح التلقائية منذ آخر دخول
+                const now = Date.now();
+                const secondsPassed = (now - (userData.lastSync || now)) / 1000;
+                const earned = (userData.profitHour / 3600) * secondsPassed;
+                
+                if(earned > 0) {
+                    userData.balance += earned;
+                    userRef.update({ balance: userData.balance, lastSync: now });
+                }
+                
                 updateUI();
-                checkLocks();
+                renderCards();
             });
+
+            // تحديث الوقت الحقيقي للرصيد كل ثانية (التعدين التلقائي)
+            setInterval(() => {
+                userData.balance += (userData.profitHour / 3600);
+                document.getElementById('balance').innerText = userData.balance.toFixed(4);
+            }, 1000);
         }
 
         function updateUI() {
-            const b = userData.balance || 0;
-            document.getElementById('balance').innerText = b.toFixed(4);
-            document.getElementById('w-bal').innerText = b.toFixed(2);
-            
-            // تحديث الشريط والمستوى
+            document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
+            document.getElementById('w-bal').innerText = (userData.balance || 0).toFixed(2);
+            document.getElementById('stat-tap').innerText = "+" + (userData.profitTap || 0.001).toFixed(4);
+            document.getElementById('stat-hour').innerText = (userData.profitHour || 0).toFixed(2);
+            document.getElementById('u-name').innerText = tg.initDataUnsafe.user?.first_name || "مستكشف";
+            document.getElementById('u-img').src = tg.initDataUnsafe.user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+            // تحديث الليفل
+            let b = userData.balance;
             let name = "برونزي"; let p = (b/5000)*100;
-            if(b >= 1000000) { name="تاج الملوك"; p=100; }
-            else if(b >= 100000) { name="ألماسي"; p=(b/1000000)*100; }
+            if(b >= 100000) { name="ألماسي"; p=100; }
             else if(b >= 20000) { name="ذهبي"; p=(b/100000)*100; }
             else if(b >= 5000) { name="فضي"; p=(b/20000)*100; }
 
-            document.getElementById('p-bar').style.width = Math.min(p, 100) + "%";
             document.getElementById('lvl-txt').innerText = "مستوى: " + name;
             document.getElementById('lvl-pct').innerText = Math.floor(Math.min(p, 100)) + "%";
-            
-            updateTimer();
+            document.getElementById('p-bar').style.width = Math.min(p, 100) + "%";
         }
 
-        function updateTimer() {
-            const diff = 300000 - (Date.now() - (userData.last || 0));
-            if(diff > 0) {
-                const m = Math.floor(diff/60000);
-                const s = Math.floor((diff%60000)/1000);
-                document.getElementById('timer-val').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-                document.getElementById('timer-icon').innerText = "❄️";
+        function renderCards() {
+            const list = document.getElementById('cards-list');
+            list.innerHTML = '';
+            cards.forEach(c => {
+                const lvl = (userData.upgrades && userData.upgrades[c.id]) || 0;
+                const price = c.base + (lvl * c.base * 1.5);
+                list.innerHTML += `
+                    <div class="u-card">
+                        <span class="u-lvl">Lvl ${lvl}</span>
+                        <span class="u-icon">${c.icon}</span>
+                        <span class="u-title">${c.name}</span>
+                        <span class="u-profit">+$${c.hour}/ساعة</span>
+                        <span class="u-price">التكلفة: <b>${price.toFixed(0)}</b></span>
+                        <button id="btn-${c.id}" class="u-btn" onclick="buyUpgrade('${c.id}', ${c.base}, ${c.tap}, ${c.hour})">تطوير</button>
+                    </div>
+                `;
+            });
+        }
+
+        function buyUpgrade(id, base, tapPlus, hourPlus) {
+            const lvl = (userData.upgrades && userData.upgrades[id]) || 0;
+            const price = base + (lvl * base * 1.5);
+
+            if(userData.balance >= price) {
+                userData.balance -= price;
+                const newUpgrades = userData.upgrades || {};
+                newUpgrades[id] = lvl + 1;
+                
+                const btn = document.getElementById('btn-' + id);
+                btn.classList.add('success');
+                btn.innerText = "تم بنجاح ✓";
+
+                firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                    balance: userData.balance,
+                    upgrades: newUpgrades,
+                    profitTap: (userData.profitTap || 0.001) + tapPlus,
+                    profitHour: (userData.profitHour || 0) + hourPlus,
+                    lastSync: Date.now()
+                });
+
+                setTimeout(() => { btn.classList.remove('success'); btn.innerText = "تطوير"; }, 800);
+                tg.HapticFeedback.impactOccurred('heavy');
             } else {
-                document.getElementById('timer-val').innerText = "جاهز!";
-                document.getElementById('timer-icon').innerText = "⚡";
+                tg.showAlert("الرصيد غير كافٍ! ❌");
             }
         }
-        setInterval(updateTimer, 1000);
 
         function handleMine() {
-            document.getElementById('snd-click').currentTime = 0;
-            document.getElementById('snd-click').play();
             const now = Date.now();
             if(now - (userData.last || 0) >= 300000) {
+                document.getElementById('snd-click').currentTime = 0;
+                document.getElementById('snd-click').play();
                 firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
-                    balance: (userData.balance || 0) + 0.001,
+                    balance: (userData.balance || 0) + (userData.profitTap || 0.001),
                     last: now
                 });
                 tg.HapticFeedback.impactOccurred('medium');
             } else {
-                tg.showAlert("المنجم يبرد الآن.. انتظر قليلاً ❄️");
+                tg.showAlert("المنجم يبرد.. انتظر قليلاً! ❄️");
             }
-        }
-
-        function checkLocks() {
-            // كود لفتح الكروت بناء على عدد الأصدقاء (userData.friends)
-            // إذا كان userData.friends >= 10 نقوم بإزالة locked من card-10
         }
 
         function showTab(id, el) {
@@ -511,7 +292,17 @@
             el.classList.add('active');
         }
 
-        initUser();
+        // تحديث عداد الوقت
+        setInterval(() => {
+            const diff = 300000 - (Date.now() - (userData.last || 0));
+            if(diff > 0) {
+                const m = Math.floor(diff/60000); const s = Math.floor((diff%60000)/1000);
+                document.getElementById('timer-val').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+            } else {
+                document.getElementById('timer-val').innerText = "جاهز!";
+            }
+        }, 1000);
+
         new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
     </script>
 </body>
