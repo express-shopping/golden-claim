@@ -284,13 +284,21 @@
 </div>
 
     <div id="p-tasks" class="page">
-    <div class="u-card" style="margin-bottom:15px;">
-        <h3 style="margin:0; color:var(--gold);">Daily Reward</h3>
+    <div class="u-card" style="margin-bottom:15px; border-left: 4px solid var(--gold);">
+        <h3 style="margin:0; color:var(--gold); font-size:14px;">📅 Daily Check-in</h3>
         <div id="daily-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:10px 0;"></div>
-        <button id="btn-daily" class="btn-premium btn-gold" onclick="claimDaily()">CLAIM DAILY</button>
+        <button id="btn-daily" class="btn-premium btn-gold" onclick="claimDaily()">CLAIM REWARD</button>
     </div>
 
-    <div id="tasks-list"></div>
+    <div style="margin-bottom:15px;">
+        <h3 style="color:var(--blue); font-size:14px; margin-left:5px;">🌟 Daily Missions</h3>
+        <div id="daily-missions-list"></div>
+    </div>
+
+    <div style="margin-bottom:80px;">
+        <h3 style="color:var(--pink); font-size:14px; margin-left:5px;">📱 Social Tasks</h3>
+        <div id="tasks-list"></div>
+    </div>
 </div>
 
         <div id="p-boost" class="page">
@@ -348,7 +356,21 @@
         };
         firebase.initializeApp(firebaseConfig);
 
-        let userData = { balance: 0, energy: 1000, dailyDay: 1, lastClaim: 0, upgrades: {}, completedTasks: {}, profitHour: 0, profitTap: 0.001, friends: 0 };
+        let userData = { 
+    balance: 0, 
+    energy: 1000, 
+    dailyDay: 1, 
+    lastClaim: 0, 
+    upgrades: {}, 
+    completedTasks: {}, 
+    profitHour: 0, 
+    profitTap: 0.001, 
+    friends: 0,
+    // المتغيرات الجديدة للمهام اليومية
+    dailyTaps: 0,
+    dailyUpgrades: 0,      // عدد نقرات اليوم
+    lastDailyReset: 0  // تاريخ آخر تصفير للمهام
+};
 
         firebase.auth().onAuthStateChanged(user => {
             if(user) {
@@ -367,6 +389,7 @@
                 renderCards(); // استدعاء دالة عرض البطاقات
                 renderTasks();
                 renderDaily();
+                renderDailyMissions();
             });
             document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || '6396618007'}`;
         }
@@ -392,7 +415,6 @@ document.getElementById('en-bar').style.width = (userData.energy / 10) + "%";
         num.className = 'tap-number';
         num.innerText = `+${(userData.profitTap || 0.001).toFixed(3)}`;
         
-        // وضع الرقم مكان النقر بالضبط
         const rect = container.getBoundingClientRect();
         num.style.left = (event.clientX - rect.left) + 'px';
         num.style.top = (event.clientY - rect.top) + 'px';
@@ -400,16 +422,18 @@ document.getElementById('en-bar').style.width = (userData.energy / 10) + "%";
         container.appendChild(num);
         setTimeout(() => num.remove(), 800);
 
-        // 2. تحديث الداتا (الرصيد والطاقة)
+        // 2. تحديث الداتا (الرصيد والطاقة وعداد النقرات اليومي)
         const newBalance = userData.balance + (userData.profitTap || 0.001);
         const newEnergy = userData.energy - 1;
+        const newDailyTaps = (userData.dailyTaps || 0) + 1;
         
         firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
             balance: newBalance,
-            energy: newEnergy
+            energy: newEnergy,
+            dailyTaps: newDailyTaps
         });
 
-        // 3. تحديث صورة الأنيمي بناءً على المستوى (Rank)
+        // 3. تحديث صورة الأنيمي بناءً على المستوى
         updateCharacter(newBalance);
 
         tg.HapticFeedback.impactOccurred('medium');
@@ -500,30 +524,31 @@ function renderCards() {
 }
 
         function buyBoost(id, price, tP, hP) {
-            const btn = document.getElementById('btn-'+id);
-            if(userData.balance >= price) {
-                const ups = userData.upgrades || {};
-                ups[id] = (ups[id] || 0) + 1;
-                
-                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                    balance: userData.balance - price,
-                    upgrades: ups,
-                    profitTap: (userData.profitTap || 0.001) + tP,
-                    profitHour: (userData.profitHour || 0) + hP
-                });
-                
-                btn.innerText = "SUCCESS";
-                btn.classList.add('btn-success');
-                tg.HapticFeedback.impactOccurred('medium');
-            } else {
-                btn.innerText = "LOW BALANCE";
-                btn.classList.add('btn-error');
-                setTimeout(() => {
-                    btn.innerText = "UPGRADE";
-                    btn.classList.remove('btn-error');
-                }, 1000);
-            }
-        }
+    const btn = document.getElementById('btn-'+id);
+    if(userData.balance >= price) {
+        const ups = userData.upgrades || {};
+        ups[id] = (ups[id] || 0) + 1;
+        
+        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+            balance: userData.balance - price,
+            upgrades: ups,
+            profitTap: (userData.profitTap || 0.001) + tP,
+            profitHour: (userData.profitHour || 0) + hP,
+            dailyUpgrades: (userData.dailyUpgrades || 0) + 1 // هذا السطر يسجل الترقية
+        });
+        
+        btn.innerText = "SUCCESS";
+        btn.classList.add('btn-success');
+        tg.HapticFeedback.impactOccurred('medium');
+    } else {
+        btn.innerText = "LOW BALANCE";
+        btn.classList.add('btn-error');
+        setTimeout(() => {
+            btn.innerText = "UPGRADE";
+            btn.classList.remove('btn-error');
+        }, 1000);
+    }
+}
 
         /* ============================================================ */
 
@@ -533,6 +558,12 @@ function renderCards() {
             {id:'s2', name:'YouTube Subscribe', r:2000, url:'https://youtube.com/your_channel'},
             {id:'s3', name:'Follow TikTok', r:1500, url:'https://tiktok.com/@your_account'}
         ];
+
+const dailyMissions = [
+    { id: 'dm1', name: 'Reach 500 Taps Today', target: 500, reward: 1000, type: 'taps' },
+    { id: 'dm2', name: 'Upgrade 2 Cards Today', target: 2, reward: 2500, type: 'upgrades' },
+    { id: 'dm3', name: 'Invite 1 Friend Today', target: 1, reward: 5000, type: 'friends' }
+];
 
         // عرض قائمة المهام الاجتماعية
 function renderTasks() {
@@ -712,6 +743,71 @@ function copyRef() {
                 }
             }
         }, 1000);
+        
+        // دالة لتصفير المهام كل 24 ساعة
+function checkDailyReset() {
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    if (now - (userData.lastDailyReset || 0) > oneDay) {
+        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+            dailyTaps: 0,
+            dailyUpgrades: 0, // يرجع عداد الترقيات للصفر في اليوم الجديد
+            lastDailyReset: now,
+            'completedTasks/dm1': false,
+            'completedTasks/dm2': false,
+            'completedTasks/dm3': false
+        });
+    }
+}
+
+// عرض المهام اليومية
+function renderDailyMissions() {
+    const list = document.getElementById('daily-missions-list');
+    if(!list) return;
+    list.innerHTML = '';
+    
+    checkDailyReset(); 
+
+    dailyMissions.forEach(m => {
+        const isDone = userData.completedTasks && userData.completedTasks[m.id];
+        
+        // هنا المنطق البرمجي لحساب التقدم لكل نوع مهمة
+        let progress = 0;
+        if(m.type === 'taps') progress = userData.dailyTaps || 0;
+        if(m.type === 'upgrades') progress = userData.dailyUpgrades || 0;
+        if(m.type === 'friends') progress = userData.friends || 0;
+        
+        const pct = Math.min(100, (progress / m.target) * 100);
+
+        list.innerHTML += `
+            <div class="u-card" style="margin-bottom:10px; text-align:left; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px;"><b>${m.name}</b></span>
+                    <span style="color:var(--gold); font-size:11px;">+${m.reward}</span>
+                </div>
+                <div style="width:100%; height:4px; background:#222; border-radius:10px; margin:8px 0;">
+                    <div style="width:${pct}%; height:100%; background:var(--blue); border-radius:10px;"></div>
+                </div>
+                <button onclick="claimMission('${m.id}', ${m.reward}, ${progress >= m.target})" 
+                    class="btn-premium ${isDone ? 'btn-success' : (progress >= m.target ? 'btn-gold' : 'btn-error')}" 
+                    style="padding:5px; font-size:10px; height:30px;">
+                    ${isDone ? 'COMPLETED' : (progress >= m.target ? 'CLAIM' : 'IN PROGRESS')}
+                </button>
+            </div>`;
+    });
+}
+
+function claimMission(id, reward, canClaim) {
+    if(!canClaim || (userData.completedTasks && userData.completedTasks[id])) return;
+    
+    const tasks = userData.completedTasks || {};
+    tasks[id] = true;
+    firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+        balance: userData.balance + reward,
+        completedTasks: tasks
+    });
+    tg.HapticFeedback.notificationOccurred('success');
+}
 
         // 9. ربط محفظة TON
         new TON_CONNECT_UI.TonConnectUI({ 
@@ -720,4 +816,4 @@ function copyRef() {
         });
     </script>
 </body>
-            </html>
+    </html>
