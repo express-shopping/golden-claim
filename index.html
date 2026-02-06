@@ -430,29 +430,38 @@ function claimDaily() {
         // دالة السحب المميزة مع تأثير الانتظار
 function handleWithdraw() {
     const btn = document.getElementById('btn-withdraw');
-    const originalText = btn.innerText;
     
-    // تغيير حالة الزر عند الضغط
+    // 1. فحص الرصيد: هل هو أقل من 10000؟
+    if (userData.balance < 10000) {
+        // إظهار تنبيه رسمي من تيليجرام
+        tg.showAlert("عذراً! رصيدك غير كافٍ. الحد الأدنى للسحب هو 10,000 عملة.");
+        
+        // تغيير نص الزر مؤقتاً لتنبيه المستخدم بصررياً
+        btn.innerText = "رصيد منخفض";
+        btn.classList.add('btn-error'); // إضافة لون أحمر لو موجود في الـ CSS
+        
+        setTimeout(() => {
+            btn.innerText = "WITHDRAW NOW";
+            btn.classList.remove('btn-error');
+        }, 2000);
+        
+        return; // التوقف هنا (لن تظهر نافذة النجاح)
+    }
+
+    // 2. إذا كان الرصيد 10,000 أو أكثر، يبدأ السحب
     btn.innerText = "PROCESSING...";
     btn.disabled = true;
 
     setTimeout(() => {
-        btn.innerText = "WITHDRAWN!";
-        btn.classList.replace('btn-gold', 'btn-success');
-        
         tg.showPopup({
-            title: 'Withdrawal Request',
-            message: 'Your withdrawal request has been submitted successfully!'
+            title: 'طلب سحب',
+            message: 'تم إرسال طلبك بنجاح! سيتم مراجعته خلال 24 ساعة.'
         });
-
-        // إعادة الزر لحالته الطبيعية بعد ثانيتين
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.classList.replace('btn-success', 'btn-gold');
-            btn.disabled = false;
-        }, 2000);
-    }, 2000);
+        btn.innerText = "PENDING...";
+        btn.style.background = "var(--green)";
+    }, 1500);
 }
+
 
 // دالة نسخ الرابط مع تغيير لون الزر
 function copyRef() {
@@ -518,4 +527,4 @@ function copyRef() {
         });
     </script>
 </body>
-    </html>
+                                                                                          </html>
