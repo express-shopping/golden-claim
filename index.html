@@ -168,6 +168,54 @@
         .lvl-bar-container { padding: 0 20px; margin: 10px 0; }
         .lvl-bar-bg { width: 100%; height: 6px; background: #222; border-radius: 10px; overflow: hidden; }
         .lvl-bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--pink)); transition: 0.5s; width: 0%; }
+        /* تأثير الرقم الطائر عند النقر */
+.tap-number {
+    position: absolute;
+    color: var(--gold);
+    font-size: 24px;
+    font-weight: 900;
+    pointer-events: none;
+    animation: flyUp 0.8s ease-out forwards;
+    z-index: 100;
+}
+
+@keyframes flyUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-100px); opacity: 0; }
+}
+
+/* شريط الطاقة الملون */
+.energy-bar-container {
+    width: 200px;
+    height: 12px;
+    background: #222;
+    border-radius: 10px;
+    margin: 15px auto;
+    border: 1px solid var(--glass-border);
+    overflow: hidden;
+}
+
+.energy-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ff4b2b, #f3ba2f, #00ff87); /* تدرج أحمر أصفر أخضر */
+    transition: width 0.3s ease;
+}
+
+/* صورة الأنيمي داخل الدائرة */
+.anime-character {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    /* حركة خفيفة تظهر كل فترة */
+    animation: breathing 5s ease-in-out infinite;
+}
+
+@keyframes breathing {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.2); }
+}
     </style>
 </head>
 <body>
@@ -194,15 +242,19 @@
     </div>
 
     <div id="p-mine" class="page active-page">
-        <h1 id="balance" style="text-align:center; font-size:45px; color:var(--gold); margin:10px 0;">0.0000</h1>
-        <div class="coin-container" id="mine-container">
-            <div class="glow-pulse"></div>
-            <div class="mining-circle" onclick="handleMine()">
-                <img src="https://cdn-icons-png.flaticon.com/512/6585/6585012.png">
-            </div>
+    <h1 id="balance" style="text-align:center; font-size:45px; color:var(--gold); margin:10px 0;">0.0000</h1>
+    
+    <div class="coin-container" id="mine-container" style="position: relative;">
+        <div class="mining-circle" onclick="handleMine(event)">
+            <img id="character-img" class="anime-character" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky">
         </div>
-        <div style="text-align:center; font-size:12px; color:#aaa;">⚡ Energy: <span id="en-txt">1000/1000</span></div>
     </div>
+
+    <div class="energy-bar-container">
+        <div id="en-bar" class="energy-bar-fill"></div>
+    </div>
+    <div style="text-align:center; font-size:12px; color:#aaa;">⚡ Energy: <span id="en-txt">1000/1000</span></div>
+</div>
 
     <div id="p-tasks" class="page">
     <div class="u-card" style="margin-bottom:15px;">
@@ -296,18 +348,52 @@
             document.getElementById('rank-pct').innerText = Math.floor(p) + "%";
         }
 
-        function handleMine() {
-            if(userData.energy >= 1) {
-                const container = document.getElementById('mine-container');
-                container.classList.add('active-mine');
-                setTimeout(() => container.classList.remove('active-mine'), 200);
-                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                    balance: userData.balance + (userData.profitTap || 0.001),
-                    energy: userData.energy - 1
-                });
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
+        function handleMine(event) {
+    if(userData.energy >= 1) {
+        // 1. إظهار الرقم الطائر
+        const container = document.getElementById('mine-container');
+        const num = document.createElement('div');
+        num.className = 'tap-number';
+        num.innerText = `+${(userData.profitTap || 0.001).toFixed(3)}`;
+        
+        // وضع الرقم مكان النقر بالضبط
+        const rect = container.getBoundingClientRect();
+        num.style.left = (event.clientX - rect.left) + 'px';
+        num.style.top = (event.clientY - rect.top) + 'px';
+        
+        container.appendChild(num);
+        setTimeout(() => num.remove(), 800);
+
+        // 2. تحديث الداتا (الرصيد والطاقة)
+        const newBalance = userData.balance + (userData.profitTap || 0.001);
+        const newEnergy = userData.energy - 1;
+        
+        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+            balance: newBalance,
+            energy: newEnergy
+        });
+
+        // 3. تحديث صورة الأنيمي بناءً على المستوى (Rank)
+        updateCharacter(newBalance);
+
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+}
+
+function updateCharacter(bal) {
+    const img = document.getElementById('character-img');
+    // تغيير الشخصية كل 5000 نقطة كمثال
+    if (bal < 5000) img.src = "URL_شخصية_ليفل_1";
+    else if (bal < 15000) img.src = "URL_شخصية_ليفل_2";
+    else img.src = "URL_شخصية_المحترف";
+}
+
+// تحديث شريط الطاقة في الـ UI
+function updateEnergyUI() {
+    const pct = (userData.energy / 1000) * 100;
+    document.getElementById('en-bar').style.width = pct + "%";
+    document.getElementById('en-txt').innerText = Math.floor(userData.energy) + "/1000";
+}
 
         /* ============================================================ */
                 // نظام الـ 55 كارت مع شروط متقدمة
