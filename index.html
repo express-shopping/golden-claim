@@ -202,6 +202,33 @@
     transition: width 0.3s ease;
 }
 
+/* أزرار الأقسام داخل صفحة بوست */
+.category-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.3);
+    padding: 5px;
+    border-radius: 12px;
+}
+.cat-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #888;
+    font-family: 'Cairo';
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.cat-btn.active {
+    background: var(--gold);
+    color: #000;
+}
+
 /* صورة الأنيمي داخل الدائرة */
 .anime-character {
     width: 100%;
@@ -267,9 +294,16 @@
 </div>
 
         <div id="p-boost" class="page">
-        <div class="cards-grid" id="cards-list">
-            </div>
+    <div class="category-nav">
+        <button class="cat-btn active" onclick="filterCards('Mining', this)">⛏️ Mining</button>
+        <button class="cat-btn" onclick="filterCards('Market', this)">📈 Market</button>
+        <button class="cat-btn" onclick="filterCards('Legal', this)">⚖️ Legal</button>
     </div>
+    
+    <div class="cards-grid" id="cards-list">
+        </div>
+</div>
+
         <div id="p-wallet" class="page">
         <div class="u-card" style="border-top: 3px solid var(--gold); position: relative; margin-bottom: 15px;">
             <p style="font-size:12px; color:#888;">MY WALLET</p>
@@ -398,63 +432,72 @@ function updateEnergyUI() {
 }
 
         /* ============================================================ */
-                // نظام الـ 55 كارت مع شروط متقدمة
-        const cardConfigs = [
-            { id: 'c1', name: 'Eco Engine', icon: '🍃', base: 100, tap: 0.0001, hour: 0.1, reqFriends: 0 },
-            { id: 'c2', name: 'Nitro Boost', icon: '🚀', base: 500, tap: 0.0005, hour: 0.5, reqFriends: 0 },
-            { id: 'c3', name: 'Power Cell', icon: '🔋', base: 1500, tap: 0.001, hour: 1.2, reqFriends: 1 },
-            { id: 'c4', name: 'Fusion Core', icon: '☢️', base: 5000, tap: 0.005, hour: 5.0, reqFriends: 2, reqCardId: 'c1', reqCardLvl: 5 },
-            { id: 'c5', name: 'AI Server', icon: '🧠', base: 15000, tap: 0.01, hour: 15.0, reqFriends: 3, reqCardId: 'c2', reqCardLvl: 10 }
-        ];
+                // إضافة قسم (Category) لكل كارت
+const cardConfigs = [
+    { id: 'c1', name: 'Eco Engine', icon: '🍃', base: 100, tap: 0.0001, hour: 0.1, reqFriends: 0, cat: 'Mining' },
+    { id: 'c2', name: 'Nitro Boost', icon: '🚀', base: 500, tap: 0.0005, hour: 0.5, reqFriends: 0, cat: 'Mining' },
+    { id: 'c3', name: 'Crypto Bot', icon: '🤖', base: 1500, tap: 0.001, hour: 1.2, reqFriends: 1, cat: 'Market' },
+    { id: 'c4', name: 'License A', icon: '📜', base: 5000, tap: 0.005, hour: 5.0, reqFriends: 2, cat: 'Legal' },
+    // توليد بقية الـ 55 كارت وتوزيعهم على الأقسام
+];
 
-        // توليد بقية الـ 55 كارت تلقائياً بنفس المنطق
-        for(let i=6; i<=55; i++) {
-            cardConfigs.push({
-                id: 'c'+i, name: 'Module X-'+i, icon: '⚙️', base: 2000 * i, tap: 0.002 * i, hour: 10 * i,
-                reqFriends: Math.floor(i/10), reqCardId: 'c'+(i-1), reqCardLvl: 3
-            });
+for(let i=5; i<=55; i++) {
+    let category = i % 3 === 0 ? 'Mining' : (i % 3 === 1 ? 'Market' : 'Legal');
+    cardConfigs.push({
+        id: 'c'+i, name: 'Module X-'+i, icon: '⚙️', base: 2000 * i, tap: 0.002 * i, hour: 10 * i,
+        reqFriends: Math.floor(i/10), reqCardId: 'c'+(i-1), reqCardLvl: 3, cat: category
+    });
+}
+
+let currentCategory = 'Mining'; // القسم الافتراضي
+
+function filterCards(category, el) {
+    currentCategory = category;
+    // تحديث شكل الأزرار
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderCards(); // إعادة عرض الكروت بناءً على القسم المختار
+}
+
+// تعديل دالة renderCards لتعرض كروت القسم المختار فقط
+function renderCards() {
+    const list = document.getElementById('cards-list');
+    if(!list) return;
+    list.innerHTML = '';
+    
+    // تصفية الكروت بناءً على القسم
+    const filtered = cardConfigs.filter(c => c.cat === currentCategory);
+    
+    filtered.forEach(c => {
+        const lvl = (userData.upgrades && userData.upgrades[c.id]) || 0;
+        const price = Math.floor(c.base * Math.pow(1.5, lvl));
+        let lockMsg = "";
+        let locked = false;
+
+        if(userData.friends < c.reqFriends) {
+            locked = true; 
+            lockMsg = `🔒 Invite ${c.reqFriends} Friends`;
+        } else if(c.reqCardId) {
+            const tLvl = (userData.upgrades && userData.upgrades[c.reqCardId]) || 0;
+            if(tLvl < c.reqCardLvl) {
+                locked = true;
+                const tName = cardConfigs.find(x => x.id === c.reqCardId).name;
+                lockMsg = `🔒 Need ${tName} Lvl ${c.reqCardLvl}`;
+            }
         }
 
-        /* ============================================================ */
-
-                function renderCards() {
-            const list = document.getElementById('cards-list');
-            if(!list) return;
-            list.innerHTML = '';
-            
-            cardConfigs.forEach(c => {
-                const lvl = (userData.upgrades && userData.upgrades[c.id]) || 0;
-                const price = Math.floor(c.base * Math.pow(1.5, lvl));
-                let lockMsg = "";
-                let locked = false;
-
-                // التحقق من شرط الأصدقاء
-                if(userData.friends < c.reqFriends) {
-                    locked = true; 
-                    lockMsg = `🔒 Invite ${c.reqFriends} Friends`;
-                } 
-                // التحقق من شرط ليفل كارت آخر
-                else if(c.reqCardId) {
-                    const tLvl = (userData.upgrades && userData.upgrades[c.reqCardId]) || 0;
-                    if(tLvl < c.reqCardLvl) {
-                        locked = true;
-                        const tName = cardConfigs.find(x => x.id === c.reqCardId).name;
-                        lockMsg = `🔒 Need ${tName} Lvl ${c.reqCardLvl}`;
-                    }
-                }
-
-                list.innerHTML += `
-                    <div class="u-card ${locked ? 'locked' : ''}">
-                        ${locked ? `<div class="lock-msg">${lockMsg}</div>` : ''}
-                        <span class="u-lvl">Lv ${lvl}</span>
-                        <span class="u-icon">${c.icon}</span>
-                        <span class="u-title">${c.name}</span>
-                        <span class="u-profit">+$${c.hour}/hr</span>
-                        <span class="u-price">Cost: <b>${price}</b></span>
-                        <button id="btn-${c.id}" class="u-btn" onclick="buyBoost('${c.id}', ${price}, ${c.tap}, ${c.hour})">UPGRADE</button>
-                    </div>`;
-            });
-        }
+        list.innerHTML += `
+            <div class="u-card ${locked ? 'locked' : ''}">
+                ${locked ? `<div class="lock-msg">${lockMsg}</div>` : ''}
+                <span class="u-lvl">Lv ${lvl}</span>
+                <span class="u-icon">${c.icon}</span>
+                <span class="u-title">${c.name}</span>
+                <span class="u-profit">+$${c.hour}/hr</span>
+                <span class="u-price">Cost: <b>${price}</b></span>
+                <button id="btn-${c.id}" class="u-btn" onclick="buyBoost('${c.id}', ${price}, ${c.tap}, ${c.hour})">UPGRADE</button>
+            </div>`;
+    });
+}
 
         function buyBoost(id, price, tP, hP) {
             const btn = document.getElementById('btn-'+id);
@@ -677,4 +720,4 @@ function copyRef() {
         });
     </script>
 </body>
-    </html>
+            </html>
