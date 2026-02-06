@@ -168,13 +168,14 @@
     </div>
 
     <div id="p-tasks" class="page">
-        <div class="u-card" style="margin-bottom:15px;">
-            <h3 style="margin:0; color:var(--gold);">Daily Reward</h3>
-            <div id="daily-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:10px 0;"></div>
-            <button id="btn-daily" class="btn-premium btn-gold" onclick="claimDaily()">CLAIM DAILY</button>
-        </div>
-        <div id="tasks-list"></div>
+    <div class="u-card" style="margin-bottom:15px;">
+        <h3 style="margin:0; color:var(--gold);">Daily Reward</h3>
+        <div id="daily-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin:10px 0;"></div>
+        <button id="btn-daily" class="btn-premium btn-gold" onclick="claimDaily()">CLAIM DAILY</button>
     </div>
+
+    <div id="tasks-list"></div>
+</div>
 
         <div id="p-boost" class="page">
         <div class="cards-grid" id="cards-list">
@@ -359,69 +360,73 @@
             {id:'s3', name:'Follow TikTok', r:1500, url:'https://tiktok.com/@your_account'}
         ];
 
-        // 2. دالة عرض المهام
-        function renderTasks() {
-            const list = document.getElementById('tasks-list');
-            if(!list) return;
-            list.innerHTML = '<h3 style="color:var(--blue); margin-left:10px;">Social Tasks</h3>';
-            socials.forEach(s => {
-                const done = userData.completedTasks && userData.completedTasks[s.id];
-                list.innerHTML += `
-                    <div class="u-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; margin-bottom:10px;">
-                        <div style="font-size:12px; text-align:left;"><b>${s.name}</b><br><span style="color:var(--gold);">+${s.r} Coins</span></div>
-                        <button id="btn-${s.id}" class="u-btn ${done ? 'btn-success' : ''}" style="width:80px; font-size:10px;" 
-                            onclick="${done ? '' : `doTask('${s.id}','${s.url}',${s.r})`}">${done ? 'DONE' : 'JOIN'}</button>
-                    </div>`;
-            });
-        }
+        // عرض قائمة المهام الاجتماعية
+function renderTasks() {
+    const list = document.getElementById('tasks-list');
+    if(!list) return;
+    list.innerHTML = '';
+    socials.forEach(s => {
+        const done = userData.completedTasks && userData.completedTasks[s.id];
+        list.innerHTML += `
+            <div class="u-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; margin-bottom:10px;">
+                <div style="font-size:12px; text-align:left;"><b>${s.name}</b><br><span style="color:var(--gold);">+${s.r}</span></div>
+                <button id="btn-${s.id}" class="btn-premium ${done ? 'btn-success' : 'btn-gold'}" style="width:80px; padding:8px; font-size:10px;" 
+                    onclick="${done ? '' : `doTask('${s.id}','${s.url}',${s.r})`}">${done ? 'DONE' : 'JOIN'}</button>
+            </div>`;
+    });
+}
 
-        // 3. دالة تنفيذ المهمة
-        function doTask(id, url, r) {
-            tg.openLink(url);
-            setTimeout(() => {
-                const tasks = userData.completedTasks || {};
-                if(!tasks[id]) {
-                    tasks[id] = true;
-                    firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                        balance: userData.balance + r,
-                        completedTasks: tasks
-                    });
-                    tg.showPopup({message: "Task Completed! +" + r});
-                }
-            }, 5000); // ينتظر 5 ثوانٍ ليتأكد من الزيارة
-        }
+// تنفيذ المهمة (الفتح ثم التحقق)
+function doTask(id, url, r) {
+    const btn = document.getElementById('btn-'+id);
+    tg.openLink(url);
+    btn.innerText = "CHECKING...";
+    setTimeout(() => {
+        const tasks = userData.completedTasks || {};
+        tasks[id] = true;
+        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+            balance: userData.balance + r,
+            completedTasks: tasks
+        });
+        btn.innerText = "SUCCESS";
+        btn.className = "btn-premium btn-success";
+    }, 3000);
+}
 
-        // 4. دالة عرض المكافأة اليومية
-        function renderDaily() {
-            const grid = document.getElementById('daily-grid');
-            if(!grid) return;
-            grid.innerHTML = '';
-            for(let i=1; i<=8; i++) {
-                const isCurrent = (i === userData.dailyDay);
-                grid.innerHTML += `
-                    <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px; font-size:8px; border:1px solid ${isCurrent ? 'var(--gold)' : 'transparent'}">
-                        Day ${i}<br><span style="color:var(--gold);">+${i*500}</span>
-                    </div>`;
-            }
-        }
+// عرض شبكة الأيام للمكافأة اليومية
+function renderDaily() {
+    const grid = document.getElementById('daily-grid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    for(let i=1; i<=8; i++) {
+        const isCurrent = (i === userData.dailyDay);
+        grid.innerHTML += `
+            <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:10px; font-size:8px; border:1px solid ${isCurrent ? 'var(--gold)' : 'transparent'}">
+                Day ${i}<br>+${i*500}
+            </div>`;
+    }
+}
 
-        // 5. دالة المطالبة بالمكافأة اليومية
-        function claimDaily() {
-            const now = Date.now();
-            const oneDay = 24 * 60 * 60 * 1000;
-            if(now - (userData.lastClaim || 0) > oneDay) {
-                const bonus = (userData.dailyDay || 1) * 500;
-                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-                    balance: userData.balance + bonus,
-                    dailyDay: userData.dailyDay >= 8 ? 1 : (userData.dailyDay || 1) + 1,
-                    lastClaim: now
-                });
-                tg.showPopup({message: "Claimed: " + bonus + " Coins!"});
-            } else {
-                tg.showPopup({message: "Come back tomorrow!"});
-            }
-        }
-
+// المطالبة بالمكافأة اليومية
+function claimDaily() {
+    const btn = document.getElementById('btn-daily');
+    const now = Date.now();
+    // التحقق من مرور 24 ساعة (86400000 مللي ثانية)
+    if(now - (userData.lastClaim || 0) > 86400000) {
+        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+            balance: userData.balance + (userData.dailyDay * 500),
+            dailyDay: userData.dailyDay >= 8 ? 1 : userData.dailyDay + 1,
+            lastClaim: now
+        });
+        btn.innerText = "CLAIMED!";
+        btn.className = "btn-premium btn-success";
+    } else {
+        btn.innerText = "WAIT TILL TOMORROW";
+        btn.className = "btn-premium btn-error";
+        setTimeout(() => { btn.innerText = "CLAIM DAILY"; btn.className = "btn-premium btn-gold"; }, 2000);
+    }
+}
+ 
         // دالة السحب المميزة مع تأثير الانتظار
 function handleWithdraw() {
     const btn = document.getElementById('btn-withdraw');
@@ -513,4 +518,4 @@ function copyRef() {
         });
     </script>
 </body>
-                                                                                                                                    </html>
+    </html>
