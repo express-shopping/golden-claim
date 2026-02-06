@@ -429,46 +429,53 @@ function claimDaily() {
  
         // دالة السحب المميزة مع تأثير الانتظار
 function handleWithdraw() {
-    // التأكد من أن الزر موجود
     const btn = document.getElementById('btn-withdraw');
     if (!btn) return;
 
-    // الحصول على الرصيد الحالي (مع التأكد أنه رقم)
     const currentBalance = userData.balance || 0;
+    const originalText = "WITHDRAW"; // النص الأصلي للزر
 
-    // 1. فحص الرصيد
+    // 1. فحص الرصيد - إذا كان أقل من 10,000
     if (currentBalance < 10000) {
-        // تنبيه تيليجرام الرسمي
-        window.Telegram.WebApp.showAlert("عذراً! رصيدك " + currentBalance.toFixed(2) + " عملة. الحد الأدنى هو 10,000.");
-        
-        // تغيير شكل الزر بصرياً
-        const originalText = btn.innerText;
-        btn.innerText = "رصيد منخفض ❌";
-        btn.style.backgroundColor = "var(--red)"; // استخدام اللون الأحمر مباشرة
+        // تنبيه اللمس (هز الهاتف) إذا كان متاحاً
+        if (window.Telegram.WebApp.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+        }
+
+        btn.innerText = "LOW BALANCE"; // نص إنجليزي فقط
+        btn.style.backgroundColor = "var(--red)"; 
         
         setTimeout(() => {
             btn.innerText = originalText;
-            btn.style.backgroundColor = ""; // العودة للون الأصلي (الذهبي)
+            btn.style.backgroundColor = ""; // العودة للذهبي
         }, 2000);
         
-        return; // الخروج من الدالة
+        return; 
     }
 
-    // 2. إذا وجد رصيد (يعمل 100% في حال الرصيد > 10000)
-    btn.innerText = "جارِ المعالجة...";
+    // 2. إذا وجد رصيد كافٍ - يبدأ السحب
     btn.disabled = true;
+    btn.innerText = "PROCESSING...";
+    btn.style.backgroundColor = "var(--blue)"; // لون أزرق أثناء المعالجة
 
     setTimeout(() => {
-        window.Telegram.WebApp.showPopup({
-            title: 'طلب سحب',
-            message: 'تم إرسال طلبك بنجاح! سيتم مراجعته خلال 24 ساعة.',
-            buttons: [{type: 'ok'}]
-        });
-        btn.innerText = "قيد الانتظار...";
-        btn.style.backgroundColor = "var(--green)";
-    }, 1500);
-}
+        // تنبيه اللمس للنجاح
+        if (window.Telegram.WebApp.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
 
+        btn.innerText = "SUCCESSFUL"; // نص إنجليزي فقط
+        btn.style.backgroundColor = "var(--green)";
+
+        // إعادة الزر لوضعه الطبيعي بعد 3 ثوانٍ
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "";
+        }, 3000);
+        
+    }, 2000);
+}
 
 // دالة نسخ الرابط مع تغيير لون الزر
 function copyRef() {
@@ -534,4 +541,4 @@ function copyRef() {
         });
     </script>
 </body>
-    </html>
+</html>
