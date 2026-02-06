@@ -114,6 +114,38 @@
         /* ألوان التنبيه داخل الأزرار */
         .btn-error { background: var(--red) !important; }
         .btn-success { background: var(--green) !important; color: #000 !important; }
+        
+        /* تصميم مربع التنبيه الراقي */
+.withdraw-toast {
+    position: absolute;
+    top: 20%; /* يظهر فوق الرصيد */
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0, 0, 0, 0.9); /* خلفية سوداء زجاجية */
+    border: 1px solid var(--blue); /* إطار أزرق نحيف كما طلبت */
+    border-radius: 15px; /* حواف دائرية أنيقة */
+    padding: 10px 20px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+}
+
+.withdraw-toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-content {
+    color: var(--green); /* لون أخضر راقي */
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
         /* ============================================================ */
         
@@ -186,7 +218,12 @@
         <p style="font-size:12px; color:#888;">MY WALLET</p>
         <h2 id="w-bal" style="font-size:35px; color:var(--gold);">0.00</h2>
         <button id="btn-withdraw" class="btn-premium btn-gold" onclick="handleWithdraw()">WITHDRAW</button>
+    <div id="w-toast" class="withdraw-toast">
+    <div class="toast-content">
+        <span>$</span> 
+        <span>Min. Withdraw: 10,000 GOLD</span>
     </div>
+</div>
 
     <div class="u-card" style="margin-top:15px;">
         <p style="font-size:11px;">Your Referral Link</p>
@@ -430,50 +467,55 @@ function claimDaily() {
         // دالة السحب المميزة مع تأثير الانتظار
 function handleWithdraw() {
     const btn = document.getElementById('btn-withdraw');
-    if (!btn) return;
+    const toast = document.getElementById('w-toast');
+    if (!btn || !toast) return;
 
     const currentBalance = userData.balance || 0;
-    const originalText = "WITHDRAW"; // النص الأصلي للزر
+    const originalText = "WITHDRAW";
 
-    // 1. فحص الرصيد - إذا كان أقل من 10,000
+    // 1. في حال كان الرصيد أقل من 10,000
     if (currentBalance < 10000) {
-        // تنبيه اللمس (هز الهاتف) إذا كان متاحاً
+        // هز الهاتف (Feedback)
         if (window.Telegram.WebApp.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
         }
 
-        btn.innerText = "LOW BALANCE"; // نص إنجليزي فقط
-        btn.style.backgroundColor = "var(--red)"; 
+        // إظهار المربع الأنيق (Toast)
+        toast.classList.add('show');
         
+        // تغيير نص الزر
+        btn.innerText = "LOW BALANCE";
+        btn.style.backgroundColor = "var(--red)";
+
+        // إخفاء المربع وإعادة الزر بعد ثانيتين
         setTimeout(() => {
+            toast.classList.remove('show');
             btn.innerText = originalText;
-            btn.style.backgroundColor = ""; // العودة للذهبي
-        }, 2000);
+            btn.style.backgroundColor = "";
+        }, 2500);
         
-        return; 
+        return;
     }
 
-    // 2. إذا وجد رصيد كافٍ - يبدأ السحب
+    // 2. في حال الرصيد كافٍ (السحب الناجح)
     btn.disabled = true;
     btn.innerText = "PROCESSING...";
-    btn.style.backgroundColor = "var(--blue)"; // لون أزرق أثناء المعالجة
+    btn.style.backgroundColor = "var(--blue)";
 
     setTimeout(() => {
-        // تنبيه اللمس للنجاح
         if (window.Telegram.WebApp.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
         }
 
-        btn.innerText = "SUCCESSFUL"; // نص إنجليزي فقط
+        btn.innerText = "SUCCESSFUL";
         btn.style.backgroundColor = "var(--green)";
 
-        // إعادة الزر لوضعه الطبيعي بعد 3 ثوانٍ
+        // إرجاع الزر لحالته بعد 3 ثواني
         setTimeout(() => {
             btn.disabled = false;
             btn.innerText = originalText;
             btn.style.backgroundColor = "";
         }, 3000);
-        
     }, 2000);
 }
 
@@ -541,4 +583,4 @@ function copyRef() {
         });
     </script>
 </body>
-</html>
+    </html>
