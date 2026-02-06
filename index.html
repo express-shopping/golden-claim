@@ -243,6 +243,71 @@
     0%, 100% { transform: scale(1); filter: brightness(1); }
     50% { transform: scale(1.05); filter: brightness(1.2); }
 }
+/* تصميم صفحة المتصدرين */
+.leaderboard-header {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 15px;
+    padding: 20px 10px;
+    background: linear-gradient(to bottom, rgba(243, 186, 47, 0.1), transparent);
+    border-radius: 30px;
+    margin-bottom: 20px;
+}
+
+.top-rank { text-align: center; position: relative; }
+.top-1 { order: 2; transform: scale(1.2); z-index: 10; }
+.top-2 { order: 1; opacity: 0.9; }
+.top-3 { order: 3; opacity: 0.8; }
+
+.top-avatar {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 3px solid;
+    background: #111;
+    padding: 2px;
+}
+.top-1 .top-avatar { border-color: #ffda44; box-shadow: 0 0 20px rgba(255, 218, 68, 0.5); width: 80px; height: 80px; }
+.top-2 .top-avatar { border-color: #e5e7eb; }
+.top-3 .top-avatar { border-color: #cd7f32; }
+
+.shield-badge {
+    position: absolute;
+    bottom: -10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+/* قائمة المتصدرين */
+.rank-item {
+    display: flex; align-items: center;
+    background: var(--glass);
+    margin: 8px 0;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    transition: 0.3s;
+}
+
+/* الرتب السبعة الأولى (Elite) */
+.elite-rank {
+    border: 1px solid rgba(243, 186, 47, 0.4);
+    background: linear-gradient(90deg, rgba(243, 186, 47, 0.1), transparent);
+}
+
+.rank-number { width: 30px; font-weight: 900; color: #888; }
+.rank-info { flex: 1; display: flex; align-items: center; gap: 10px; }
+.rank-name { font-size: 14px; font-weight: bold; }
+.rank-score { color: var(--gold); font-weight: bold; font-size: 13px; }
+
+/* تسميات الدروع */
+.shield-legend { color: #fff; background: linear-gradient(45deg, #ff0000, #ff7300); box-shadow: 0 0 10px #ff7300; } /* القاهر */
+.shield-king { color: #000; background: var(--gold); } /* الملك */
+.shield-warrior { color: #fff; background: #555; } /* المحارب */
     </style>
 </head>
 <body>
@@ -311,7 +376,15 @@
     <div class="cards-grid" id="cards-list">
         </div>
 </div>
+<div id="p-leaderboard" class="page">
+    <h2 style="text-align:center; color:var(--gold);">🏆 GLOBAL RANKING</h2>
+    
+    <div id="top-three" class="leaderboard-header">
+        </div>
 
+    <div id="leaderboard-list" style="margin-bottom: 80px;">
+        </div>
+</div>
         <div id="p-wallet" class="page">
         <div class="u-card" style="border-top: 3px solid var(--gold); position: relative; margin-bottom: 15px;">
             <p style="font-size:12px; color:#888;">MY WALLET</p>
@@ -335,11 +408,11 @@
         </div>
     </div> 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="showTab('p-mine', this)">⛏️<br>MINE</div>
-        <div class="nav-item" onclick="showTab('p-tasks', this)">🎯<br>TASKS</div>
-        <div class="nav-item" onclick="showTab('p-boost', this)">⚡<br>BOOST</div>
-        <div class="nav-item" onclick="showTab('p-wallet', this)">💰<br>WALLET</div>
-    </nav>
+    <div class="nav-item active" onclick="showTab('p-mine', this)">⛏️<br>MINE</div>
+    <div class="nav-item" onclick="showTab('p-leaderboard', this); renderLeaderboard();">🏆<br>RANK</div> <div class="nav-item" onclick="showTab('p-tasks', this)">🎯<br>TASKS</div>
+    <div class="nav-item" onclick="showTab('p-boost', this)">⚡<br>BOOST</div>
+    <div class="nav-item" onclick="showTab('p-wallet', this)">💰<br>WALLET</div>
+</nav>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -382,17 +455,39 @@
         });
 
         function syncUser(uid) {
-            firebase.database().ref('users/'+uid).on('value', s => {
-                const data = s.val();
-                if(data) userData = {...userData, ...data};
-                updateUI();
-                renderCards(); // استدعاء دالة عرض البطاقات
-                renderTasks();
-                renderDaily();
-                renderDailyMissions();
+    // جلب بيانات المستخدم من تلجرام
+    const firstName = tg.initDataUnsafe.user?.first_name || "Unknown";
+    const lastName = tg.initDataUnsafe.user?.last_name || "";
+    const fullName = (firstName + " " + lastName).trim();
+    const userPhoto = tg.initDataUnsafe.user?.photo_url || "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + uid;
+
+    const userRef = firebase.database().ref('users/' + uid);
+
+    userRef.on('value', s => {
+        const data = s.val();
+        
+        // إذا كان المستخدم جديداً تماماً أو بياناته الأساسية ناقصة
+        if (!data || !data.name || !data.photo) {
+            userRef.update({
+                name: fullName,
+                photo: userPhoto,
+                // إذا كان جديداً نضع له القيم الافتراضية
+                balance: data?.balance || 0,
+                energy: data?.energy || 1000
             });
-            document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || '6396618007'}`;
         }
+        
+        if (data) userData = { ...userData, ...data };
+        updateUI();
+        renderCards();
+        renderTasks();
+        renderDaily();
+        renderDailyMissions();
+    });
+
+    // تحديث رابط الإحالة الخاص بالمستخدم
+    document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || uid}`;
+}
 
         function updateUI() {
             document.getElementById('balance').innerText = (userData.balance || 0).toFixed(4);
@@ -814,6 +909,62 @@ function claimMission(id, reward, canClaim) {
             manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', 
             buttonRootId: 'ton-connect' 
         });
+        // تعريف الدروع والرتب
+const SHIELDS = {
+    1: { name: "🔱 القاهر", class: "shield-legend" },
+    2: { name: "👑 الإمبراطور", class: "shield-king" },
+    3: { name: "⚔️ السلطان", class: "shield-king" },
+    4: { name: "🛡️ الفارس", class: "shield-warrior" },
+    // يمكن إضافة المزيد تلقائياً
+};
+
+function renderLeaderboard() {
+    const topThreeContainer = document.getElementById('top-three');
+    const listContainer = document.getElementById('leaderboard-list');
+    
+    // جلب أعلى 100 لاعب من فايربيس
+    firebase.database().ref('users').orderByChild('balance').limitToLast(100).once('value', snapshot => {
+        let players = [];
+        snapshot.forEach(child => {
+            players.push({ id: child.key, ...child.val() });
+        });
+        players.reverse(); // الترتيب من الأكثر رصيداً
+
+        topThreeContainer.innerHTML = '';
+        listContainer.innerHTML = '';
+
+        players.forEach((p, index) => {
+            const rank = index + 1;
+            const shield = SHIELDS[rank] || { name: "🛡️ مقاتل", class: "shield-warrior" };
+            const pImg = p.photo || "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + p.id;
+
+            if (rank <= 3) {
+                // تصميم الثلاثة الأوائل في البانر
+                topThreeContainer.innerHTML += `
+                    <div class="top-rank top-${rank}">
+                        <img src="${pImg}" class="top-avatar">
+                        <div class="shield-badge ${shield.class}">${shield.name}</div>
+                        <div style="font-size:11px; margin-top:15px; font-weight:bold;">${p.name || 'Player'}</div>
+                    </div>`;
+            }
+
+            // إضافة جميع اللاعبين للقائمة (بما فيهم الأوائل لضمان الترتيب)
+            const isElite = rank <= 10;
+            listContainer.innerHTML += `
+                <div class="rank-item ${isElite ? 'elite-rank' : ''}">
+                    <div class="rank-number">#${rank}</div>
+                    <div class="rank-info">
+                        <img src="${pImg}" style="width:35px; height:35px; border-radius:50%; border:1px solid #333;">
+                        <div>
+                            <span class="rank-name">${p.name || 'Player'}</span>
+                            <div style="font-size:9px; color:#888;">${shield.name}</div>
+                        </div>
+                    </div>
+                    <div class="rank-score">${Math.floor(p.balance || 0).toLocaleString()} 🟡</div>
+                </div>`;
+        });
+    });
+}
     </script>
 </body>
-    </html>
+        </html>
