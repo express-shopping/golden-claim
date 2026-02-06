@@ -344,6 +344,8 @@
             document.getElementById('st-hr').innerText = (userData.profitHour || 0).toFixed(2);
             document.getElementById('en-txt').innerText = Math.floor(userData.energy) + "/1000";
             let p = (userData.balance % 1000) / 10;
+
+document.getElementById('en-bar').style.width = (userData.energy / 10) + "%";
             document.getElementById('p-bar').style.width = p + "%";
             document.getElementById('rank-pct').innerText = Math.floor(p) + "%";
         }
