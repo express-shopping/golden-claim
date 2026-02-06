@@ -429,36 +429,43 @@ function claimDaily() {
  
         // دالة السحب المميزة مع تأثير الانتظار
 function handleWithdraw() {
+    // التأكد من أن الزر موجود
     const btn = document.getElementById('btn-withdraw');
-    
-    // 1. فحص الرصيد: هل هو أقل من 10000؟
-    if (userData.balance < 10000) {
-        // إظهار تنبيه رسمي من تيليجرام
-        tg.showAlert("عذراً! رصيدك غير كافٍ. الحد الأدنى للسحب هو 10,000 عملة.");
+    if (!btn) return;
+
+    // الحصول على الرصيد الحالي (مع التأكد أنه رقم)
+    const currentBalance = userData.balance || 0;
+
+    // 1. فحص الرصيد
+    if (currentBalance < 10000) {
+        // تنبيه تيليجرام الرسمي
+        window.Telegram.WebApp.showAlert("عذراً! رصيدك " + currentBalance.toFixed(2) + " عملة. الحد الأدنى هو 10,000.");
         
-        // تغيير نص الزر مؤقتاً لتنبيه المستخدم بصررياً
-        btn.innerText = "رصيد منخفض";
-        btn.classList.add('btn-error'); // إضافة لون أحمر لو موجود في الـ CSS
+        // تغيير شكل الزر بصرياً
+        const originalText = btn.innerText;
+        btn.innerText = "رصيد منخفض ❌";
+        btn.style.backgroundColor = "var(--red)"; // استخدام اللون الأحمر مباشرة
         
         setTimeout(() => {
-            btn.innerText = "WITHDRAW NOW";
-            btn.classList.remove('btn-error');
+            btn.innerText = originalText;
+            btn.style.backgroundColor = ""; // العودة للون الأصلي (الذهبي)
         }, 2000);
         
-        return; // التوقف هنا (لن تظهر نافذة النجاح)
+        return; // الخروج من الدالة
     }
 
-    // 2. إذا كان الرصيد 10,000 أو أكثر، يبدأ السحب
-    btn.innerText = "PROCESSING...";
+    // 2. إذا وجد رصيد (يعمل 100% في حال الرصيد > 10000)
+    btn.innerText = "جارِ المعالجة...";
     btn.disabled = true;
 
     setTimeout(() => {
-        tg.showPopup({
+        window.Telegram.WebApp.showPopup({
             title: 'طلب سحب',
-            message: 'تم إرسال طلبك بنجاح! سيتم مراجعته خلال 24 ساعة.'
+            message: 'تم إرسال طلبك بنجاح! سيتم مراجعته خلال 24 ساعة.',
+            buttons: [{type: 'ok'}]
         });
-        btn.innerText = "PENDING...";
-        btn.style.background = "var(--green)";
+        btn.innerText = "قيد الانتظار...";
+        btn.style.backgroundColor = "var(--green)";
     }, 1500);
 }
 
@@ -527,4 +534,4 @@ function copyRef() {
         });
     </script>
 </body>
-                                                                                          </html>
+    </html>
