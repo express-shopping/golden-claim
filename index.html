@@ -446,46 +446,72 @@
 };
 
         firebase.auth().onAuthStateChanged(user => {
-            if(user) {
-                const userPhoto = tg.initDataUnsafe.user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                document.getElementById('u-img').src = userPhoto;
-                document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "Guest").toUpperCase();
-                syncUser(user.uid);
-            } else firebase.auth().signInAnonymously();
-        });
+    if(user) {
+        // الحصول على معرف الشخص الذي دعا المستخدم (إن وجد)
+        const urlParams = new URLSearchParams(window.location.search);
+        const referrerId = tg.initDataUnsafe.start_param || null;
 
-        function syncUser(uid) {
-    // جلب بيانات المستخدم من تلجرام
-    const firstName = tg.initDataUnsafe.user?.first_name || "Unknown";
-    const lastName = tg.initDataUnsafe.user?.last_name || "";
-    const fullName = (firstName + " " + lastName).trim();
-    const userPhoto = tg.initDataUnsafe.user?.photo_url || "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + uid;
+        const userPhoto = tg.initDataUnsafe.user?.photo_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        document.getElementById('u-img').src = userPhoto;
+        document.getElementById('u-name').innerText = (tg.initDataUnsafe.user?.first_name || "Guest").toUpperCase();
+        
+        syncUser(user.uid, referrerId); // نمرر referrerId هنا
+    } else {
+        firebase.auth().signInAnonymously();
+    }
+});
 
+        function syncUser(uid, referrerId) {
     const userRef = firebase.database().ref('users/' + uid);
 
-    userRef.on('value', s => {
+    userRef.once('value', s => {
         const data = s.val();
         
-        // إذا كان المستخدم جديداً تماماً أو بياناته الأساسية ناقصة
-        if (!data || !data.name || !data.photo) {
-            userRef.update({
-                name: fullName,
-                photo: userPhoto,
-                // إذا كان جديداً نضع له القيم الافتراضية
-                balance: data?.balance || 0,
-                energy: data?.energy || 1000
-            });
+        // إذا كان المستخدم يدخل لأول مرة (مستخدم جديد)
+        if (!data) {
+            const newUser = {
+                name: (tg.initDataUnsafe.user?.first_name || "Unknown"),
+                photo: tg.initDataUnsafe.user?.photo_url || "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + uid,
+                balance: 1000, // هدية ترحيبية للمستخدم الجديد
+                energy: 1000,
+                friends: 0,
+                profitHour: 0,
+                profitTap: 0.001,
+                referredBy: referrerId || null // تخزين من الذي دعاه
+            };
+
+            userRef.set(newUser);
+
+            // إذا كان هناك شخص دعاه، نكافئ ذلك الشخص
+            if (referrerId && referrerId !== uid.toString()) {
+                const refUserRef = firebase.database().ref('users/' + referrerId);
+                refUserRef.once('value', snapshot => {
+                    if (snapshot.exists()) {
+                        const refData = snapshot.val();
+                        refUserRef.update({
+                            balance: (refData.balance || 0) + 5000, // مكافأة الصديق 5000
+                            friends: (refData.friends || 0) + 1    // زيادة عدد أصدقائه
+                        });
+                        // إرسال إشعار بسيط (اختياري)
+                    }
+                });
+            }
         }
-        
-        if (data) userData = { ...userData, ...data };
-        updateUI();
-        renderCards();
-        renderTasks();
-        renderDaily();
-        renderDailyMissions();
     });
 
-    // تحديث رابط الإحالة الخاص بالمستخدم
+    // استكمال المزامنة العادية للبيانات
+    userRef.on('value', s => {
+        const data = s.val();
+        if (data) {
+            userData = { ...userData, ...data };
+            updateUI();
+            renderCards();
+            renderTasks();
+            renderDaily();
+            renderDailyMissions();
+        }
+    });
+
     document.getElementById('ref-link').innerText = `https://t.me/Golden_Claim_Bot?start=${tg.initDataUnsafe.user?.id || uid}`;
 }
 
@@ -502,34 +528,42 @@ document.getElementById('en-bar').style.width = (userData.energy / 10) + "%";
             document.getElementById('rank-pct').innerText = Math.floor(p) + "%";
         }
 
-        function handleMine(event) {
+        // --- المتغيرات المساعدة للنقر الذكي ---
+let updateTimer = null;
+
+function handleMine(event) {
     if(userData.energy >= 1) {
-        // 1. إظهار الرقم الطائر
+        // 1. التحديث البصري الفوري للمستخدم (سرعة استجابة)
+        userData.balance += (userData.profitTap || 0.001);
+        userData.energy -= 1;
+        userData.dailyTaps = (userData.dailyTaps || 0) + 1;
+        
+        updateUI(); // تحديث الأرقام على الشاشة فوراً
+        
+        // 2. تأثير الرقم الطائر
         const container = document.getElementById('mine-container');
         const num = document.createElement('div');
         num.className = 'tap-number';
         num.innerText = `+${(userData.profitTap || 0.001).toFixed(3)}`;
-        
         const rect = container.getBoundingClientRect();
         num.style.left = (event.clientX - rect.left) + 'px';
         num.style.top = (event.clientY - rect.top) + 'px';
-        
         container.appendChild(num);
         setTimeout(() => num.remove(), 800);
 
-        // 2. تحديث الداتا (الرصيد والطاقة وعداد النقرات اليومي)
-        const newBalance = userData.balance + (userData.profitTap || 0.001);
-        const newEnergy = userData.energy - 1;
-        const newDailyTaps = (userData.dailyTaps || 0) + 1;
-        
-        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-            balance: newBalance,
-            energy: newEnergy,
-            dailyTaps: newDailyTaps
-        });
+        // 3. تحديث صورة الشخصية بناءً على الرصيد الجديد
+        updateCharacter(userData.balance);
 
-        // 3. تحديث صورة الأنيمي بناءً على المستوى
-        updateCharacter(newBalance);
+        // 4. منطق التحديث الذكي (إرسال لـ Firebase بعد التوقف عن النقر بثانية)
+        clearTimeout(updateTimer);
+        updateTimer = setTimeout(() => {
+            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                balance: userData.balance,
+                energy: userData.energy,
+                dailyTaps: userData.dailyTaps
+            });
+            console.log("Data Synced!");
+        }, 1000); 
 
         tg.HapticFeedback.impactOccurred('medium');
     }
@@ -537,13 +571,15 @@ document.getElementById('en-bar').style.width = (userData.energy / 10) + "%";
 
 function updateCharacter(bal) {
     const img = document.getElementById('character-img');
-    // تغيير الشخصية كل 5000 نقطة كمثال
-    if (bal < 5000) img.src = "https://i.imgur.com/MG8qwiZ.png";
-    else if (bal < 15000) img.src = "https://i.imgur.com/LqL4KWQ.png";
-    else img.src = "https://i.imgur.com/NcwEM1H.png";
+    if (bal < 5000) {
+        img.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky"; // شخصية البداية
+    } else if (bal < 15000) {
+        img.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=Warrior"; // شخصية المستوى الثاني
+    } else {
+        img.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=King"; // شخصية الملك
+    }
 }
 
-// تحديث شريط الطاقة في الـ UI
 function updateEnergyUI() {
     const pct = (userData.energy / 1000) * 100;
     document.getElementById('en-bar').style.width = pct + "%";
@@ -557,6 +593,7 @@ const cardConfigs = [
     { id: 'c2', name: 'Nitro Boost', icon: '🚀', base: 500, tap: 0.0005, hour: 0.5, reqFriends: 0, cat: 'Mining' },
     { id: 'c3', name: 'Crypto Bot', icon: '🤖', base: 1500, tap: 0.001, hour: 1.2, reqFriends: 1, cat: 'Market' },
     { id: 'c4', name: 'License A', icon: '📜', base: 5000, tap: 0.005, hour: 5.0, reqFriends: 2, cat: 'Legal' },
+    { id: 'c56', name: 'AI Server', icon: '🧠', base: 100000, tap: 0.1, hour: 500, reqFriends: 5, cat: 'Market' },
     // توليد بقية الـ 55 كارت وتوزيعهم على الأقسام
 ];
 
@@ -820,21 +857,37 @@ function copyRef() {
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        // 8. العداد الزمني (للربح التلقائي واستعادة الطاقة)
+                // 8. العداد الزمني المطور (تحديث بصري سريع + حفظ ذكي في قاعدة البيانات)
         setInterval(() => {
-            if(firebase.auth().currentUser) {
+            if (firebase.auth().currentUser && userData) {
+                let needsUpdate = false;
                 const updates = {};
-                // زيادة الرصيد بناءً على ربح الساعة
-                if(userData.profitHour > 0) {
-                    updates['balance'] = userData.balance + (userData.profitHour / 3600);
+
+                // 1. حساب الربح التلقائي (الربح في الساعة تقسيم 3600 ثانية)
+                if (userData.profitHour > 0) {
+                    userData.balance += (userData.profitHour / 3600);
+                    updates['balance'] = userData.balance;
+                    needsUpdate = true;
                 }
-                // استعادة الطاقة تلقائياً (1 طاقة كل ثانية)
-                if(userData.energy < 1000) {
-                    updates['energy'] = Math.min(1000, (userData.energy || 0) + 1);
+
+                // 2. استعادة الطاقة تلقائياً (1 طاقة كل ثانية حتى تصل لـ 1000)
+                if (userData.energy < 1000) {
+                    userData.energy = Math.min(1000, (userData.energy || 0) + 1);
+                    updates['energy'] = userData.energy;
+                    needsUpdate = true;
                 }
-                
-                if(Object.keys(updates).length > 0) {
-                    firebase.database().ref('users/'+firebase.auth().currentUser.uid).update(updates);
+
+                // 3. تحديث واجهة المستخدم (UI) ليرى المستخدم الأرقام تتحرك فوراً
+                updateUI();
+
+                // 4. الحفظ في Firebase (كل 30 ثانية فقط لتوفير استهلاك البيانات)
+                if (!window.saveCounter) window.saveCounter = 0;
+                window.saveCounter++;
+
+                if (needsUpdate && window.saveCounter >= 30) { 
+                    firebase.database().ref('users/' + firebase.auth().currentUser.uid).update(updates);
+                    window.saveCounter = 0; // إعادة تصفير العداد بعد الحفظ
+                    console.log("Auto-save: Data synced with Firebase");
                 }
             }
         }, 1000);
