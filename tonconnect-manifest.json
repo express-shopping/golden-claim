@@ -1,5 +1,7 @@
 {
   "url": "https://express-shopping.github.io/golden-claim/",
-  "name": "Golden Claim Bot",
-  "iconUrl": "https://cdn-icons-png.flaticon.com/512/6585/6585012.png"
+  "name": "Golden Claim",
+  "iconUrl": "https://api.dicebear.com/7.x/icons/svg?seed=Golden",
+  "termsOfServiceUrl": "https://express-shopping.github.io/golden-claim/terms.html",
+  "privacyPolicyUrl": "https://express-shopping.github.io/golden-claim/privacy.html"
 }
