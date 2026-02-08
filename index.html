@@ -750,18 +750,34 @@ function renderTasks() {
 // تنفيذ المهمة (الفتح ثم التحقق)
 function doTask(id, url, r) {
     const btn = document.getElementById('btn-'+id);
+    
+    // فتح الرابط في تليجرام
     tg.openLink(url);
-    btn.innerText = "CHECKING...";
+    
+    // تغيير حالة الزر لبدء "التحقق"
+    btn.innerText = "VERIFYING..."; 
+    btn.disabled = true; // تعطيل الزر حتى لا يضغط اللاعب مرتين
+    btn.style.opacity = "0.7";
+
+    // زيادة مدة الانتظار إلى 10 ثوانٍ (لإعطاء انطباع بالتحقق الفعلي)
     setTimeout(() => {
         const tasks = userData.completedTasks || {};
         tasks[id] = true;
+        
+        // تحديث البيانات في فيربايس
         firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
             balance: userData.balance + r,
             completedTasks: tasks
         });
-        btn.innerText = "SUCCESS";
+        
+        btn.innerText = "SUCCESS + " + r;
         btn.className = "btn-premium btn-success";
-    }, 3000);
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        
+        // اهتزاز الهاتف عند النجاح
+        tg.HapticFeedback.notificationOccurred('success');
+    }, 10000); // 10 ثوانٍ كافية لإشعار اللاعب بالجدية
 }
 
 // عرض شبكة الأيام للمكافأة اليومية
