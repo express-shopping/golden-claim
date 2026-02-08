@@ -429,21 +429,26 @@
         };
         firebase.initializeApp(firebaseConfig);
 
-        let userData = { 
-    balance: 0, 
-    energy: 1000, 
-    dailyDay: 1, 
-    lastClaim: 0, 
-    upgrades: {}, 
-    completedTasks: {}, 
-    profitHour: 0, 
-    profitTap: 0.001, 
-    friends: 0,
-    // المتغيرات الجديدة للمهام اليومية
-    dailyTaps: 0,
-    dailyUpgrades: 0,      // عدد نقرات اليوم
-    lastDailyReset: 0  // تاريخ آخر تصفير للمهام
-};
+                // 1. هذا هو صندوق بيانات المستخدم
+        let userData = {
+            balance: 0, 
+            energy: 1000, 
+            dailyDay: 1, 
+            lastClaim: 0, 
+            upgrades: {}, 
+            completedTasks: {}, 
+            profitHour: 0, 
+            profitTap: 0.001, 
+            friends: 0,
+            dailyTaps: 0,
+            dailyUpgrades: 0,
+            lastDailyReset: 0 
+        };
+
+        // 2. هذه هي أدوات الحماية (يجب أن تكون بالخارج كما تلاحظين)
+        let lastTapTime = 0;
+        let tapCountInSecond = 0;
+        let isBanned = false; 
 
         firebase.auth().onAuthStateChanged(user => {
     if(user) {
@@ -532,15 +537,38 @@ document.getElementById('en-bar').style.width = (userData.energy / 10) + "%";
 let updateTimer = null;
 
 function handleMine(event) {
+    if (isBanned) {
+        tg.showAlert("تم اكتشاف نشاط غير طبيعي! انتظر قليلاً...");
+        return;
+    }
+
+    const now = Date.now();
+    
+    // حساب الفرق الزمني بين النقرات
+    if (now - lastTapTime < 50) { // 50 مللي ثانية يعني أكثر من 20 نقرة في الثانية
+        tapCountInSecond++;
+    } else {
+        tapCountInSecond = 0; // إعادة التصفير إذا كان النقر طبيعي
+    }
+
+    lastTapTime = now;
+
+    // إذا زاد النقر عن حد معين (مثلاً 15 نقرة في أجزاء من الثانية)
+    if (tapCountInSecond > 15) {
+        isBanned = true;
+        tg.HapticFeedback.notificationOccurred('warning');
+        setTimeout(() => { isBanned = false; tapCountInSecond = 0; }, 5000); // حظر لمدة 5 ثوانٍ للتنبيه
+        return;
+    }
+
     if(userData.energy >= 1) {
-        // 1. التحديث البصري الفوري للمستخدم (سرعة استجابة)
+        // ... باقي كود النقر الأصلي الخاص بك ...
         userData.balance += (userData.profitTap || 0.001);
         userData.energy -= 1;
         userData.dailyTaps = (userData.dailyTaps || 0) + 1;
+        updateUI();
         
-        updateUI(); // تحديث الأرقام على الشاشة فوراً
-        
-        // 2. تأثير الرقم الطائر
+        // تأثير الرقم الطائر
         const container = document.getElementById('mine-container');
         const num = document.createElement('div');
         num.className = 'tap-number';
@@ -551,10 +579,8 @@ function handleMine(event) {
         container.appendChild(num);
         setTimeout(() => num.remove(), 800);
 
-        // 3. تحديث صورة الشخصية بناءً على الرصيد الجديد
         updateCharacter(userData.balance);
 
-        // 4. منطق التحديث الذكي (إرسال لـ Firebase بعد التوقف عن النقر بثانية)
         clearTimeout(updateTimer);
         updateTimer = setTimeout(() => {
             firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
@@ -562,7 +588,6 @@ function handleMine(event) {
                 energy: userData.energy,
                 dailyTaps: userData.dailyTaps
             });
-            console.log("Data Synced!");
         }, 1000); 
 
         tg.HapticFeedback.impactOccurred('medium');
@@ -597,11 +622,20 @@ const cardConfigs = [
     // توليد بقية الـ 55 كارت وتوزيعهم على الأقسام
 ];
 
+// استبدلي حلقة for القديمة بهذا التصميم المتوازن
 for(let i=5; i<=55; i++) {
     let category = i % 3 === 0 ? 'Mining' : (i % 3 === 1 ? 'Market' : 'Legal');
     cardConfigs.push({
-        id: 'c'+i, name: 'Module X-'+i, icon: '⚙️', base: 2000 * i, tap: 0.002 * i, hour: 10 * i,
-        reqFriends: Math.floor(i/10), reqCardId: 'c'+(i-1), reqCardLvl: 3, cat: category
+        id: 'c'+i, 
+        name: 'Module X-'+i, 
+        icon: '⚙️', 
+        base: 1000 * Math.pow(1.2, i), // السعر يرتفع بشكل أسي (احترافي)
+        tap: 0.001 * i, 
+        hour: 25 * i, // زيادة الربح لجعل اللاعب يستمتع
+        reqFriends: Math.floor(i/8), 
+        reqCardId: 'c'+(i-1), 
+        reqCardLvl: 2, 
+        cat: category
     });
 }
 
@@ -880,144 +914,140 @@ function copyRef() {
                 // 3. تحديث واجهة المستخدم (UI) ليرى المستخدم الأرقام تتحرك فوراً
                 updateUI();
 
-                // 4. الحفظ في Firebase (كل 30 ثانية فقط لتوفير استهلاك البيانات)
+                                                // 4. الحفظ في Firebase (كل 30 ثانية فقط لتوفير استهلاك البيانات)
                 if (!window.saveCounter) window.saveCounter = 0;
                 window.saveCounter++;
 
                 if (needsUpdate && window.saveCounter >= 30) { 
-                    firebase.database().ref('users/' + firebase.auth().currentUser.uid).update(updates);
-                    window.saveCounter = 0; // إعادة تصفير العداد بعد الحفظ
-                    console.log("Auto-save: Data synced with Firebase");
+                    if (updates.balance > userData.balance + 100000) { 
+                        console.error("Warning: Suspected hacking attempt!");
+                        location.reload(); 
+                    } else {
+                        firebase.database().ref('users/' + firebase.auth().currentUser.uid).update(updates);
+                    }
+                    window.saveCounter = 0;
                 }
             }
-        }, 1000);
-        
+        }, 1000); 
+
         // دالة لتصفير المهام كل 24 ساعة
-function checkDailyReset() {
-    const now = Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
-    if (now - (userData.lastDailyReset || 0) > oneDay) {
-        firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-            dailyTaps: 0,
-            dailyUpgrades: 0, // يرجع عداد الترقيات للصفر في اليوم الجديد
-            lastDailyReset: now,
-            'completedTasks/dm1': false,
-            'completedTasks/dm2': false,
-            'completedTasks/dm3': false
-        });
-    }
-}
+        function checkDailyReset() {
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            if (now - (userData.lastDailyReset || 0) > oneDay) {
+                firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+                    dailyTaps: 0,
+                    dailyUpgrades: 0,
+                    lastDailyReset: now,
+                    'completedTasks/dm1': false,
+                    'completedTasks/dm2': false,
+                    'completedTasks/dm3': false
+                });
+            }
+        }
 
-// عرض المهام اليومية
-function renderDailyMissions() {
-    const list = document.getElementById('daily-missions-list');
-    if(!list) return;
-    list.innerHTML = '';
-    
-    checkDailyReset(); 
+        function renderDailyMissions() {
+            const list = document.getElementById('daily-missions-list');
+            if(!list) return;
+            list.innerHTML = '';
+            checkDailyReset(); 
 
-    dailyMissions.forEach(m => {
-        const isDone = userData.completedTasks && userData.completedTasks[m.id];
-        
-        // هنا المنطق البرمجي لحساب التقدم لكل نوع مهمة
-        let progress = 0;
-        if(m.type === 'taps') progress = userData.dailyTaps || 0;
-        if(m.type === 'upgrades') progress = userData.dailyUpgrades || 0;
-        if(m.type === 'friends') progress = userData.friends || 0;
-        
-        const pct = Math.min(100, (progress / m.target) * 100);
+            dailyMissions.forEach(m => {
+                const isDone = userData.completedTasks && userData.completedTasks[m.id];
+                let progress = 0;
+                if(m.type === 'taps') progress = userData.dailyTaps || 0;
+                if(m.type === 'upgrades') progress = userData.dailyUpgrades || 0;
+                if(m.type === 'friends') progress = userData.friends || 0;
+                
+                const pct = Math.min(100, (progress / m.target) * 100);
 
-        list.innerHTML += `
-            <div class="u-card" style="margin-bottom:10px; text-align:left; padding:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:12px;"><b>${m.name}</b></span>
-                    <span style="color:var(--gold); font-size:11px;">+${m.reward}</span>
-                </div>
-                <div style="width:100%; height:4px; background:#222; border-radius:10px; margin:8px 0;">
-                    <div style="width:${pct}%; height:100%; background:var(--blue); border-radius:10px;"></div>
-                </div>
-                <button onclick="claimMission('${m.id}', ${m.reward}, ${progress >= m.target})" 
-                    class="btn-premium ${isDone ? 'btn-success' : (progress >= m.target ? 'btn-gold' : 'btn-error')}" 
-                    style="padding:5px; font-size:10px; height:30px;">
-                    ${isDone ? 'COMPLETED' : (progress >= m.target ? 'CLAIM' : 'IN PROGRESS')}
-                </button>
-            </div>`;
-    });
-}
+                list.innerHTML += `
+                    <div class="u-card" style="margin-bottom:10px; text-align:left; padding:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:12px;"><b>${m.name}</b></span>
+                            <span style="color:var(--gold); font-size:11px;">+${m.reward}</span>
+                        </div>
+                        <div style="width:100%; height:4px; background:#222; border-radius:10px; margin:8px 0;">
+                            <div style="width:${pct}%; height:100%; background:var(--blue); border-radius:10px;"></div>
+                        </div>
+                        <button onclick="claimMission('${m.id}', ${m.reward}, ${progress >= m.target})" 
+                            class="btn-premium ${isDone ? 'btn-success' : (progress >= m.target ? 'btn-gold' : 'btn-error')}" 
+                            style="padding:5px; font-size:10px; height:30px;">
+                            ${isDone ? 'COMPLETED' : (progress >= m.target ? 'CLAIM' : 'IN PROGRESS')}
+                        </button>
+                    </div>`;
+            });
+        }
 
-function claimMission(id, reward, canClaim) {
-    if(!canClaim || (userData.completedTasks && userData.completedTasks[id])) return;
-    
-    const tasks = userData.completedTasks || {};
-    tasks[id] = true;
-    firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
-        balance: userData.balance + reward,
-        completedTasks: tasks
-    });
-    tg.HapticFeedback.notificationOccurred('success');
-}
+        function claimMission(id, reward, canClaim) {
+            if(!canClaim || (userData.completedTasks && userData.completedTasks[id])) return;
+            const tasks = userData.completedTasks || {};
+            tasks[id] = true;
+            firebase.database().ref('users/'+firebase.auth().currentUser.uid).update({
+                balance: userData.balance + reward,
+                completedTasks: tasks
+            });
+            tg.HapticFeedback.notificationOccurred('success');
+        }
 
-        // 9. ربط محفظة TON
+        // ربط محفظة TON
         new TON_CONNECT_UI.TonConnectUI({ 
             manifestUrl: 'https://express-shopping.github.io/golden-claim/tonconnect-manifest.json', 
             buttonRootId: 'ton-connect' 
         });
-        // تعريف الدروع والرتب
-const SHIELDS = {
-    1: { name: "🔱 القاهر", class: "shield-legend" },
-    2: { name: "👑 الإمبراطور", class: "shield-king" },
-    3: { name: "⚔️ السلطان", class: "shield-king" },
-    4: { name: "🛡️ الفارس", class: "shield-warrior" },
-    // يمكن إضافة المزيد تلقائياً
-};
 
-function renderLeaderboard() {
-    const topThreeContainer = document.getElementById('top-three');
-    const listContainer = document.getElementById('leaderboard-list');
-    
-    // جلب أعلى 100 لاعب من فايربيس
-    firebase.database().ref('users').orderByChild('balance').limitToLast(100).once('value', snapshot => {
-        let players = [];
-        snapshot.forEach(child => {
-            players.push({ id: child.key, ...child.val() });
-        });
-        players.reverse(); // الترتيب من الأكثر رصيداً
+        const SHIELDS = {
+            1: { name: "🔱 القاهر", class: "shield-legend" },
+            2: { name: "👑 الإمبراطور", class: "shield-king" },
+            3: { name: "⚔️ السلطان", class: "shield-king" },
+            4: { name: "🛡️ الفارس", class: "shield-warrior" }
+        };
 
-        topThreeContainer.innerHTML = '';
-        listContainer.innerHTML = '';
+        function renderLeaderboard() {
+            const topThreeContainer = document.getElementById('top-three');
+            const listContainer = document.getElementById('leaderboard-list');
+            
+            firebase.database().ref('users').orderByChild('balance').limitToLast(100).once('value', snapshot => {
+                let players = [];
+                snapshot.forEach(child => { players.push({ id: child.key, ...child.val() }); });
+                players.sort((a, b) => (b.balance || 0) - (a.balance || 0));
 
-        players.forEach((p, index) => {
-            const rank = index + 1;
-            const shield = SHIELDS[rank] || { name: "🛡️ مقاتل", class: "shield-warrior" };
-            const pImg = p.photo || "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + p.id;
+                if(topThreeContainer) topThreeContainer.innerHTML = '';
+                if(listContainer) listContainer.innerHTML = '';
 
-            if (rank <= 3) {
-                // تصميم الثلاثة الأوائل في البانر
-                topThreeContainer.innerHTML += `
-                    <div class="top-rank top-${rank}">
-                        <img src="${pImg}" class="top-avatar">
-                        <div class="shield-badge ${shield.class}">${shield.name}</div>
-                        <div style="font-size:11px; margin-top:15px; font-weight:bold;">${p.name || 'Player'}</div>
-                    </div>`;
-            }
+                players.forEach((p, index) => {
+                    const rank = index + 1;
+                    const shield = SHIELDS[rank] || { name: "🛡️ مقاتل", class: "shield-warrior" };
+                    const pImg = p.photo || "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + p.id;
 
-            // إضافة جميع اللاعبين للقائمة (بما فيهم الأوائل لضمان الترتيب)
-            const isElite = rank <= 10;
-            listContainer.innerHTML += `
-                <div class="rank-item ${isElite ? 'elite-rank' : ''}">
-                    <div class="rank-number">#${rank}</div>
-                    <div class="rank-info">
-                        <img src="${pImg}" style="width:35px; height:35px; border-radius:50%; border:1px solid #333;">
-                        <div>
-                            <span class="rank-name">${p.name || 'Player'}</span>
-                            <div style="font-size:9px; color:#888;">${shield.name}</div>
-                        </div>
-                    </div>
-                    <div class="rank-score">${Math.floor(p.balance || 0).toLocaleString()} 🟡</div>
-                </div>`;
-        });
-    });
-}
+                    if (rank <= 3 && topThreeContainer) {
+                        topThreeContainer.innerHTML += `
+                            <div class="top-rank top-${rank}">
+                                <img src="${pImg}" class="top-avatar">
+                                <div class="shield-badge ${shield.class}">${shield.name}</div>
+                                <div style="font-size:11px; margin-top:15px; font-weight:bold;">${p.name || 'Player'}</div>
+                            </div>`;
+                    }
+
+                    if(listContainer) {
+                        const isElite = rank <= 10;
+                        listContainer.innerHTML += `
+                            <div class="rank-item ${isElite ? 'elite-rank' : ''}">
+                                <div class="rank-number">#${rank}</div>
+                                <div class="rank-info">
+                                    <img src="${pImg}" style="width:35px; height:35px; border-radius:50%; border:1px solid #333;">
+                                    <div>
+                                        <span class="rank-name">${p.name || 'Player'}</span>
+                                        <div style="font-size:9px; color:#888;">${shield.name}</div>
+                                    </div>
+                                </div>
+                                <div class="rank-score">${Math.floor(p.balance || 0).toLocaleString()} 🟡</div>
+                            </div>`;
+                    }
+                });
+            });
+        }
     </script>
 </body>
-    </html>
+</html>
+
