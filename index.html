@@ -19,20 +19,37 @@
         }
         
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; outline: none; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Cairo', sans-serif; overflow: hidden; height: 100vh; }
+        body { 
+    margin: 0; 
+    background: radial-gradient(circle, #1a0000 0%, #000000 100%); /* خلفية داكنة متدرجة بالأحمر */
+    color: white; 
+    font-family: 'Cairo', sans-serif; 
+    overflow: hidden; 
+    height: 100vh; 
+}
         
         /* Mining Circle Animation */
-        .coin-container { position: relative; width: 220px; height: 220px; margin: 40px auto; }
-        .mining-circle { 
-            width: 100%; height: 100%; border-radius: 50%; 
-            background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
-            box-shadow: 0 0 30px rgba(243, 186, 47, 0.2);
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s, box-shadow 0.3s; cursor: pointer;
-            border: 4px solid rgba(243, 186, 47, 0.1);
-        }
-        .mining-circle:active { transform: scale(0.95); box-shadow: 0 0 50px rgba(243, 186, 47, 0.5); }
-        .mining-circle img { width: 80%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        .coin-container { 
+    position: relative; 
+    width: 280px; /* المقاس الكبير الراقي */
+    height: 280px; 
+    margin: 30px auto; 
+}
+
+.mining-circle { 
+    width: 100%; height: 100%; border-radius: 50%; 
+    background: transparent; /* هنا سنضع صورة الدرع */
+    background-size: contain;
+    box-shadow: 0 0 50px rgba(255, 0, 0, 0.4); /* توهج أحمر فخم */
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.1s; cursor: pointer;
+    border: 4px solid #ff0000;
+}
+
+.mining-circle:active { 
+    transform: scale(0.92); /* تأثير ضغط أقوى */
+    box-shadow: 0 0 80px rgba(255, 0, 0, 0.8); 
+}
         
         /* Glow Effect for Mining */
         .glow-pulse { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--gold); opacity: 0; pointer-events: none; }
@@ -158,9 +175,15 @@
 
         /* ============================================================ */
 
-        .nav-bar { position: fixed; bottom: 15px; left: 5%; width: 90%; background: #0a0a0f; display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .nav-item { color: #555; font-size: 10px; text-align: center; flex: 1; }
-        .nav-item.active { color: var(--gold); }
+        .nav-bar { 
+    position: fixed; bottom: 15px; left: 5%; width: 90%; 
+    background: rgba(20, 0, 0, 0.9); /* أسود مائل للأحمر */
+    display: flex; justify-content: space-around; padding: 12px 0; 
+    border-radius: 25px; border: 1px solid #ff0000; 
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.2); 
+}
+.nav-item { color: #888; font-size: 10px; text-align: center; flex: 1; transition: 0.3s; }
+.nav-item.active { color: #ff0000; filter: drop-shadow(0 0 8px #ff0000); font-weight: bold; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px; }
         .stat-card { background: var(--glass); padding: 8px; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); }
@@ -198,7 +221,8 @@
 .energy-bar-fill {
     height: 100%;
     width: 100%;
-    background: linear-gradient(90deg, #ff4b2b, #f3ba2f, #00ff87); /* تدرج أحمر أصفر أخضر */
+    background: linear-gradient(90deg, #ff0000, #ff4d4d);
+    box-shadow: 0 0 15px #ff0000; /* توهج للشريط */
     transition: width 0.3s ease;
 }
 
@@ -336,7 +360,7 @@
     <div id="p-mine" class="page active-page">
     <h1 id="balance" style="text-align:center; font-size:45px; color:var(--gold); margin:10px 0;">0.0000</h1>
     
-    <div class="coin-container" id="mine-container" style="position: relative;">
+        <div class="coin-container" id="mine-container" style="position: relative;">
         <div class="mining-circle" onclick="handleMine(event)">
             <img id="character-img" class="anime-character" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky">
         </div>
@@ -596,12 +620,16 @@ function handleMine(event) {
 
 function updateCharacter(bal) {
     const img = document.getElementById('character-img');
+    
     if (bal < 5000) {
-        img.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky"; // شخصية البداية
-    } else if (bal < 15000) {
-        img.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=Warrior"; // شخصية المستوى الثاني
+        // الدرع الابتدائي (مثلاً برونزي أو أحمر)
+        img.src = "https://i.imgur.com/lYk0LsP.png"; 
+    } else if (bal < 50000) {
+        // الدرع المتوسط (مثلاً أزرق أو فضي) - ضع الرابط هنا
+        img.src = "رابط_صورة_الدرع_الفضي_هنا"; 
     } else {
-        img.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=King"; // شخصية الملك
+        // الدرع النهائي (الذهبي الملكي) - ضع الرابط هنا
+        img.src = "رابط_صورة_الدرع_الذهبي_هنا"; 
     }
 }
 
