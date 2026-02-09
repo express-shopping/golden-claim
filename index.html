@@ -620,16 +620,30 @@ function handleMine(event) {
 
 function updateCharacter(bal) {
     const img = document.getElementById('character-img');
+    const circle = document.querySelector('.mining-circle');
+    const rankNameTxt = document.getElementById('rank-name'); // النص الذي يعرض الرتبة
     
     if (bal < 5000) {
-        // الدرع الابتدائي (مثلاً برونزي أو أحمر)
+        // الدرع الأحمر - المحارب الأحمر
         img.src = "https://i.imgur.com/lYk0LsP.png"; 
+        circle.style.borderColor = "#ff0000";
+        circle.style.boxShadow = "0 0 50px rgba(255, 0, 0, 0.4)";
+        rankNameTxt.innerText = "Rank: Red Warrior";
+        rankNameTxt.style.color = "#ff4d4d";
     } else if (bal < 50000) {
-        // الدرع المتوسط (مثلاً أزرق أو فضي) - ضع الرابط هنا
-        img.src = "رابط_صورة_الدرع_الفضي_هنا"; 
+        // الدرع الفضي - الفارس الفضي
+        img.src = "https://i.ibb.co/v4m8YmP/shield-silver.png"; 
+        circle.style.borderColor = "#c0c0c0";
+        circle.style.boxShadow = "0 0 60px rgba(192, 192, 192, 0.5)";
+        rankNameTxt.innerText = "Rank: Silver Knight";
+        rankNameTxt.style.color = "#e5e7eb";
     } else {
-        // الدرع النهائي (الذهبي الملكي) - ضع الرابط هنا
-        img.src = "رابط_صورة_الدرع_الذهبي_هنا"; 
+        // الدرع الذهبي - الأسطورة الذهبية
+        img.src = "https://i.ibb.co/YyYfW90/shield-gold.png"; 
+        circle.style.borderColor = "#f3ba2f";
+        circle.style.boxShadow = "0 0 80px rgba(243, 186, 47, 0.7)";
+        rankNameTxt.innerText = "Rank: Golden Legend";
+        rankNameTxt.style.color = "#f3ba2f";
     }
 }
 
@@ -1093,5 +1107,4 @@ function copyRef() {
         }
     </script>
 </body>
-</html>
-
+    </html>
