@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <script src="https://adsgram.ai/sdk/v1/adsgram-sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 
     <style>
@@ -362,7 +363,7 @@
     
         <div class="coin-container" id="mine-container" style="position: relative;">
         <div class="mining-circle" onclick="handleMine(event)">
-            <img id="character-img" class="anime-character" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky">
+            <img id="character-img" class="anime-character" src="https://i.imgur.com/lYk0LsP.png">
         </div>
     </div>
 
@@ -441,6 +442,16 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        const AdController = window.Adsgram.init({ blockId: "سأعطيك_الرقم_بعد_قليل" });
+
+function showAd() {
+    AdController.show().then((result) => {
+        // هنا يتم إضافة الأرباح لرصيدك 2815.2597
+        alert("شكرًا لمشاهدة الإعلان! تم إضافة المكافأة.");
+    }).catch((result) => {
+        console.error("خطأ في تشغيل الإعلان", result);
+    });
+}
 
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
@@ -626,7 +637,7 @@ function updateCharacter(bal) {
     
     if (bal < 5000) {
         // الدرع الأحمر - المحارب الأحمر
-        img.src = "https://i.imgur.com/1tBWehv.png"; 
+        img.src = "https://i.imgur.com/lYk0LsP.png"; 
         circle.style.borderColor = "#ff0000";
         circle.style.boxShadow = "0 0 50px rgba(255, 0, 0, 0.4)";
         rankNameTxt.innerText = "Rank: Red Warrior";
