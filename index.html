@@ -439,20 +439,26 @@
     <div class="nav-item" onclick="showTab('p-wallet', this)">💰<br>WALLET</div>
 </nav>
 
-    <script>
+        <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        const AdController = window.Adsgram.init({ blockId: "سأعطيك_الرقم_بعد_قليل" });
 
-function showAd() {
-    AdController.show().then((result) => {
-        // هنا يتم إضافة الأرباح لرصيدك 2815.2597
-        alert("شكرًا لمشاهدة الإعلان! تم إضافة المكافأة.");
-    }).catch((result) => {
-        console.error("خطأ في تشغيل الإعلان", result);
-    });
-}
+        // وضعنا رقم تجريبي "4321" لكي يعمل البوت ولا يتوقف حتى تحصل على رقمك الخاص
+        const AdController = window.Adsgram.init({ blockId: "4321" }); 
 
+        function showAd() {
+            if (!AdController) return;
+            AdController.show().then((result) => {
+                userData.balance += 500;
+                updateUI();
+                firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+                    balance: userData.balance
+                });
+                tg.showAlert("✅ شكرًا لمشاهدة الإعلان! تم إضافة 500 عملة.");
+            }).catch((result) => {
+                tg.showAlert("تعذر تشغيل الإعلان حالياً.");
+            });
+        }
         const firebaseConfig = {
             apiKey: "AIzaSyBzNnLCKo1Zn5XH602UGN8jPDX5kp9jsjA",
             authDomain: "goldenclaim-6863a.firebaseapp.com",
