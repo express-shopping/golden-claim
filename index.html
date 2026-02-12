@@ -423,36 +423,39 @@
         <script src="https://adsgram.ai/sdk/v1/adsgram-sdk.js"></script>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    // 1. تهيئة الإعلانات مع خاصية التعرف على المستخدم
+const AdController = window.Adsgram.init({ 
+    blockId: "ضع_رقم_البلوك_الخاص_بك_هنا",
+    debug: false // غيرها لـ true إذا أردت تجربة الإعلانات قبل النشر
+});
 
-    // 2. تهيئة متحكم الإعلانات (استبدل الرقم بالـ Block ID الخاص بك)
-    const AdController = window.Adsgram.init({ blockId: "ضع_رقم_الـID_هنا" });
+// 2. دالة تشغيل الإعلان المعدلة
+function showAd() {
+    // الحصول على ID المستخدم من تليجرام
+    const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "unknown";
 
-    // 3. دالة تشغيل الإعلان وإضافة المكافأة
-    function showAd() {
-        if (!AdController) {
-            tg.showAlert("جاري تحميل الإعلانات، حاول مجدداً...");
-            return;
-        }
+    if (!AdController) return;
 
-        AdController.show().then((result) => {
-            // إضافة المكافأة (مثلاً 5000 عملة)
-            userData.balance += 5000;
-            updateUI();
-            
-            // حفظ التحديث في Firebase فوراً
-            firebase.database().ref('users/' + firebase.auth().currentUser.uid).update({
+    // إرسال طلب الإعلان مع معرف المستخدم
+    AdController.show({ userId: userId }).then((result) => {
+        // إذا اكتمل الإعلان بنجاح
+        userData.balance += 5000; 
+        updateUI();
+        
+        // تحديث قاعدة البيانات فوراً
+        const currentUser = firebase.auth().currentUser;
+        if(currentUser) {
+            firebase.database().ref('users/' + currentUser.uid).update({
                 balance: userData.balance
             });
-
-            tg.showAlert("✅ شكرًا لمشاهدة الإعلان! تم إضافة 5000 عملة لرصيدك.");
-            tg.HapticFeedback.notificationOccurred('success');
-        }).catch((result) => {
-            console.error("Adsgram error:", result);
-            tg.showAlert("عذراً، لا توجد إعلانات متوفرة حالياً. حاول لاحقاً.");
-        });
-    }
+        }
+        
+        tg.showAlert("✅ مبروك! حصلت على 5000 عملة.");
+    }).catch((result) => {
+        console.error("Ad error:", result);
+        tg.showAlert("⚠️ لم يكتمل الإعلان أو لا يوجد إعلانات متاحة حالياً.");
+    });
+}
         const tg = window.Telegram.WebApp;
         tg.expand();
 
